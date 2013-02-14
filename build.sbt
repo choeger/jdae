@@ -12,8 +12,7 @@ resolvers += "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repositor
 resolvers += "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
 
 libraryDependencies ++= Seq(
-		    "org.scalatest" %% "scalatest" % "1.8" % "test",
-		    "org.scala-tools.testing" %% "scalacheck" % "1.9",
+		    "org.scalatest" %% "scalatest" % "1.9.1" % "test",
 		    "com.google.guava" % "guava" % "14.0-rc1",
 		    "com.google.code.findbugs" % "jsr305" % "1.3.+", //for javax.annotation.Nullable :(
 		    "org.hamcrest" % "hamcrest-integration" % "1.3.RC2",
