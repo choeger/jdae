@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Objects;
@@ -95,7 +93,7 @@ public final class UnionFindEquivalence<T> extends Equivalence<T> {
         }
 
         @Override
-        public boolean equals(@Nullable Object obj) {
+        public boolean equals(Object obj) {
             if (obj instanceof Partition) {
                 Partition p = (Partition) obj;
                 return representative() == p.representative();
@@ -151,7 +149,7 @@ public final class UnionFindEquivalence<T> extends Equivalence<T> {
      * @return {@code true} if this equivalence relation changed as a result of
      *         this call
      */
-    public boolean merge(@Nullable T a, @Nullable T b) {
+    public boolean merge(T a, T b) {
         if (Objects.equal(a, b)) {
             return false;
         }
