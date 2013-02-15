@@ -45,6 +45,15 @@ import de.tuberlin.uebb.jdae.transformation.Causalisation.Computation;
 import de.tuberlin.uebb.jdae.utils.UnionFindEquivalence;
 import de.tuberlin.uebb.jdae.utils.VarComparator;
 
+/**
+ * Simulation entry point. This class contains a unique
+ * {@link DerivativeCollector} which allows {@link Causalisation} to create an
+ * explicit ODE. The actual calculation is done in a newly allocated
+ * {@link SolvableDAE}.
+ * 
+ * @author Christoph Höger <christoph.hoeger@tu-berlin.de>
+ * 
+ */
 public final class SimulationRuntime {
 
     public final Logger logger = Logger.getLogger("simulation");
@@ -57,6 +66,14 @@ public final class SimulationRuntime {
         logger.setLevel(Level.INFO);
     }
 
+    /**
+     * Create a solvable dae instance from a list of equations.
+     * 
+     * @param equations
+     *            the equations that form the model. Note: Any derivatives need
+     *            to be collected with {@code derivative_collector}!
+     * @return a solvable dae
+     */
     public SolvableDAE causalise(List<Equation> equations) {
         final UnionFindEquivalence<Unknown> equiv = UnionFindEquivalence
                 .create();

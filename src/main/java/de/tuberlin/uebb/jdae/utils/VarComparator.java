@@ -24,6 +24,18 @@ import java.util.Map;
 
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
+/**
+ * Implements {@link java.util.Comparator} for {@link Unknown}. The idea is to
+ * sort unknowns in a way that puts states first, followed by derivatives and
+ * finally the algebraic unknowns. This helps in interfacing with ODE
+ * integrators.
+ * 
+ * Also we can decide with this comparison which unknown to choose as a
+ * representative in case of equality optimization.
+ * 
+ * @author Christoph Höger <christoph.hoeger@tu-berlin.de>
+ * 
+ */
 public final class VarComparator implements Comparator<Unknown> {
     private final Map<Unknown, Unknown> derivatives;
 

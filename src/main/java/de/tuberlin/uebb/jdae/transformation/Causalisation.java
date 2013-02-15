@@ -45,7 +45,11 @@ import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
 /**
- * @author choeger
+ * This class holds the causalisation algorithm. See {@link www.eoolt.org
+ * /2011/presentations/presentation_13.pdf} for a presentation about the
+ * concept.
+ * 
+ * @author Christoph Höger <christoph.hoeger@tu-berlin.de>
  * 
  */
 public final class Causalisation {
