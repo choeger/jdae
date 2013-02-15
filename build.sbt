@@ -6,6 +6,8 @@ version := "0.0.1"
 
 scalaVersion := "2.10.0"
 
+javacOptions ++= Seq("-source", "1.7")
+
 resolvers += "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repository"
 
 // Only needed to track snapshot releases, SBT automatically includes the releases repository.
@@ -23,3 +25,24 @@ libraryDependencies ++= Seq(
 		    )
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+
+pomExtra :=
+<build>
+  <plugins>
+    <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-compiler-plugin</artifactId>
+       <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+       </configuration>
+    </plugin>
+  </plugins>
+</build>
+<licenses>
+  <license>
+    <name>LGPL (GNU Lesser General Public License)</name>
+    <url>http://www.gnu.org/licenses/lgpl.html</url>
+    <distribution>repo</distribution>
+  </license>
+</licenses>
