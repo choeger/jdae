@@ -28,6 +28,7 @@ import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import static org.junit.Assert.assertEquals;
 
@@ -39,9 +40,9 @@ public class SimpleIntegrationTest {
     /*
      * der(x) = x;
      */
-    final SimulationRuntime runtime = new SimulationRuntime();
+    final SimulationRuntime runtime = new DefaultSimulationRuntime();
     final Unknown x = new SimpleVar("x");
-    final Unknown dx = runtime.derivative_collector.apply(x);
+    final Unknown dx = runtime.der().apply(x);
     final Equation eq = ConstantLinearEquation.builder().add(dx, 1.0)
             .add(x, -1).build();
 

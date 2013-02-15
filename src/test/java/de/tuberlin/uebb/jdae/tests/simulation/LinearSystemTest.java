@@ -28,6 +28,7 @@ import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -50,7 +51,7 @@ public class LinearSystemTest {
 
     @Test
     public void testCausalisation() {
-        final SimulationRuntime runtime = new SimulationRuntime();
+        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         final SolvableDAE dae = runtime.causalise(ImmutableList.of(LINEAR1,
                 LINEAR2));
         assertNotNull(dae);
@@ -58,7 +59,7 @@ public class LinearSystemTest {
 
     @Test
     public void testSimulation() {
-        final SimulationRuntime runtime = new SimulationRuntime();
+        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         final SolvableDAE dae = runtime.causalise(ImmutableList.of(LINEAR1,
                 LINEAR2));
 

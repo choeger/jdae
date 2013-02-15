@@ -28,6 +28,7 @@ import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import static org.junit.Assert.assertEquals;
 
@@ -46,7 +47,7 @@ public class SimpleSquareIntegration {
          * der(x) = 2*time + 1;
          */
         final Unknown x = new SimpleVar("x");
-        final Unknown dx = runtime.derivative_collector.apply(x);
+        final Unknown dx = runtime.der().apply(x);
         final Equation eq = ConstantLinearEquation.builder().add(dx, 1.0)
                 .addTime(-2).add(1.0).build();
 
@@ -55,14 +56,14 @@ public class SimpleSquareIntegration {
 
     @Test
     public void testCausalisation() {
-        final SimulationRuntime runtime = new SimulationRuntime();
+        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         final SolvableDAE dae = model(runtime);
         assertEquals(1, dae.specialComputations[0].target);
     }
 
     @Test
     public void testSimulation() {
-        final SimulationRuntime runtime = new SimulationRuntime();
+        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         int stop_time = 2;
         final SolvableDAE dae = model(runtime);
         runtime.simulateFixedStep(dae, ImmutableMap.of("x", 0.0), stop_time,
@@ -76,7 +77,7 @@ public class SimpleSquareIntegration {
 
     @Test
     public void testVariableStepSimulation() {
-        final SimulationRuntime runtime = new SimulationRuntime();
+        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         int stop_time = 2;
         final SolvableDAE dae = model(runtime);
         runtime.simulateVariableStep(dae, ImmutableMap.of("x", 0.0), stop_time,
