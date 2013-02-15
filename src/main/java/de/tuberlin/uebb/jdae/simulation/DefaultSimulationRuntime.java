@@ -59,10 +59,11 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     public final Logger logger = Logger.getLogger("simulation");
     public final LoadingCache<Unknown, Unknown> derivative_collector;
 
+    @SuppressWarnings("unchecked")
     public DefaultSimulationRuntime(
-            LoadingCache<Unknown, Unknown> derivative_collector) {
+            LoadingCache<? extends Unknown, ? extends Unknown> derivative_collector) {
         super();
-        this.derivative_collector = derivative_collector;
+        this.derivative_collector = (LoadingCache<Unknown, Unknown>) derivative_collector;
     }
 
     public DefaultSimulationRuntime() {
