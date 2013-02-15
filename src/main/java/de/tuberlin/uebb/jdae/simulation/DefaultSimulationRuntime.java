@@ -28,7 +28,6 @@ import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.EulerIntegrator;
 
-import com.google.common.base.Function;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -59,9 +58,6 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
     public final Logger logger = Logger.getLogger("simulation");
     public final LoadingCache<Unknown, Unknown> derivative_collector;
-
-    private long last_eq_instantiation;
-    private long last_obj_instantiation;
 
     public DefaultSimulationRuntime(
             LoadingCache<Unknown, Unknown> derivative_collector) {
@@ -144,9 +140,6 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 representatives, causality.computations, derivative_collector,
                 logger);
 
-        solvableDAE.equation_instantiation_time = last_eq_instantiation;
-        solvableDAE.object_instantiation_time = last_obj_instantiation;
-
         return solvableDAE;
     }
 
@@ -204,9 +197,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public Function<Unknown, Unknown> der() {
-        // TODO Automatisch generierter Methodenstub
-        return null;
+    public LoadingCache<Unknown, Unknown> der() {
+        return derivative_collector;
     }
 
 }

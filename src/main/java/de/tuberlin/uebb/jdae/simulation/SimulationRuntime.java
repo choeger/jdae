@@ -3,7 +3,7 @@ package de.tuberlin.uebb.jdae.simulation;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Function;
+import com.google.common.cache.LoadingCache;
 
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
@@ -21,7 +21,7 @@ public interface SimulationRuntime {
      */
     public abstract SolvableDAE causalise(List<Equation> equations);
 
-    public Function<Unknown, Unknown> der();
+    public LoadingCache<Unknown, Unknown> der();
 
     public abstract void simulateFixedStep(SolvableDAE dae,
             Map<String, Double> inits, double stop_time, int steps);
