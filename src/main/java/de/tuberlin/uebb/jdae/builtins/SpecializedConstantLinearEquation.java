@@ -63,14 +63,14 @@ public final class SpecializedConstantLinearEquation implements Equation {
     public double solveFor(final int index, Unknown v, SolvableDAE systemState) {
         // final long start = System.nanoTime();
         double val = systemState.currentTime * this.time;
-        double c = 1.0;
+        double c = 0;
 
         for (int i = 0; i < variables.length; i++) {
             final int v_index = variables[i];
             if (v_index != index)
                 val += coefficients[i] * systemState.get(variables[i]);
             else
-                c = coefficients[i];
+                c += coefficients[i];
         }
 
         final double d = (constant - val) / c;

@@ -21,12 +21,13 @@ package de.tuberlin.uebb.jdae.transformation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.jgrapht.alg.EdmondsKarpMaximumFlow;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.ListenableDirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.GraphIterator;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
@@ -35,6 +36,7 @@ import com.google.common.base.Functions;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -43,6 +45,7 @@ import com.google.common.collect.UnmodifiableIterator;
 import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.thirdparty.HopcroftKarpBipartiteMatching;
 
 /**
  * This class holds the causalisation algorithm. See {@link www.eoolt.org
@@ -114,14 +117,8 @@ public final class Causalisation {
             final Iterable<Equation> equations,
             final Map<Unknown, Unknown> repres) {
 
-        final SimpleDirectedGraph<Object, DefaultEdge> g = new SimpleDirectedGraph<Object, DefaultEdge>(
+        final SimpleGraph<Object, DefaultEdge> g = new SimpleGraph<Object, DefaultEdge>(
                 DefaultEdge.class);
-
-        final Object SINK = new Object();
-        g.addVertex(SINK);
-
-        final Object SOURCE = new Object();
-        g.addVertex(SOURCE);
 
         for (Equation eq : equations) {
             g.addVertex(eq);
@@ -131,28 +128,28 @@ public final class Causalisation {
 
                 g.addVertex(vtx);
                 g.addEdge(vtx, eq);
-                g.addEdge(SOURCE, vtx);
             }
-
-            g.addEdge(eq, SINK);
         }
 
-        final EdmondsKarpMaximumFlow<Object, DefaultEdge> maxFlow = new EdmondsKarpMaximumFlow<Object, DefaultEdge>(
-                g);
+        logger.log(Level.INFO,
+                "Running HopcroftKarp on {0} edges and {1} vertices",
+                new Object[] { g.edgeSet().size(), g.vertexSet().size() });
+        final long start = System.currentTimeMillis();
+        final HopcroftKarpBipartiteMatching<Object, DefaultEdge> hopcroft = new HopcroftKarpBipartiteMatching<Object, DefaultEdge>(
+                g, ImmutableSet.<Object> copyOf(equations),
+                ImmutableSet.<Object> copyOf(repres.values()));
 
-        maxFlow.calculateMaximumFlow(SOURCE, SINK);
+        final Set<DefaultEdge> matching = hopcroft.getMatching();
+        logger.log(Level.INFO, "HopcroftKarp done after {0}ms",
+                System.currentTimeMillis() - start);
 
         final Map<Unknown, Equation> map = Maps.newHashMap();
-        final Map<DefaultEdge, Double> maximumFlow = maxFlow.getMaximumFlow();
 
-        for (DefaultEdge edge : maximumFlow.keySet()) {
-            if (maximumFlow.get(edge) > 0.0) {
-                final Object edgeSource = g.getEdgeSource(edge);
-                final Object edgeTarget = g.getEdgeTarget(edge);
-                if (edgeSource instanceof Unknown
-                        && edgeTarget instanceof Equation) {
-                    map.put((Unknown) edgeSource, (Equation) edgeTarget);
-                }
+        for (DefaultEdge edge : matching) {
+            final Object edgeSource = g.getEdgeSource(edge);
+            final Object edgeTarget = g.getEdgeTarget(edge);
+            if (edgeSource instanceof Unknown && edgeTarget instanceof Equation) {
+                map.put((Unknown) edgeSource, (Equation) edgeTarget);
             }
         }
         return map;

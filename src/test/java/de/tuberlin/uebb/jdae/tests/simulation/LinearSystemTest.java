@@ -45,9 +45,9 @@ public class LinearSystemTest {
     final static Unknown x = new SimpleVar("x");
     final static Unknown y = new SimpleVar("y");
     final static Equation LINEAR1 = ConstantLinearEquation.builder()
-            .add(x, 1.0).subTime(1.0).build();
+            .add(x, 1.0).addTime(-1.0).build();
     final static Equation LINEAR2 = ConstantLinearEquation.builder()
-            .add(x, 1.0).add(y, 1.0).subTime(2.0).build();
+            .add(x, 1.0).add(y, 1.0).addTime(-2.0).build();
 
     @Test
     public void testCausalisation() {

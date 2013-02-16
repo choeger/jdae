@@ -20,13 +20,10 @@ package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 
 import de.tuberlin.uebb.jdae.dae.ConstantLinear;
 import de.tuberlin.uebb.jdae.dae.Equation;
@@ -45,57 +42,32 @@ public final class ConstantLinearEquation implements ConstantLinear {
 
     public static final class Builder {
 
-        private final Map<Unknown, Double> elements = Maps.newHashMap();
+        private final List<Unknown> variables = Lists.newArrayList();
+        private final List<Double> coefficients = Lists.newArrayList();
         private double constant;
         private double time;
-
-        public Builder sub(final Unknown v, final double d) {
-            return add(v, -d);
-        }
 
         public Builder addTime(final double d) {
             time += d;
             return this;
         }
 
-        public Builder subTime(final double d) {
-            time -= d;
+        public Builder addConstant(final double d) {
+            constant += d;
             return this;
         }
 
         public Builder add(final Unknown v, final double d) {
             if (v == null)
                 throw new NullPointerException();
-            if (elements.containsKey(v)) {
-                elements.put(v, elements.get(v) + d);
-            } else {
-                elements.put(v, d);
-            }
-            return this;
-        }
-
-        public Builder sub(final double d) {
-            constant -= d;
-            return this;
-        }
-
-        public Builder add(final double d) {
-            constant += d;
+            variables.add(v);
+            coefficients.add(d);
             return this;
         }
 
         public ConstantLinearEquation build() {
-            final ImmutableList.Builder<Unknown> vars = ImmutableList.builder();
-            final ImmutableList.Builder<Double> coeffs = ImmutableList
-                    .builder();
-
-            for (Entry<Unknown, Double> e : elements.entrySet()) {
-                vars.add(e.getKey());
-                coeffs.add(e.getValue());
-            }
-
-            return new ConstantLinearEquation(time, constant, coeffs.build(),
-                    vars.build());
+            return new ConstantLinearEquation(time, constant, coefficients,
+                    variables);
         }
     }
 
@@ -126,16 +98,16 @@ public final class ConstantLinearEquation implements ConstantLinear {
     public double solveFor(final int index, Unknown v,
             final SolvableDAE systemState) {
         double val = this.time * systemState.currentTime;
-        int v_index = 0;
+        int v_coeff = 0;
         for (int i = 0; i < variables.size(); i++) {
             final Unknown var = variables.get(i);
             if (var != v) {
                 val += coefficients.get(i) * systemState.apply(var);
             } else {
-                v_index = i;
+                v_coeff += coefficients.get(i);
             }
         }
-        double d = (constant - val) / coefficients.get(v_index);
+        double d = (constant - val) / v_coeff;
         systemState.logger.log(Level.INFO, "Returning {0}", d);
         return d;
     }

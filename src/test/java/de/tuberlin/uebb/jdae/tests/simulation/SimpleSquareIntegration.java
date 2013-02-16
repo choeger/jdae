@@ -49,7 +49,7 @@ public class SimpleSquareIntegration {
         final Unknown x = new SimpleVar("x");
         final Unknown dx = runtime.der().apply(x);
         final Equation eq = ConstantLinearEquation.builder().add(dx, 1.0)
-                .addTime(-2).add(1.0).build();
+                .addTime(-2).addConstant(1.0).build();
 
         return runtime.causalise(ImmutableList.of(eq));
     }

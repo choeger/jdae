@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
-import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
 import de.tuberlin.uebb.jdae.builtins.SpecializedConstantLinearEquation;
 import de.tuberlin.uebb.jdae.dae.Equality;
 import de.tuberlin.uebb.jdae.dae.Equation;
@@ -42,7 +41,6 @@ import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.Causalisation.CausalisationResult;
-import de.tuberlin.uebb.jdae.transformation.Causalisation.Computation;
 import de.tuberlin.uebb.jdae.utils.UnionFindEquivalence;
 import de.tuberlin.uebb.jdae.utils.VarComparator;
 
@@ -80,7 +78,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * .List)
      */
     @Override
-    public SolvableDAE causalise(List<Equation> equations) {
+    public SolvableDAE causalise(List<? extends Equation> equations) {
         final UnionFindEquivalence<Unknown> equiv = UnionFindEquivalence
                 .create();
         final ImmutableSet.Builder<Unknown> variable_b = ImmutableSet.builder();
@@ -100,8 +98,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         for (Equation meq : equations) {
             if (meq instanceof Equality) {
-                final EqualityEquation equals = (EqualityEquation) meq;
-                equiv.merge(equals.lhs_obj, equals.rhs_obj);
+                final Equality equals = (Equality) meq;
+                equiv.merge(equals.lhs(), equals.rhs());
             } else {
                 optimized_equations_b.add(meq);
             }
@@ -118,12 +116,16 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 .getRepresentatives(variables, new VarComparator(
                         derivative_collector.asMap()));
 
+        final long graph_start = System.currentTimeMillis();
         final Map<Unknown, Equation> matching = causalisation.prepareEquations(
                 optimized_equations, derivative_collector.asMap(),
                 representatives);
 
-        logger.log(Level.INFO, "Matched {0} out of {1} equations in {2}ms",
+        logger.log(
+                Level.INFO,
+                "Matched {0} out of {1} equations in {2}ms graph took {3}ms",
                 new Object[] { matching.size(), optimized_equations.size(),
+                        System.currentTimeMillis() - graph_start,
                         System.currentTimeMillis() - match_start });
 
         final long causalise_start = System.currentTimeMillis();
@@ -133,10 +135,6 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         logger.log(Level.INFO, "Created a causality-relation in {0}ms",
                 new Object[] { System.currentTimeMillis() - causalise_start });
-
-        for (Computation comp : causality.computations) {
-            logger.log(Level.INFO, comp.toString());
-        }
 
         final SolvableDAE solvableDAE = new SolvableDAE(causality.states,
                 representatives, causality.computations, derivative_collector,

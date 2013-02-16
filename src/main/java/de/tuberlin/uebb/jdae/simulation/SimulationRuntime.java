@@ -19,7 +19,7 @@ public interface SimulationRuntime {
      *            to be collected with {@code derivative_collector}!
      * @return a solvable dae
      */
-    public abstract SolvableDAE causalise(List<Equation> equations);
+    public abstract SolvableDAE causalise(List<? extends Equation> equations);
 
     public LoadingCache<Unknown, Unknown> der();
 
