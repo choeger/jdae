@@ -40,7 +40,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.UnmodifiableIterator;
 
-import de.tuberlin.uebb.jdae.dae.DerivativeCollector;
+import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 

@@ -23,9 +23,9 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.dae.ConstantLinearEquation;
+import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
+import de.tuberlin.uebb.jdae.builtins.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;

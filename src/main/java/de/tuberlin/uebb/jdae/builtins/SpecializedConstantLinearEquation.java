@@ -17,11 +17,16 @@
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 
 import com.google.common.base.Function;
+
+import de.tuberlin.uebb.jdae.dae.ConstantLinear;
+import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.dae.Unknown;
 
 public final class SpecializedConstantLinearEquation implements Equation {
 
@@ -32,21 +37,21 @@ public final class SpecializedConstantLinearEquation implements Equation {
     public final double[] coefficients;
     public final double constant;
 
-    private final ConstantLinearEquation origin;
+    private final ConstantLinear origin;
 
     public SpecializedConstantLinearEquation(
-            ConstantLinearEquation constantLinearEquation, SolvableDAE system) {
+            ConstantLinear constantLinearEquation, SolvableDAE system) {
         this.origin = constantLinearEquation;
 
-        time = constantLinearEquation.time;
-        variables = new int[origin.variables.size()];
-        coefficients = new double[origin.variables.size()];
+        time = constantLinearEquation.timeCoefficient();
+        variables = new int[origin.unknowns().size()];
+        coefficients = new double[origin.coefficients().size()];
 
-        for (int i = 0; i < origin.variables.size(); i++) {
-            variables[i] = system.variables.get(origin.variables.get(i));
-            coefficients[i] = origin.coefficients.get(i);
+        for (int i = 0; i < origin.unknowns().size(); i++) {
+            variables[i] = system.variables.get(origin.unknowns().get(i));
+            coefficients[i] = origin.coefficients().get(i);
         }
-        constant = origin.constant;
+        constant = origin.constant();
     }
 
     @Override

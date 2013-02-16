@@ -17,14 +17,19 @@
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
-public final class EqualityEquation implements Equation {
+import de.tuberlin.uebb.jdae.dae.Equality;
+import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.dae.Unknown;
+
+public final class EqualityEquation implements Equality {
 
     public EqualityEquation(Unknown l, Unknown r) {
         lhs_obj = l;
@@ -38,11 +43,25 @@ public final class EqualityEquation implements Equation {
     public final Unknown lhs_obj;
     public final Unknown rhs_obj;
 
+    /*
+     * (nicht-Javadoc)
+     * 
+     * @see
+     * de.tuberlin.uebb.jdae.dae.Equality#lhs(de.tuberlin.uebb.jdae.dae.SolvableDAE
+     * )
+     */
     @Override
     public double lhs(final SolvableDAE systemState) {
         return systemState.apply(lhs_obj);
     }
 
+    /*
+     * (nicht-Javadoc)
+     * 
+     * @see
+     * de.tuberlin.uebb.jdae.dae.Equality#rhs(de.tuberlin.uebb.jdae.dae.SolvableDAE
+     * )
+     */
     @Override
     public double rhs(final SolvableDAE systemState) {
         return systemState.apply(rhs_obj);
@@ -68,5 +87,15 @@ public final class EqualityEquation implements Equation {
     @Override
     public Equation specialize(SolvableDAE system) {
         return this;
+    }
+
+    @Override
+    public Unknown lhs() {
+        return lhs_obj;
+    }
+
+    @Override
+    public Unknown rhs() {
+        return rhs_obj;
     }
 }

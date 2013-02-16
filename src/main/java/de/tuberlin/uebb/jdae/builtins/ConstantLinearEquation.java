@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,11 +28,16 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+import de.tuberlin.uebb.jdae.dae.ConstantLinear;
+import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.dae.Unknown;
+
 /**
  * @author choeger
  * 
  */
-public final class ConstantLinearEquation implements Equation {
+public final class ConstantLinearEquation implements ConstantLinear {
 
     public static final Builder builder() {
         return new Builder();
@@ -159,5 +164,25 @@ public final class ConstantLinearEquation implements Equation {
         b.delete(b.length() - 3, b.length());
         b.append(String.format(" = %f", constant));
         return b.toString();
+    }
+
+    @Override
+    public List<Unknown> unknowns() {
+        return variables;
+    }
+
+    @Override
+    public List<Double> coefficients() {
+        return coefficients;
+    }
+
+    @Override
+    public double timeCoefficient() {
+        return time;
+    }
+
+    @Override
+    public double constant() {
+        return constant;
     }
 }

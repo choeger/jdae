@@ -33,11 +33,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import de.tuberlin.uebb.jdae.dae.DerivativeCollector;
-import de.tuberlin.uebb.jdae.dae.EqualityEquation;
+import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
+import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
+import de.tuberlin.uebb.jdae.builtins.SpecializedConstantLinearEquation;
+import de.tuberlin.uebb.jdae.dae.Equality;
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.SpecializedConstantLinearEquation;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.Causalisation.CausalisationResult;
@@ -98,7 +99,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 .builder();
 
         for (Equation meq : equations) {
-            if (meq instanceof EqualityEquation) {
+            if (meq instanceof Equality) {
                 final EqualityEquation equals = (EqualityEquation) meq;
                 equiv.merge(equals.lhs_obj, equals.rhs_obj);
             } else {

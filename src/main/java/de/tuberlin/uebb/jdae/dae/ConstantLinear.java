@@ -16,36 +16,41 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.tuberlin.uebb.jdae.dae;
 
+import java.util.List;
+
 /**
- * This is just a simple mockup for unknowns. Usually this class should not be
- * used directly, except for testing purposes.
+ * An interface for linear equations
  * 
  * @author choeger
+ * 
  */
-public final class SimpleVar implements Unknown {
+public interface ConstantLinear extends Equation {
 
-    final String name;
-
-    /*
-     * (nicht-Javadoc)
+    /**
      * 
-     * @see de.tuberlin.uebb.jdae.dae.Unknown#isDerivative()
+     * @return All unknowns of this linear equation. (Note: The first unknown is
+     *         not listed here, as it is the independent variable).
      */
-    @Override
-    public boolean isDerivative() {
-        return false;
-    }
+    public List<Unknown> unknowns();
 
-    public SimpleVar(String name) {
-        super();
-        this.name = name;
-    }
+    /**
+     * 
+     * @return All but the first coefficient of this linear equation in order
+     */
+    public List<Double> coefficients();
 
-    @Override
-    public String toString() {
-        return name;
-    }
+    /**
+     * 
+     * @return The first left hand side coefficient of this linear equation
+     */
+    public double timeCoefficient();
 
+    /**
+     * 
+     * @return The right hand side of this linear equation
+     */
+    public double constant();
 }
