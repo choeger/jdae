@@ -33,7 +33,6 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -42,7 +41,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.UnmodifiableIterator;
 
-import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 import de.tuberlin.uebb.jdae.thirdparty.HopcroftKarpBipartiteMatching;
@@ -88,19 +86,6 @@ public final class Causalisation {
             this.computations = computations;
             this.states = states;
         }
-    }
-
-    public static final Map<Unknown, Unknown> derivativeMap(
-            final Iterable<Equation> equations) {
-        final LoadingCache<Unknown, Unknown> der = DerivativeCollector
-                .derivatives();
-
-        /* collect derivatives */
-        for (Equation eq : equations)
-            eq.canSolveFor(der);
-
-        final Map<Unknown, Unknown> der_map = der.asMap();
-        return der_map;
     }
 
     public static final List<Equation> integrationEquations(

@@ -1,10 +1,12 @@
 package de.tuberlin.uebb.jdae.builtins;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Maps;
 
 import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.simulation.DerivativeRelation;
 
 /**
  * This class yields a Function<Unknown, Unknown> that holds all derivative
@@ -13,25 +15,27 @@ import de.tuberlin.uebb.jdae.dae.Unknown;
  * @author choeger
  * 
  */
-public final class DerivativeCollector extends CacheLoader<Unknown, Unknown> {
+public final class DerivativeCollector implements DerivativeRelation {
+    final Map<Unknown, Unknown> map = Maps.newHashMap();
 
     @Override
-    public Unknown load(final Unknown base) throws Exception {
-        return new Unknown() {
-            @Override
-            public String toString() {
-                return "der(" + base + ")";
-            }
-
-            @Override
-            public boolean isDerivative() {
-                return true;
-            }
-        };
+    public Unknown apply(Unknown x) {
+        final Unknown d = map.get(x);
+        if (d == null) {
+            final Unknown mDerVar = new SimpleDer(x.toString());
+            map.put(x, mDerVar);
+            return mDerVar;
+        }
+        return d;
     }
 
-    public static final LoadingCache<Unknown, Unknown> derivatives() {
-        return CacheBuilder.newBuilder().build(new DerivativeCollector());
+    @Override
+    public Set<Unknown> domain() {
+        return map.keySet();
     }
 
+    @Override
+    public Map<Unknown, Unknown> asMap() {
+        return map;
+    }
 }

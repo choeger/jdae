@@ -28,7 +28,6 @@ import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.EulerIntegrator;
 
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -56,17 +55,16 @@ import de.tuberlin.uebb.jdae.utils.VarComparator;
 public final class DefaultSimulationRuntime implements SimulationRuntime {
 
     public final Logger logger = Logger.getLogger("simulation");
-    public final LoadingCache<Unknown, Unknown> derivative_collector;
+    public final DerivativeRelation derivative_collector;
 
     @SuppressWarnings("unchecked")
-    public DefaultSimulationRuntime(
-            LoadingCache<? extends Unknown, ? extends Unknown> derivative_collector) {
+    public DefaultSimulationRuntime(DerivativeRelation derivative_collector) {
         super();
-        this.derivative_collector = (LoadingCache<Unknown, Unknown>) derivative_collector;
+        this.derivative_collector = derivative_collector;
     }
 
     public DefaultSimulationRuntime() {
-        derivative_collector = DerivativeCollector.derivatives();
+        derivative_collector = new DerivativeCollector();
         logger.setLevel(Level.INFO);
     }
 
@@ -87,7 +85,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
          * start with the der collector so we do not accidentally leave out some
          * states
          */
-        variable_b.addAll(derivative_collector.asMap().keySet());
+        variable_b.addAll(derivative_collector.domain());
 
         for (Equation eq : equations)
             variable_b.addAll(eq.canSolveFor(derivative_collector));
@@ -159,7 +157,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         final ResultStorage storage = new ResultStorage(dae, steps);
 
         final FirstOrderIntegrator i = new EulerIntegrator(stop_time / steps);
-        i.addStepHandler(storage);
+        // i.addStepHandler(storage);
 
         final long start = System.currentTimeMillis();
         dae.integrate(new SimulationOptions(0.0, stop_time, i, inits));
@@ -197,7 +195,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public LoadingCache<Unknown, Unknown> der() {
+    public DerivativeRelation der() {
         return derivative_collector;
     }
 
