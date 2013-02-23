@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.jgrapht.Graphs;
@@ -79,9 +80,10 @@ public final class HopcroftKarpBipartiteMatching<V, E> {
     private final Set<V> unmatchedVertices1; // Set which contains the unmatched
                                              // vertices in partition 1
     private final Set<V> unmatchedVertices2;
+    private final Map<V, V> initialMatch;
 
     public HopcroftKarpBipartiteMatching(UndirectedGraph<V, E> graph,
-            Set<V> partition1, Set<V> partition2) {
+            Set<V> partition1, Set<V> partition2, Map<V, V> initialMatch) {
         this.graph = graph;
         this.partition1 = partition1;
         this.partition2 = partition2;
@@ -90,7 +92,9 @@ public final class HopcroftKarpBipartiteMatching<V, E> {
         unmatchedVertices1 = new HashSet<V>(partition1);
         unmatchedVertices2 = new HashSet<V>(partition2);
 
-        // assert this.checkInputData();
+        this.initialMatch = initialMatch;
+
+        // checkInputData();
         this.maxMatching();
     }
 
@@ -125,17 +129,27 @@ public final class HopcroftKarpBipartiteMatching<V, E> {
      */
     private void greedyMatch() {
         HashSet<V> usedVertices = new HashSet<V>();
+        for (Entry<V, V> e : initialMatch.entrySet()) {
+            final V key = e.getKey();
+            final V value = e.getValue();
+            unmatchedVertices1.remove(key);
+            unmatchedVertices2.remove(value);
+            matching.add(graph.getEdge(key, value));
+            usedVertices.add(value);
+            usedVertices.add(key);
+        }
 
         for (V vertex1 : partition1) {
-            for (V vertex2 : Graphs.neighborListOf(graph, vertex1)) {
-                if (!usedVertices.contains(vertex2)) {
-                    usedVertices.add(vertex2);
-                    unmatchedVertices1.remove(vertex1);
-                    unmatchedVertices2.remove(vertex2);
-                    matching.add(graph.getEdge(vertex1, vertex2));
-                    break;
+            if (!usedVertices.contains(vertex1))
+                for (V vertex2 : Graphs.neighborListOf(graph, vertex1)) {
+                    if (!usedVertices.contains(vertex2)) {
+                        usedVertices.add(vertex2);
+                        unmatchedVertices1.remove(vertex1);
+                        unmatchedVertices2.remove(vertex2);
+                        matching.add(graph.getEdge(vertex1, vertex2));
+                        break;
+                    }
                 }
-            }
         }
     }
 
@@ -153,6 +167,7 @@ public final class HopcroftKarpBipartiteMatching<V, E> {
                                                                          // with
                                                                          // augmenting
                                                                          // paths
+
         while (!augmentingPaths.isEmpty()) {
             for (Iterator<LinkedList<V>> it = augmentingPaths.iterator(); it
                     .hasNext();) { // Process all augmenting paths
@@ -225,8 +240,9 @@ public final class HopcroftKarpBipartiteMatching<V, E> {
                         continue;
                     else {
                         evenLayer.add(neighbor);
-                        if (!layeredMap.containsKey(neighbor))
+                        if (!layeredMap.containsKey(neighbor)) {
                             layeredMap.put(neighbor, new HashSet<V>());
+                        }
                         layeredMap.get(neighbor).add(vertex);
                     }
                 }

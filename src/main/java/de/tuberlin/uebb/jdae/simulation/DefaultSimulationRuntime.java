@@ -18,13 +18,14 @@
  */
 package de.tuberlin.uebb.jdae.simulation;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
+import org.apache.commons.math3.ode.events.EventHandler;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.EulerIntegrator;
 
@@ -56,6 +57,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
     public final Logger logger = Logger.getLogger("simulation");
     public final DerivativeRelation derivative_collector;
+    private ResultStorage results;
 
     @SuppressWarnings("unchecked")
     public DefaultSimulationRuntime(DerivativeRelation derivative_collector) {
@@ -76,7 +78,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * .List)
      */
     @Override
-    public SolvableDAE causalise(List<? extends Equation> equations) {
+    public SolvableDAE causalise(Collection<? extends Equation> equations) {
         final UnionFindEquivalence<Unknown> equiv = UnionFindEquivalence
                 .create();
         final ImmutableSet.Builder<Unknown> variable_b = ImmutableSet.builder();
@@ -94,6 +96,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         final ImmutableList.Builder<Equation> optimized_equations_b = ImmutableList
                 .builder();
 
+        /* TODO also merge the derivatives of equal states */
         for (Equation meq : equations) {
             if (meq instanceof Equality) {
                 final Equality equals = (Equality) meq;
@@ -115,7 +118,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                         derivative_collector.asMap()));
 
         final long graph_start = System.currentTimeMillis();
-        final Map<Unknown, Equation> matching = causalisation.prepareEquations(
+        final Map<Unknown, Equation> matching = causalisation.matching(
                 optimized_equations, derivative_collector.asMap(),
                 representatives);
 
@@ -154,13 +157,13 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         SpecializedConstantLinearEquation.time_spent = 0;
 
-        final ResultStorage storage = new ResultStorage(dae, steps);
+        results = new ResultStorage(dae, steps);
 
         final FirstOrderIntegrator i = new EulerIntegrator(stop_time / steps);
         // i.addStepHandler(storage);
 
         final long start = System.currentTimeMillis();
-        dae.integrate(new SimulationOptions(0.0, stop_time, i, inits));
+        dae.integrate(new SimulationOptions(0.0, stop_time, i), inits);
         logger.log(Level.INFO,
                 "Simulation finished after {1} evaluation-steps in {0}ms",
                 new Object[] { System.currentTimeMillis() - start,
@@ -179,15 +182,30 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     public void simulateVariableStep(SolvableDAE dae,
             Map<String, Double> inits, double stop_time, double minStep,
             double maxStep, double absoluteTolerance, double relativeTolerance) {
+        simulateVariableStep(dae, ImmutableList.<EventHandler> of(), inits,
+                stop_time, minStep, maxStep, absoluteTolerance,
+                relativeTolerance);
+    }
+
+    @Override
+    public void simulateVariableStep(SolvableDAE dae,
+            Iterable<EventHandler> events, Map<String, Double> inits,
+            double stop_time, double minStep, double maxStep,
+            double absoluteTolerance, double relativeTolerance) {
         SpecializedConstantLinearEquation.time_spent = 0;
 
-        final ResultStorage storage = new ResultStorage(dae,
-                (int) Math.round(stop_time / maxStep));
+        results = new ResultStorage(dae, (int) Math.round(stop_time / maxStep));
         final FirstOrderIntegrator i = new DormandPrince54Integrator(minStep,
                 maxStep, absoluteTolerance, relativeTolerance);
-        i.addStepHandler(storage);
+
+        for (EventHandler e : events) {
+            i.addEventHandler(e, maxStep, absoluteTolerance, 1000);
+        }
+
+        i.addStepHandler(results);
+
         final long start = System.currentTimeMillis();
-        dae.integrate(new SimulationOptions(0.0, stop_time, i, inits));
+        dae.integrate(new SimulationOptions(0.0, stop_time, i), inits);
         logger.log(Level.INFO,
                 "Simulation finished after {1} evaluation-steps in {0}ms",
                 new Object[] { System.currentTimeMillis() - start,
@@ -197,6 +215,11 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     @Override
     public DerivativeRelation der() {
         return derivative_collector;
+    }
+
+    @Override
+    public ResultStorage lastResults() {
+        return results;
     }
 
 }

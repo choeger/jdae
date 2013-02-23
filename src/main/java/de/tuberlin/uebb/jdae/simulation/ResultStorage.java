@@ -18,6 +18,12 @@
  */
 package de.tuberlin.uebb.jdae.simulation;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,8 +31,14 @@ import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonWriter;
 
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.dae.Unknown;
 
 public final class ResultStorage implements StepHandler {
 
@@ -47,7 +59,7 @@ public final class ResultStorage implements StepHandler {
     }
 
     private final SolvableDAE dae;
-    private final List<Step> results;
+    public final List<Step> results;
 
     public ResultStorage(SolvableDAE dae, int estimatedSteps) {
         super();
@@ -68,4 +80,38 @@ public final class ResultStorage implements StepHandler {
 
     }
 
+    public Path toJson(String file) {
+        Path f = Paths.get(file);
+        try {
+            BufferedWriter w = Files.newBufferedWriter(f,
+                    Charset.defaultCharset());
+
+            JsonWriter json = new JsonWriter(w);
+
+            JsonArray jResults = new JsonArray();
+
+            for (Unknown u : dae.variables.keySet()) {
+                JsonObject obj = new JsonObject();
+                obj.add("label", new JsonPrimitive(u.toString()));
+                JsonArray data = new JsonArray();
+                for (Step step : results) {
+                    JsonArray point = new JsonArray();
+                    point.add(new JsonPrimitive(step.time));
+                    point.add(new JsonPrimitive(dae.valueAt(step, u)));
+                    data.add(point);
+                }
+                obj.add("data", data);
+                jResults.add(obj);
+            }
+
+            (new Gson()).toJson(jResults, json);
+
+            w.close();
+            return f;
+        } catch (IOException e) {
+            // TODO Automatisch generierter Erfassungsblock
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

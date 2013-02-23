@@ -16,23 +16,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
+package de.tuberlin.uebb.jdae.dae;
 
-package de.tuberlin.uebb.jdae.simulation;
+import org.apache.commons.math3.ode.events.EventHandler;
 
-import org.apache.commons.math3.ode.FirstOrderIntegrator;
+/**
+ * @author choeger
+ * 
+ */
+public abstract class ContinuousEvent implements EventHandler {
 
-public final class SimulationOptions {
+    @Override
+    public void init(double t0, double[] y0, double t) {
 
-    public final double startTime;
-    public final double stopTime;
-    public final FirstOrderIntegrator integrator;
-
-    public SimulationOptions(double startTime, double stopTime,
-            FirstOrderIntegrator integrator) {
-        super();
-        this.startTime = startTime;
-        this.stopTime = stopTime;
-        this.integrator = integrator;
     }
 
+    public void resetState(double t, double[] y) {
+
+    }
 }

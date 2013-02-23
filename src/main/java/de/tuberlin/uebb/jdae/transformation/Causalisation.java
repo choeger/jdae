@@ -88,22 +88,24 @@ public final class Causalisation {
         }
     }
 
-    public static final List<Equation> integrationEquations(
+    public static final List<IntegrationEquation> integrationEquations(
             Map<Unknown, Unknown> der) {
-        final ImmutableList.Builder<Equation> eq = ImmutableList.builder();
+        final ImmutableList.Builder<IntegrationEquation> eq = ImmutableList
+                .builder();
         for (Unknown v : der.keySet()) {
             eq.add(new IntegrationEquation(v));
         }
         return eq.build();
     }
 
-    public Map<Unknown, Equation> matching(
-            final Function<Unknown, Unknown> der,
-            final Iterable<Equation> equations,
-            final Map<Unknown, Unknown> repres) {
+    public Map<Unknown, Equation> matching(final Iterable<Equation> equations,
+            final Map<Unknown, Unknown> der_map, final Map<Unknown, Unknown> repres) {
+
+        final Function<Unknown, Unknown> der = Functions.forMap(der_map);
 
         final SimpleGraph<Object, DefaultEdge> g = new SimpleGraph<Object, DefaultEdge>(
                 DefaultEdge.class);
+        final Iterable<IntegrationEquation> integration = integrationEquations(der_map);
 
         for (Equation eq : equations) {
             g.addVertex(eq);
@@ -116,15 +118,32 @@ public final class Causalisation {
             }
         }
 
+        final Map<Object, Object> index0integration = Maps.newHashMap();
+        for (IntegrationEquation i : integration) {
+            g.addVertex(i);
+            final Unknown x = repres.containsKey(i.v) ? repres.get(i.v) : i.v;
+            final Unknown dv = der_map.get(i.v);
+            final Unknown dx = repres.containsKey(dv) ? repres.get(dv) : dv;
+
+            g.addEdge(x, i);
+            g.addEdge(dx, i);
+
+            /* put the ideal result into our initial matching */
+            index0integration.put(i, x);
+        }
+
         logger.log(Level.INFO,
                 "Running HopcroftKarp on {0} edges and {1} vertices",
                 new Object[] { g.edgeSet().size(), g.vertexSet().size() });
         final long start = System.currentTimeMillis();
+
         final HopcroftKarpBipartiteMatching<Object, DefaultEdge> hopcroft = new HopcroftKarpBipartiteMatching<Object, DefaultEdge>(
-                g, ImmutableSet.<Object> copyOf(equations),
-                ImmutableSet.<Object> copyOf(repres.values()));
+                g, ImmutableSet.<Object> copyOf(Iterables.concat(equations,
+                        integration)), ImmutableSet.<Object> copyOf(repres
+                        .values()), index0integration);
 
         final Set<DefaultEdge> matching = hopcroft.getMatching();
+
         logger.log(Level.INFO, "HopcroftKarp done after {0}ms",
                 System.currentTimeMillis() - start);
 
@@ -215,23 +234,5 @@ public final class Causalisation {
         }
 
         return new CausalisationResult(comps.build(), states.build());
-    }
-
-    /**
-     * Add integration equations and causalise
-     * 
-     * @param equations
-     * @param der_map
-     * @param repres
-     * @return
-     */
-    public final Map<Unknown, Equation> prepareEquations(
-            Iterable<Equation> equations, Map<Unknown, Unknown> der_map,
-            Map<Unknown, Unknown> repres) {
-        final Iterable<Equation> eq = Iterables.concat(equations,
-                integrationEquations(der_map));
-        final Map<Unknown, Equation> solve = matching(
-                Functions.forMap(der_map), eq, repres);
-        return solve;
     }
 }

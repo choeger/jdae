@@ -16,23 +16,25 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
+package de.tuberlin.uebb.jdae.dae;
 
-package de.tuberlin.uebb.jdae.simulation;
+import java.util.Collection;
+import java.util.Map;
 
-import org.apache.commons.math3.ode.FirstOrderIntegrator;
+import org.apache.commons.math3.ode.events.EventHandler;
 
-public final class SimulationOptions {
+/**
+ * @author choeger
+ * 
+ */
+public interface LoadableModel {
 
-    public final double startTime;
-    public final double stopTime;
-    public final FirstOrderIntegrator integrator;
+    public Map<String, Double> initials();
 
-    public SimulationOptions(double startTime, double stopTime,
-            FirstOrderIntegrator integrator) {
-        super();
-        this.startTime = startTime;
-        this.stopTime = stopTime;
-        this.integrator = integrator;
-    }
+    public Collection<Equation> equations();
+
+    public String name();
+
+    public Collection<EventHandler> events(SolvableDAE ctxt);
 
 }

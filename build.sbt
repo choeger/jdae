@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
 		    "org.apache.commons" % "commons-math3" % "3.0",
 		    "net.sourceforge.jmatio" % "jmatio" % "1.0",
 		    "junit" % "junit" % "4.10",
+		  	"com.google.code.gson" % "gson" % "2.2.2",
 		     "com.novocode" % "junit-interface" % "0.10-M2" % "test"
 		    )
 

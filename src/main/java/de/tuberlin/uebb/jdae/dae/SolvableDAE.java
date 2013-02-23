@@ -33,6 +33,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import de.tuberlin.uebb.jdae.simulation.ResultStorage.Step;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.Causalisation.Computation;
 
@@ -216,12 +217,13 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         }
     }
 
-    public final Map<Unknown, Double> integrate(final SimulationOptions options) {
+    public final Map<Unknown, Double> integrate(
+            final SimulationOptions options, Map<String, Double> initial_values) {
         final List<Unknown> observables = Lists.newArrayList();
 
         for (Unknown v : variables.keySet()) {
-            if (options.initial_values.containsKey(v.toString())) {
-                set(v, options.initial_values.get(v.toString()));
+            if (initial_values.containsKey(v.toString())) {
+                set(v, initial_values.get(v.toString()));
                 observables.add(v);
             }
         }
@@ -236,5 +238,17 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         for (Unknown v : variables.keySet())
             results.put(v, apply(v));
         return results.build();
+    }
+
+    public double valueAt(Step step, Unknown v) {
+        final int index = variables.get(v);
+
+        if (index >= 2 * dimension) {
+            return step.algebraics[index - 2 * dimension];
+        } else if (index >= dimension) {
+            return step.derivatives[index - dimension];
+        } else {
+            return step.states[index];
+        }
     }
 }
