@@ -21,6 +21,7 @@ package de.tuberlin.uebb.jdae.tests.simulation;
 import org.junit.Test;
 
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.examples.StiffHybrid;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
