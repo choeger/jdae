@@ -19,6 +19,8 @@
 
 package de.tuberlin.uebb.jdae.simulation;
 
+import java.util.Map;
+
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 
 public final class SimulationOptions {
@@ -27,12 +29,24 @@ public final class SimulationOptions {
     public final double stopTime;
     public final FirstOrderIntegrator integrator;
 
-    public SimulationOptions(double startTime, double stopTime,
-            FirstOrderIntegrator integrator) {
+    public final double minStepSize;
+    public final double maxStepSize;
+
+    public final double tolerance;
+
+    public final Map<String, Double> initialValues;
+
+    public SimulationOptions(double startTime, double stopTime, double tol,
+            double minStep, double maxStep, FirstOrderIntegrator integrator,
+            Map<String, Double> initials) {
         super();
         this.startTime = startTime;
+        this.minStepSize = minStep;
+        this.maxStepSize = maxStep;
+        this.tolerance = tol;
         this.stopTime = stopTime;
         this.integrator = integrator;
+        this.initialValues = initials;
     }
 
 }

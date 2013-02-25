@@ -44,6 +44,9 @@ public interface SimulationRuntime {
 
     public Function<Unknown, Unknown> der();
 
+    public abstract void simulate(SolvableDAE dae,
+            Iterable<EventHandler> events, SimulationOptions options);
+
     public abstract void simulateFixedStep(SolvableDAE dae,
             Map<String, Double> inits, double stop_time, int steps);
 

@@ -217,13 +217,12 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         }
     }
 
-    public final Map<Unknown, Double> integrate(
-            final SimulationOptions options, Map<String, Double> initial_values) {
+    public final Map<Unknown, Double> integrate(final SimulationOptions options) {
         final List<Unknown> observables = Lists.newArrayList();
 
         for (Unknown v : variables.keySet()) {
-            if (initial_values.containsKey(v.toString())) {
-                set(v, initial_values.get(v.toString()));
+            if (options.initialValues.containsKey(v.toString())) {
+                set(v, options.initialValues.get(v.toString()));
                 observables.add(v);
             }
         }

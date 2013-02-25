@@ -154,20 +154,12 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     @Override
     public void simulateFixedStep(SolvableDAE dae, Map<String, Double> inits,
             double stop_time, final int steps) {
+        final double stepSize = (stop_time / steps);
 
-        SpecializedConstantLinearEquation.time_spent = 0;
+        final FirstOrderIntegrator i = new EulerIntegrator(stepSize);
+        final SimulationOptions options = new SimulationOptions(0.0, stop_time,
+                -1.0, stepSize, stepSize, i, inits);
 
-        results = new ResultStorage(dae, steps);
-
-        final FirstOrderIntegrator i = new EulerIntegrator(stop_time / steps);
-        // i.addStepHandler(storage);
-
-        final long start = System.currentTimeMillis();
-        dae.integrate(new SimulationOptions(0.0, stop_time, i), inits);
-        logger.log(Level.INFO,
-                "Simulation finished after {1} evaluation-steps in {0}ms",
-                new Object[] { System.currentTimeMillis() - start,
-                        dae.evaluations });
     }
 
     /*
@@ -192,24 +184,13 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
             Iterable<EventHandler> events, Map<String, Double> inits,
             double stop_time, double minStep, double maxStep,
             double absoluteTolerance, double relativeTolerance) {
-        SpecializedConstantLinearEquation.time_spent = 0;
 
-        results = new ResultStorage(dae, (int) Math.round(stop_time / maxStep));
         final FirstOrderIntegrator i = new DormandPrince54Integrator(minStep,
                 maxStep, absoluteTolerance, relativeTolerance);
+        final SimulationOptions options = new SimulationOptions(0.0, stop_time,
+                absoluteTolerance, minStep, maxStep, i, inits);
 
-        for (EventHandler e : events) {
-            i.addEventHandler(e, maxStep, absoluteTolerance, 1000);
-        }
-
-        i.addStepHandler(results);
-
-        final long start = System.currentTimeMillis();
-        dae.integrate(new SimulationOptions(0.0, stop_time, i), inits);
-        logger.log(Level.INFO,
-                "Simulation finished after {1} evaluation-steps in {0}ms",
-                new Object[] { System.currentTimeMillis() - start,
-                        dae.evaluations });
+        simulate(dae, events, options);
     }
 
     @Override
@@ -220,6 +201,27 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     @Override
     public ResultStorage lastResults() {
         return results;
+    }
+
+    @Override
+    public void simulate(SolvableDAE dae, Iterable<EventHandler> events,
+            SimulationOptions options) {
+        SpecializedConstantLinearEquation.time_spent = 0;
+        results = new ResultStorage(dae, (int) Math.round(options.stopTime
+                / options.maxStepSize));
+
+        for (EventHandler e : events) {
+            options.integrator.addEventHandler(e, options.maxStepSize,
+                    options.tolerance, 1000);
+        }
+
+        final long start = System.currentTimeMillis();
+
+        dae.integrate(options);
+        logger.log(Level.INFO,
+                "Simulation finished after {1} evaluation-steps in {0}ms",
+                new Object[] { System.currentTimeMillis() - start,
+                        dae.evaluations });
     }
 
 }
