@@ -209,6 +209,10 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         SpecializedConstantLinearEquation.time_spent = 0;
         results = new ResultStorage(dae, (int) Math.round(options.stopTime
                 / options.maxStepSize));
+        options.integrator.clearEventHandlers();
+        options.integrator.clearStepHandlers();
+
+        options.integrator.addStepHandler(results);
 
         for (EventHandler e : events) {
             options.integrator.addEventHandler(e, options.maxStepSize,
