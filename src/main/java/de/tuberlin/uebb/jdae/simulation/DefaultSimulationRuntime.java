@@ -207,8 +207,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     public void simulate(SolvableDAE dae, Iterable<EventHandler> events,
             SimulationOptions options) {
         SpecializedConstantLinearEquation.time_spent = 0;
-        results = new ResultStorage(dae, (int) Math.round(options.stopTime
-                / options.maxStepSize));
+        results = new ResultStorage(dae, 1000);
+
         options.integrator.clearEventHandlers();
         options.integrator.clearStepHandlers();
 
