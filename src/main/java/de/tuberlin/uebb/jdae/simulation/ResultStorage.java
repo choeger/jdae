@@ -114,4 +114,30 @@ public final class ResultStorage implements StepHandler {
         }
         return null;
     }
+
+    /**
+     * Select a view of the result set
+     * 
+     * @param from
+     *            the start time of the view
+     * @param to
+     *            the end time of the view
+     * @param step
+     *            the maximal step size between to data points in the view
+     * @return a list of data points of this result
+     */
+    public List<Step> select(double from, final double to, final double step) {
+        final List<Step> steps = Lists
+                .newArrayListWithExpectedSize((int) ((to - from) / step));
+
+        for (Step r : steps) {
+            if (r.time >= from) {
+                steps.add(r);
+                if ((from += step) >= to)
+                    break;
+            }
+        }
+
+        return steps;
+    }
 }
