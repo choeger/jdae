@@ -2,7 +2,7 @@ name := "jdae"
 
 organization := "de.tuberlin.uebb"
 
-version := "0.0.2"
+version := "0.0.3"
 
 scalaVersion := "2.10.0"
 
@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
 		    "org.hamcrest" % "hamcrest-integration" % "1.3.RC2",
 		    "org.ow2.asm" % "asm-all" % "4.0",
 		    "net.sf.jgrapht" % "jgrapht" % "0.8.3",
-		    "org.apache.commons" % "commons-math3" % "3.0",
+		    "org.apache.commons" % "commons-math3" % "3.1.1",
 		    "net.sourceforge.jmatio" % "jmatio" % "1.0",
 		    "junit" % "junit" % "4.10",
 		  	"com.google.code.gson" % "gson" % "2.2.2",
@@ -26,6 +26,8 @@ libraryDependencies ++= Seq(
 		    )
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+
+EclipseKeys.withSource := true
 
 pomExtra :=
 <build>

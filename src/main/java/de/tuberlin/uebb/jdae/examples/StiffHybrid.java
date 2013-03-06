@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.apache.commons.math3.ode.events.EventHandler;
-import org.junit.Test;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -35,10 +34,6 @@ import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
-
-import static org.hamcrest.CoreMatchers.is;
-
-import static org.junit.Assert.assertThat;
 
 public final class StiffHybrid implements LoadableModel {
 
@@ -132,10 +127,12 @@ public final class StiffHybrid implements LoadableModel {
     public final class Event1 extends ContinuousEvent {
 
         final int x1;
+        final SolvableDAE system;
 
-        public Event1(int x1) {
+        public Event1(int x1, SolvableDAE dae) {
             super();
             this.x1 = x1;
+            this.system = dae;
         }
 
         @Override
@@ -151,18 +148,10 @@ public final class StiffHybrid implements LoadableModel {
 
         @Override
         public double g(double t, double[] y) {
+            final double[] derivatives = new double[y.length];
+            system.computeDerivatives(t, y, derivatives);
             return y[x1] - 1.1;
         }
-    }
-
-    @Test
-    public void test() {
-        final SolvableDAE dae = runtime.causalise(equations());
-
-        runtime.simulateVariableStep(dae, events(dae), initials(), 10000,
-                0.002, 0.01, 0.000001, 0.01);
-
-        assertThat(events, is(15916));
     }
 
     public ImmutableList<Equation> equations() {
@@ -181,7 +170,7 @@ public final class StiffHybrid implements LoadableModel {
 
     @Override
     public Collection<EventHandler> events(SolvableDAE dae) {
-        return ImmutableList
-                .<EventHandler> of(new Event1(dae.variables.get(x1)));
+        return ImmutableList.<EventHandler> of(new Event1(
+                dae.variables.get(x1), dae));
     }
 }

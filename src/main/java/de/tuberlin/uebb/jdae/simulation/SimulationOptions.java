@@ -23,6 +23,8 @@ import java.util.Map;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 
+import com.google.common.base.Objects;
+
 public final class SimulationOptions {
 
     public final double startTime;
@@ -47,6 +49,14 @@ public final class SimulationOptions {
         this.stopTime = stopTime;
         this.integrator = integrator;
         this.initialValues = initials;
+    }
+
+    public String toString() {
+        return Objects.toStringHelper(this).add("startTime", startTime)
+                .add("stopTime", stopTime).add("integrator", integrator)
+                .add("minStepSize", minStepSize)
+                .add("maxStepSize", maxStepSize).add("tolerance", tolerance)
+                .add("initial values", initialValues).toString();
     }
 
 }

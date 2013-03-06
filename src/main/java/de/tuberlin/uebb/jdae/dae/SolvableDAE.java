@@ -32,6 +32,7 @@ import org.apache.commons.math3.ode.sampling.StepInterpolator;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import de.tuberlin.uebb.jdae.simulation.ResultStorage.Step;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
@@ -49,6 +50,33 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
             this.var = comp.var;
             this.source = comp.eq.specialize(system);
             this.target = system.variables.get(var);
+        }
+    }
+
+    /**
+     * A plain copy from a state to a derivative does not require any
+     * computation. It is necessary, though, because Java arrays may not
+     * overlap.
+     * 
+     * @author choeger
+     * 
+     */
+    public final static class CopyOp {
+        /**
+         * The index of the state variable.
+         */
+        public final int source;
+
+        /**
+         * The index of the derivative variable. Note: This is the index in the
+         * derivatives array and not the index in the system!
+         */
+        public final int target;
+
+        public CopyOp(int target, int source) {
+            super();
+            this.target = target;
+            this.source = source;
         }
     }
 
@@ -71,6 +99,8 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
     public final SpecializedComputation[] specialComputations;
     private final Function<Unknown, Unknown> der;
     public final Logger logger;
+
+    private final CopyOp[] copyOperations;
 
     final class Observer implements StepHandler {
 
@@ -115,6 +145,25 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         this.der = der;
         this.variables = ordering;
 
+        /*
+         * In case a derivative is equivalent to a state, the state will get
+         * selected as representative. Therefore, we have to copy the state's
+         * value to the derivative during der-computation to not confuse the
+         * solver.
+         */
+        final List<CopyOp> copyOps = Lists.newArrayList();
+        for (Unknown state : states) {
+            final Integer source = variables.get(der.apply(state));
+            if (source < dimension) {
+                /*
+                 * The derivative has the index of the state variable in the
+                 * derivative-array
+                 */
+                copyOps.add(new CopyOp(variables.get(state), source));
+            }
+        }
+        this.copyOperations = copyOps.toArray(new CopyOp[copyOps.size()]);
+
         this.specialComputations = new SpecializedComputation[causalisation
                 .size()];
         for (int i = 0; i < causalisation.size(); i++) {
@@ -135,43 +184,66 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
             final List<Computation> computations, final List<Unknown> states,
             Function<Unknown, Unknown> der,
             ImmutableMap<Unknown, Unknown> representatives) {
-        final ImmutableMap.Builder<Unknown, Integer> b = ImmutableMap.builder();
+        final Map<Unknown, Integer> b = Maps.newHashMap();
         int i = 0;
+        final int dimension = states.size();
 
         /* states */
         for (Unknown state : states)
             b.put(state, i++);
 
         /* derivatives */
-        for (Unknown state : states)
-            b.put(der.apply(state), i++);
+        for (Unknown state : states) {
+            final Unknown d = der.apply(state);
+            final Unknown drep = representatives.get(d);
+            final Integer k = b.get(drep);
 
-        final ImmutableMap<Unknown, Integer> build = b.build();
+            /*
+             * Use a representatives key, if necessary.
+             */
+            if (k != null) {
+                b.put(d, k);
+            } else {
+                b.put(d, b.get(state) + dimension);
+            }
+        }
+
+        i = 0;
         /*
-         * the rest, i.e. algebraic variables guava does not allow builder
-         * inspection, but since the computations are unique, it suffices to
-         * filter out states and derivatives
+         * the rest, i.e. algebraic since the computations are unique, it
+         * suffices to filter out states and derivatives
          */
         for (Computation c : computations)
-            if (!build.containsKey(c.var))
-                b.put(c.var, i++);
-        final ImmutableMap<Unknown, Integer> build2 = b.build();
+            if (!b.containsKey(c.var))
+                b.put(c.var, (2 * dimension + i++));
 
+        /*
+         * Everything, that does not need to be computed
+         */
         for (Unknown equi : representatives.keySet())
-            if (!build2.containsKey(equi))
-                b.put(equi, build2.get(representatives.get(equi)));
+            if (!b.containsKey(equi))
+                b.put(equi, b.get(representatives.get(equi)));
 
-        return b.build();
+        return ImmutableMap.copyOf(b);
     }
 
     @Override
     public void computeDerivatives(final double time, final double[] states,
             final double[] derivatives) {
 
+        // logger.log(Level.INFO, "Evaluating system at t={0}", time);
         // final long start = System.nanoTime();
         this.currentTime = time;
         this.states = states;
         this.derivatives = derivatives;
+
+        /*
+         * Do the copying for equivalences between states and ders, The
+         * integrator has calculated all states, so do that first!
+         */
+        for (CopyOp copy : copyOperations) {
+            derivatives[copy.target] = states[copy.source];
+        }
 
         for (final SpecializedComputation s : specialComputations) {
             evaluations++;
@@ -229,8 +301,12 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
 
         logger.log(Level.INFO, "Done with initial values.");
         // integrator.addStepHandler(new Observer(observables));
-        options.integrator.integrate(this, options.startTime, states,
-                options.stopTime, states);
+
+        double t = options.startTime;
+        while (t < options.stopTime) {
+            t = options.integrator.integrate(this, t, states, options.stopTime,
+                    states);
+        }
 
         final ImmutableMap.Builder<Unknown, Double> results = ImmutableMap
                 .builder();
@@ -249,5 +325,10 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         } else {
             return step.states[index];
         }
+    }
+
+    public void stop(double t, double[] vars) {
+        this.states = vars;
+        this.currentTime = t;
     }
 }

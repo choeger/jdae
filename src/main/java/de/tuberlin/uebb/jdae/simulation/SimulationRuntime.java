@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.commons.math3.ode.events.EventHandler;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
@@ -48,7 +49,8 @@ public interface SimulationRuntime {
             Iterable<EventHandler> events, SimulationOptions options);
 
     public abstract void simulateFixedStep(SolvableDAE dae,
-            Map<String, Double> inits, double stop_time, int steps);
+            Iterable<EventHandler> events, Map<String, Double> inits,
+            double stop_time, int steps);
 
     public abstract void simulateVariableStep(SolvableDAE dae,
             Map<String, Double> inits, double stop_time, double minStep,
@@ -59,5 +61,8 @@ public interface SimulationRuntime {
             double maxStep, double absoluteTolerance, double relativeTolerance);
 
     ResultStorage lastResults();
+
+    public abstract void simulateFixedStep(SolvableDAE dae,
+            ImmutableMap<String, Double> of, double stopTime, int fixedSteps);
 
 }

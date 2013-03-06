@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
@@ -42,19 +43,26 @@ import de.tuberlin.uebb.jdae.dae.Unknown;
 
 public final class ResultStorage implements StepHandler {
 
-    public final class Step {
+    public static final class Step {
         public final double time;
         public final double[] states;
         public final double[] algebraics;
         public final double[] derivatives;
 
-        public Step(double time, double[] states, double[] algebraics,
-                double[] derivatives) {
+        public Step(double time, double[] derivatives, double[] states,
+                double[] algebraics) {
             super();
             this.time = time;
             this.states = states;
-            this.algebraics = algebraics;
             this.derivatives = derivatives;
+            this.algebraics = algebraics;
+        }
+
+        public String toString() {
+            return String.format(Locale.ENGLISH,
+                    "derivatives: %s algebraics: %s states: %s", states,
+                    derivatives, algebraics);
+
         }
     }
 
@@ -69,9 +77,10 @@ public final class ResultStorage implements StepHandler {
 
     @Override
     public void handleStep(StepInterpolator arg0, boolean arg1) {
-        results.add(new Step(arg0.getInterpolatedTime(), arg0
-                .getInterpolatedState(), Arrays.copyOf(dae.algebraics,
-                dae.algebraics.length), arg0.getInterpolatedDerivatives()));
+        results.add(new Step(arg0.getInterpolatedTime(), Arrays.copyOf(
+                arg0.getInterpolatedDerivatives(), dae.dimension), Arrays
+                .copyOf(arg0.getInterpolatedState(), dae.dimension), Arrays
+                .copyOf(dae.algebraics, dae.algebraics.length)));
     }
 
     @Override
@@ -130,7 +139,7 @@ public final class ResultStorage implements StepHandler {
         final List<Step> steps = Lists
                 .newArrayListWithExpectedSize((int) ((to - from) / step));
 
-        for (Step r : steps) {
+        for (Step r : results) {
             if (r.time >= from) {
                 steps.add(r);
                 if ((from += step) >= to)
@@ -139,5 +148,13 @@ public final class ResultStorage implements StepHandler {
         }
 
         return steps;
+    }
+
+    public Iterable<Unknown> variables() {
+        return dae.variables.keySet();
+    }
+
+    public double valueAt(Step step, Unknown u) {
+        return dae.valueAt(step, u);
     }
 }

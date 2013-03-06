@@ -21,7 +21,7 @@ package de.tuberlin.uebb.jdae.tests.simulation;
 import org.junit.Test;
 
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.examples.StiffHybrid;
+import de.tuberlin.uebb.jdae.examples.BouncingBall;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
@@ -29,20 +29,25 @@ import static org.hamcrest.CoreMatchers.is;
 
 import static org.junit.Assert.assertThat;
 
-public class StiffHybridTest {
+public class BouncingBallTest {
 
     @Test
     public void test() {
         final SimulationRuntime runtime = new DefaultSimulationRuntime();
 
-        final StiffHybrid model = new StiffHybrid(runtime);
+        final BouncingBall model = new BouncingBall(runtime);
 
         final SolvableDAE dae = runtime.causalise(model.equations());
 
         runtime.simulateVariableStep(dae, model.events(dae), model.initials(),
-                1000, 5e-4, Double.POSITIVE_INFINITY, 1e-4, 1e-4);
+                10.0, Double.MAX_VALUE, Double.MAX_VALUE, 1e-6, 1e-6);
 
-        assertThat(model.events, is(1592));
+        /*
+         * runtime.simulateFixedStep(dae, model.events(dae), model.initials(),
+         * 10, 10000);
+         */
+
+        assertThat(model.events, is(7));
     }
 
 }

@@ -99,7 +99,8 @@ public final class Causalisation {
     }
 
     public Map<Unknown, Equation> matching(final Iterable<Equation> equations,
-            final Map<Unknown, Unknown> der_map, final Map<Unknown, Unknown> repres) {
+            final Map<Unknown, Unknown> der_map,
+            final Map<Unknown, Unknown> repres) {
 
         final Function<Unknown, Unknown> der = Functions.forMap(der_map);
 
@@ -124,6 +125,10 @@ public final class Causalisation {
             final Unknown x = repres.containsKey(i.v) ? repres.get(i.v) : i.v;
             final Unknown dv = der_map.get(i.v);
             final Unknown dx = repres.containsKey(dv) ? repres.get(dv) : dv;
+
+            /* the unknowns might not be in the graph yet */
+            g.addVertex(x);
+            g.addVertex(dx);
 
             g.addEdge(x, i);
             g.addEdge(dx, i);

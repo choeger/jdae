@@ -55,19 +55,28 @@ import de.tuberlin.uebb.jdae.utils.VarComparator;
  */
 public final class DefaultSimulationRuntime implements SimulationRuntime {
 
-    public final Logger logger = Logger.getLogger("simulation");
+    public final Logger logger;
     public final DerivativeRelation derivative_collector;
     private ResultStorage results;
 
-    @SuppressWarnings("unchecked")
-    public DefaultSimulationRuntime(DerivativeRelation derivative_collector) {
+    public DefaultSimulationRuntime(Logger l,
+            DerivativeRelation derivative_collector) {
         super();
+        this.logger = l;
         this.derivative_collector = derivative_collector;
+        logger.setLevel(Level.INFO);
+    }
+
+    public DefaultSimulationRuntime(DerivativeRelation derivative_collector) {
+        this(Logger.getLogger("simulation"), derivative_collector);
     }
 
     public DefaultSimulationRuntime() {
-        derivative_collector = new DerivativeCollector();
-        logger.setLevel(Level.INFO);
+        this(Logger.getLogger("simulation"), new DerivativeCollector());
+    }
+
+    public DefaultSimulationRuntime(Logger l) {
+        this(l, new DerivativeCollector());
     }
 
     /*
@@ -152,13 +161,16 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * (de.tuberlin.uebb.jdae.dae.SolvableDAE, java.util.Map, double, int)
      */
     @Override
-    public void simulateFixedStep(SolvableDAE dae, Map<String, Double> inits,
+    public void simulateFixedStep(SolvableDAE dae,
+            Iterable<EventHandler> events, Map<String, Double> inits,
             double stop_time, final int steps) {
         final double stepSize = (stop_time / steps);
 
         final FirstOrderIntegrator i = new EulerIntegrator(stepSize);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
-                -1.0, stepSize, stepSize, i, inits);
+                stepSize * 1e-3, stepSize, stepSize, i, inits);
+
+        simulate(dae, events, options);
 
     }
 
@@ -209,23 +221,33 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         SpecializedConstantLinearEquation.time_spent = 0;
         results = new ResultStorage(dae, 1000);
 
+        System.out.println("About to simulate using options: " + options);
+
         options.integrator.clearEventHandlers();
         options.integrator.clearStepHandlers();
 
         options.integrator.addStepHandler(results);
 
         for (EventHandler e : events) {
-            options.integrator.addEventHandler(e, options.maxStepSize,
+            options.integrator.addEventHandler(e, options.minStepSize,
                     options.tolerance, 1000);
         }
 
         final long start = System.currentTimeMillis();
 
         dae.integrate(options);
-        logger.log(Level.INFO,
-                "Simulation finished after {1} evaluation-steps in {0}ms",
+
+        logger.log(
+                Level.INFO,
+                "Simulation finished after {1} accepted steps, {2} system-evaluations in {0}ms",
                 new Object[] { System.currentTimeMillis() - start,
-                        dae.evaluations });
+                        results.results.size(), dae.evaluations });
     }
 
+    @Override
+    public void simulateFixedStep(SolvableDAE dae,
+            ImmutableMap<String, Double> inits, double stopTime, int fixedSteps) {
+        simulateFixedStep(dae, ImmutableList.<EventHandler> of(), inits,
+                stopTime, fixedSteps);
+    }
 }
