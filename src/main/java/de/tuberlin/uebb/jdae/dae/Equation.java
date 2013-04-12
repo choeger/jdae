@@ -21,19 +21,17 @@ package de.tuberlin.uebb.jdae.dae;
 
 import java.util.Collection;
 
+import org.apache.commons.math3.analysis.UnivariateFunction;
+
 import com.google.common.base.Function;
 
 public interface Equation {
 
-    public Equation specialize(final SolvableDAE system);
+    public FunctionalEquation specializeFor(final Unknown unknown,
+            final SolvableDAE system);
 
     public Collection<Unknown> canSolveFor(final Function<Unknown, Unknown> der);
 
-    public double solveFor(final int unknown, final Unknown v,
-            final SolvableDAE system);
-
-    public double lhs(final SolvableDAE systemState);
-
-    public double rhs(final SolvableDAE systemState);
+    public UnivariateFunction residual(final SolvableDAE system);
 
 }

@@ -50,7 +50,7 @@ public class SimpleIntegrationTest {
     public void testCausalisation() {
         final SolvableDAE dae = runtime.causalise(ImmutableList.of(eq));
         assertEquals(dae.variables.get(dx),
-                (Integer) dae.specialComputations[0].target);
+                (Integer) dae.computationalOrder[0].unknown());
     }
 
     @Test
@@ -59,6 +59,7 @@ public class SimpleIntegrationTest {
         SolvableDAE dae = runtime.causalise(ImmutableList.of(eq));
         runtime.simulateFixedStep(dae, ImmutableMap.of("x", 1.0), stop_time,
                 FIXED_STEPS);
-        assertEquals((Double) dae.get(1), Math.exp(stop_time), PRECISION);
+        assertEquals((Double) dae.value(x, stop_time), Math.exp(stop_time),
+                PRECISION);
     }
 }

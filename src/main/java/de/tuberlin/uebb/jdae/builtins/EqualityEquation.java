@@ -21,11 +21,13 @@ package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 
+import org.apache.commons.math3.analysis.UnivariateFunction;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
 import de.tuberlin.uebb.jdae.dae.Equality;
-import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
@@ -43,52 +45,6 @@ public final class EqualityEquation implements Equality {
     public final Unknown lhs_obj;
     public final Unknown rhs_obj;
 
-    /*
-     * (nicht-Javadoc)
-     * 
-     * @see
-     * de.tuberlin.uebb.jdae.dae.Equality#lhs(de.tuberlin.uebb.jdae.dae.SolvableDAE
-     * )
-     */
-    @Override
-    public double lhs(final SolvableDAE systemState) {
-        return systemState.apply(lhs_obj);
-    }
-
-    /*
-     * (nicht-Javadoc)
-     * 
-     * @see
-     * de.tuberlin.uebb.jdae.dae.Equality#rhs(de.tuberlin.uebb.jdae.dae.SolvableDAE
-     * )
-     */
-    @Override
-    public double rhs(final SolvableDAE systemState) {
-        return systemState.apply(rhs_obj);
-    }
-
-    @Override
-    public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
-        return ImmutableList.of(lhs_obj, rhs_obj);
-    }
-
-    @Override
-    public double solveFor(final int index, Unknown v,
-            final SolvableDAE systemState) {
-
-        if (v == lhs_obj)
-            return systemState.apply(rhs_obj);
-        else if (v == rhs_obj)
-            return systemState.apply(lhs_obj);
-
-        throw new IllegalArgumentException("Cannot solve for" + v);
-    }
-
-    @Override
-    public Equation specialize(SolvableDAE system) {
-        return this;
-    }
-
     @Override
     public Unknown lhs() {
         return lhs_obj;
@@ -97,5 +53,31 @@ public final class EqualityEquation implements Equality {
     @Override
     public Unknown rhs() {
         return rhs_obj;
+    }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown, SolvableDAE system) {
+        /* to prevent cycling, this should actually not happen ?? */
+        return system.get(unknown);
+    }
+
+    @Override
+    public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
+        return ImmutableList.of(lhs_obj, rhs_obj);
+    }
+
+    @Override
+    public UnivariateFunction residual(SolvableDAE system) {
+        final UnivariateFunction l = system.get(lhs_obj);
+        final UnivariateFunction r = system.get(rhs_obj);
+
+        return new UnivariateFunction() {
+
+            @Override
+            public double value(double t) {
+                return l.value(t) - r.value(t);
+            }
+
+        };
     }
 }

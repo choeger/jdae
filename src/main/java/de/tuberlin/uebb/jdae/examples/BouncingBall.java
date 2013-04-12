@@ -26,6 +26,7 @@ import org.apache.commons.math3.ode.events.EventHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
 import de.tuberlin.uebb.jdae.builtins.DefaultConstantEquation;
 import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
 import de.tuberlin.uebb.jdae.builtins.SimpleVar;
@@ -50,10 +51,12 @@ public class BouncingBall implements LoadableModel {
 
     final Unknown h = new SimpleVar("h");
     final Unknown v = new SimpleVar("v");
+    final Unknown b = new SimpleVar("b");
 
     final Unknown dh, dv;
 
     final Equation freeFall;
+    final Equation bottom;
     final Equation accel;
 
     public BouncingBall(SimulationRuntime runtime) {
@@ -61,6 +64,9 @@ public class BouncingBall implements LoadableModel {
         this.runtime = runtime;
         this.dh = runtime.der().apply(h);
         this.dv = runtime.der().apply(v);
+
+        this.bottom = ConstantLinearEquation.builder().add(b, 1).add(h, -1)
+                .addConstant(-0.5).build();
 
         this.freeFall = new DefaultConstantEquation(dv, -9.81);
         this.accel = new EqualityEquation(v, dh);
@@ -83,7 +89,7 @@ public class BouncingBall implements LoadableModel {
      */
     @Override
     public Collection<Equation> equations() {
-        return ImmutableList.of(freeFall, accel);
+        return ImmutableList.of(freeFall, accel, bottom);
     }
 
     /*
@@ -110,12 +116,13 @@ public class BouncingBall implements LoadableModel {
 
     public final class BounceEvent extends ContinuousEvent {
 
-        final int v_i, h_i;
+        final int v_i, h_i, b_i;
         final SolvableDAE ctxt;
 
         public BounceEvent(SolvableDAE ctxt) {
             v_i = ctxt.variables.get(v);
             h_i = ctxt.variables.get(h);
+            b_i = ctxt.variables.get(b);
             this.ctxt = ctxt;
         }
 
@@ -126,7 +133,7 @@ public class BouncingBall implements LoadableModel {
                 events++;
 
                 /* ensure promise */
-                vars[h_i] = 0.0;
+                vars[h_i] = 0.5;
 
                 vars[v_i] = -0.8 * vars[v_i];
                 ctxt.stop(t, vars);
@@ -137,7 +144,9 @@ public class BouncingBall implements LoadableModel {
 
         @Override
         public double g(double t, double[] vars) {
-            return vars[h_i];
+            final double[] derivatives = new double[vars.length];
+            ctxt.computeDerivativesUpto(b_i, t, vars, derivatives);
+            return ctxt.get(b_i).value(t);
         }
 
         @Override

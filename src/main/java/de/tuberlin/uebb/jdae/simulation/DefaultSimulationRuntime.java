@@ -34,7 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import de.tuberlin.uebb.jdae.builtins.DerivativeCollector;
-import de.tuberlin.uebb.jdae.builtins.SpecializedConstantLinearEquation;
+import de.tuberlin.uebb.jdae.builtins.LinearFunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.Equality;
 import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
@@ -147,8 +147,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 new Object[] { System.currentTimeMillis() - causalise_start });
 
         final SolvableDAE solvableDAE = new SolvableDAE(causality.states,
-                representatives, causality.computations, derivative_collector,
-                logger);
+                representatives, causality.computations, this, logger);
 
         return solvableDAE;
     }
@@ -218,7 +217,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     @Override
     public void simulate(SolvableDAE dae, Iterable<EventHandler> events,
             SimulationOptions options) {
-        SpecializedConstantLinearEquation.time_spent = 0;
+        LinearFunctionalEquation.time_spent = 0;
         results = new ResultStorage(dae, 1000);
 
         System.out.println("About to simulate using options: " + options);

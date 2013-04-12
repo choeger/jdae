@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -67,25 +68,25 @@ public final class ResultStorage implements StepHandler {
     }
 
     private final SolvableDAE dae;
-    public final List<Step> results;
+    public final LinkedList<Step> results;
 
     public ResultStorage(SolvableDAE dae, int estimatedSteps) {
         super();
         this.dae = dae;
-        results = Lists.newArrayListWithCapacity(estimatedSteps);
+        results = Lists.newLinkedList();
     }
 
     @Override
     public void handleStep(StepInterpolator arg0, boolean arg1) {
-        results.add(new Step(arg0.getInterpolatedTime(), Arrays.copyOf(
-                arg0.getInterpolatedDerivatives(), dae.dimension), Arrays
-                .copyOf(arg0.getInterpolatedState(), dae.dimension), Arrays
-                .copyOf(dae.algebraics, dae.algebraics.length)));
+
+        addResult(arg0.getInterpolatedTime(),
+                arg0.getInterpolatedDerivatives(), arg0.getInterpolatedState());
+
     }
 
+    // TODO Automatisch generierter Methodenstub
     @Override
     public void init(double arg0, double[] arg1, double arg2) {
-        // TODO Automatisch generierter Methodenstub
 
     }
 
@@ -135,16 +136,26 @@ public final class ResultStorage implements StepHandler {
      *            the maximal step size between to data points in the view
      * @return a list of data points of this result
      */
-    public List<Step> select(double from, final double to, final double step) {
+    public List<Step> select(double from, double to, final double step) {
+        System.out.println("selecting from " + from + " to " + to
+                + "precision: " + step);
         final List<Step> steps = Lists
                 .newArrayListWithExpectedSize((int) ((to - from) / step));
 
         for (Step r : results) {
+            System.out.println("Checking " + r.time);
             if (r.time >= from) {
                 steps.add(r);
-                if ((from += step) >= to)
+                if ((from += step) >= to) {
                     break;
+                }
+                System.out.println("Going on to " + from);
             }
+        }
+
+        for (Step step2 : steps) {
+            System.out.println(step2.time + " "
+                    + Arrays.toString(step2.algebraics));
         }
 
         return steps;
@@ -157,4 +168,20 @@ public final class ResultStorage implements StepHandler {
     public double valueAt(Step step, Unknown u) {
         return dae.valueAt(step, u);
     }
+
+    public void addResult(double time, double[] derivatives, double[] states) {
+        while (!results.isEmpty() && (results.peekLast().time >= time)) {
+            results.removeLast();
+        }
+
+        final double algVector[] = new double[dae.algebraics.length];
+
+        for (int i = 0; i < algVector.length; i++) {
+            algVector[i] = dae.algebraics[i].value(time);
+        }
+
+        results.add(new Step(time, Arrays.copyOf(derivatives, dae.dimension),
+                Arrays.copyOf(states, dae.dimension), algVector));
+    }
+
 }

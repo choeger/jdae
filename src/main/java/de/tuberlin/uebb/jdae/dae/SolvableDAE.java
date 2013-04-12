@@ -19,43 +19,28 @@
 
 package de.tuberlin.uebb.jdae.dae;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
-import org.apache.commons.math3.ode.sampling.StepHandler;
-import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import de.tuberlin.uebb.jdae.builtins.StateEquation;
 import de.tuberlin.uebb.jdae.simulation.ResultStorage.Step;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
+import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import de.tuberlin.uebb.jdae.transformation.Causalisation.Computation;
 
-public final class SolvableDAE implements FirstOrderDifferentialEquations,
-        Function<Unknown, Double> {
-
-    public final static class SpecializedComputation {
-        public final Unknown var;
-        public final int target;
-        public final Equation source;
-
-        public SpecializedComputation(Computation comp, SolvableDAE system) {
-            this.var = comp.var;
-            this.source = comp.eq.specialize(system);
-            this.target = system.variables.get(var);
-        }
-    }
+public final class SolvableDAE implements FirstOrderDifferentialEquations {
 
     /**
      * A plain copy from a state to a derivative does not require any
-     * computation. It is necessary, though, because Java arrays may not
+     * computation. It is necessary, though, because Java arrays must not
      * overlap.
      * 
      * @author choeger
@@ -88,101 +73,73 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
     public long object_instantiation_time = -1;
     public long set_time = -1;
 
-    public double currentTime = 0.0;
+    public final FunctionalEquation[] computationalOrder;
 
-    /* current simulation state */
-    private double[] states;
-    private double[] derivatives;
-    public final double[] algebraics;
+    private FunctionalEquation[] states;
+    private FunctionalEquation[] derivatives;
+    public final FunctionalEquation[] algebraics;
+
+    public double stateVector[];
+    public double time;
+
     public final ImmutableMap<Unknown, Integer> variables;
 
-    public final SpecializedComputation[] specialComputations;
-    private final Function<Unknown, Unknown> der;
     public final Logger logger;
-
-    private final CopyOp[] copyOperations;
-
-    final class Observer implements StepHandler {
-
-        final Collection<Unknown> observed;
-
-        private Observer(Collection<Unknown> observed) {
-            super();
-            this.observed = observed;
-        }
-
-        @Override
-        public void handleStep(StepInterpolator i, boolean isLast) {
-            final double res[] = i.getInterpolatedState();
-            for (Unknown v : observed) {
-                final Integer integer = variables.get(v);
-                logger.log(Level.INFO, "{0} \t {1} \t = {2}",
-                        new Object[] {
-                                i.getInterpolatedTime(),
-                                v,
-                                integer < dimension ? res[integer]
-                                        : algebraics[integer - 2 * dimension] });
-            }
-        }
-
-        @Override
-        public void init(double arg0, double[] arg1, double arg2) {
-
-        }
-
-    };
+    public boolean storeResultFlag = false;
+    public final SimulationRuntime runtime;
 
     protected SolvableDAE(final List<Unknown> states,
             final List<Computation> causalisation,
-            final Function<Unknown, Unknown> der,
+            final SimulationRuntime runtime,
             final ImmutableMap<Unknown, Integer> ordering, final Logger log) {
         this.logger = log;
         this.dimension = states.size();
-        this.derivatives = new double[dimension];
-        this.states = new double[dimension];
-        this.algebraics = new double[ordering.size() - 2 * dimension];
+        this.runtime = runtime;
 
-        this.der = der;
+        this.derivatives = new FunctionalEquation[dimension];
+        this.states = new FunctionalEquation[dimension];
+        this.algebraics = new FunctionalEquation[ordering.size() - 2
+                * dimension];
+
         this.variables = ordering;
+
+        this.computationalOrder = new FunctionalEquation[causalisation.size()];
+
+        for (int s = 0; s < dimension; s++)
+            this.states[s] = new StateEquation(s, this);
 
         /*
          * In case a derivative is equivalent to a state, the state will get
-         * selected as representative. Therefore, we have to copy the state's
-         * value to the derivative during der-computation to not confuse the
-         * solver.
+         * selected as representative. Therefore, the derivative is the same
+         * function as the state.
          */
-        final List<CopyOp> copyOps = Lists.newArrayList();
         for (Unknown state : states) {
-            final Integer source = variables.get(der.apply(state));
+            final Unknown der = runtime.der().apply(state);
+            final Integer source = variables.get(der);
             if (source < dimension) {
-                /*
-                 * The derivative has the index of the state variable in the
-                 * derivative-array
-                 */
-                copyOps.add(new CopyOp(variables.get(state), source));
+                /* the derivative has the index of the state in the der-vector! */
+                derivatives[variables.get(state)] = get(source);
             }
         }
-        this.copyOperations = copyOps.toArray(new CopyOp[copyOps.size()]);
 
-        this.specialComputations = new SpecializedComputation[causalisation
-                .size()];
         for (int i = 0; i < causalisation.size(); i++) {
-            specialComputations[i] = new SpecializedComputation(
-                    causalisation.get(i), this);
+            final Computation c = causalisation.get(i);
+            computationalOrder[i] = c.eq.specializeFor(c.var, this);
+            set(variables.get(c.var), computationalOrder[i]);
         }
     }
 
     public SolvableDAE(final List<Unknown> states,
             ImmutableMap<Unknown, Unknown> representatives,
-            final List<Computation> causalisation,
-            Function<Unknown, Unknown> der, final Logger log) {
-        this(states, causalisation, der, buildDefaultMapping(causalisation,
-                states, der, representatives), log);
+            final List<Computation> causalisation, SimulationRuntime runtime,
+            final Logger log) {
+        this(states, causalisation, runtime, buildDefaultMapping(causalisation,
+                states, runtime, representatives), log);
     }
 
     public static ImmutableMap<Unknown, Integer> buildDefaultMapping(
             final List<Computation> computations, final List<Unknown> states,
-            Function<Unknown, Unknown> der,
+            SimulationRuntime runtime,
             ImmutableMap<Unknown, Unknown> representatives) {
         final Map<Unknown, Integer> b = Maps.newHashMap();
         int i = 0;
@@ -194,7 +151,7 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
 
         /* derivatives */
         for (Unknown state : states) {
-            final Unknown d = der.apply(state);
+            final Unknown d = runtime.der().apply(state);
             final Unknown drep = representatives.get(d);
             final Integer k = b.get(drep);
 
@@ -233,24 +190,29 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
 
         // logger.log(Level.INFO, "Evaluating system at t={0}", time);
         // final long start = System.nanoTime();
-        this.currentTime = time;
-        this.states = states;
-        this.derivatives = derivatives;
 
-        /*
-         * Do the copying for equivalences between states and ders, The
-         * integrator has calculated all states, so do that first!
-         */
-        for (CopyOp copy : copyOperations) {
-            derivatives[copy.target] = states[copy.source];
+        this.stateVector = states;
+
+        for (int i = 0; i < dimension; i++) {
+            derivatives[i] = this.derivatives[i].value(time);
         }
 
-        for (final SpecializedComputation s : specialComputations) {
-            evaluations++;
-            final double value = s.source.solveFor(s.target, s.var, this);
-            set(s.target, value);
+        if (storeResultFlag) {
+            runtime.lastResults().addResult(time, derivatives, states);
         }
         // simulation_time += (System.nanoTime() - start);
+    }
+
+    public void computeDerivativesUpto(final int limit, final double time,
+            final double[] states, final double[] derivatives) {
+
+        this.stateVector = states;
+
+        for (FunctionalEquation eq : computationalOrder) {
+            eq.value(time);
+            if (eq.unknown() == limit)
+                break;
+        }
     }
 
     @Override
@@ -258,18 +220,12 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         return dimension;
     }
 
-    @Override
-    public Double apply(Unknown v) {
-        final int index = variables.get(v);
+    public final FunctionalEquation get(final Unknown u) {
+        final int index = variables.get(u);
         return get(index);
     }
 
-    private final void set(final Unknown v, final double d) {
-        final int index = variables.get(v);
-        set(index, d);
-    }
-
-    public final double get(final int index) {
+    public final FunctionalEquation get(final int index) {
         if (index >= 2 * dimension) {
             return algebraics[index - 2 * dimension];
         } else if (index >= dimension) {
@@ -279,22 +235,27 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         }
     }
 
-    private final void set(final int index, final double d) {
+    private void set(int index, FunctionalEquation f) {
         if (index >= 2 * dimension) {
-            algebraics[index - 2 * dimension] = d;
+            algebraics[index - 2 * dimension] = f;
         } else if (index >= dimension) {
-            derivatives[index - dimension] = d;
+            derivatives[index - dimension] = f;
         } else {
-            states[index] = d;
+            throw new RuntimeException(
+                    "Trying to set a computation for a state!");
         }
     }
 
     public final Map<Unknown, Double> integrate(final SimulationOptions options) {
         final List<Unknown> observables = Lists.newArrayList();
 
+        double t = options.startTime;
+        stateVector = new double[dimension];
+
         for (Unknown v : variables.keySet()) {
             if (options.initialValues.containsKey(v.toString())) {
-                set(v, options.initialValues.get(v.toString()));
+                stateVector[variables.get(v)] = options.initialValues.get(v
+                        .toString());
                 observables.add(v);
             }
         }
@@ -302,17 +263,36 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
         logger.log(Level.INFO, "Done with initial values.");
         // integrator.addStepHandler(new Observer(observables));
 
-        double t = options.startTime;
         while (t < options.stopTime) {
-            t = options.integrator.integrate(this, t, states, options.stopTime,
-                    states);
+
+            t = options.integrator.integrate(this, t, stateVector,
+                    options.stopTime, stateVector);
         }
 
         final ImmutableMap.Builder<Unknown, Double> results = ImmutableMap
                 .builder();
         for (Unknown v : variables.keySet())
-            results.put(v, apply(v));
+            results.put(v, get(v).value(t));
+
+        runtime.lastResults().addResult(options.stopTime, derVector(t),
+                stateVector);
+
         return results.build();
+    }
+
+    private double[] derVector(double time) {
+        double[] vector = new double[dimension];
+        for (int i = 0; i < dimension; i++)
+            vector[i] = derivatives[i].value(time);
+        return vector;
+    }
+
+    public double value(int i, double time) {
+        return get(i).value(time);
+    }
+
+    public double value(Unknown u, double time) {
+        return get(variables.get(u)).value(time);
     }
 
     public double valueAt(Step step, Unknown v) {
@@ -328,7 +308,7 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations,
     }
 
     public void stop(double t, double[] vars) {
-        this.states = vars;
-        this.currentTime = t;
+        this.stateVector = vars;
+        this.time = t;
     }
 }

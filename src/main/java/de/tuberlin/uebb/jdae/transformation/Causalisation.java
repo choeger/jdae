@@ -207,6 +207,7 @@ public final class Causalisation {
 
         final ImmutableList.Builder<Computation> comps = ImmutableList
                 .builder();
+
         final GraphIterator<Object, DefaultEdge> iter = new TopologicalOrderIterator<Object, DefaultEdge>(
                 g);
 

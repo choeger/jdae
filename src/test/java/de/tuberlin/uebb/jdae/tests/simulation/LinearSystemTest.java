@@ -66,9 +66,9 @@ public class LinearSystemTest {
         double stopTime = 1.0;
         runtime.simulateFixedStep(dae, ImmutableMap.of("x", 0.0, "y", 0.0),
                 stopTime, FIXED_STEPS);
-        assertEquals(stopTime, dae.currentTime, PRECISION);
-        assertEquals((Double) dae.currentTime, dae.apply(x), PRECISION);
-        assertEquals((Double) dae.currentTime, dae.apply(y), PRECISION);
+        assertEquals(stopTime, dae.time, PRECISION);
+        assertEquals((Double) dae.time, dae.value(x, dae.time), PRECISION);
+        assertEquals((Double) dae.time, dae.value(y, dae.time), PRECISION);
 
     }
 }

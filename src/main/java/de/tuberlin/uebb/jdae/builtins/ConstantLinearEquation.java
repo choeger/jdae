@@ -20,13 +20,14 @@ package de.tuberlin.uebb.jdae.builtins;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
+
+import org.apache.commons.math3.analysis.UnivariateFunction;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
 import de.tuberlin.uebb.jdae.dae.ConstantLinear;
-import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
@@ -71,66 +72,27 @@ public final class ConstantLinearEquation implements ConstantLinear {
         }
     }
 
-    @Override
-    public Equation specialize(final SolvableDAE system) {
-        return new SpecializedConstantLinearEquation(this, system);
-    }
-
     public final double time;
     public final double constant;
-    public final List<Double> coefficients;
+    public final double[] coefficients;
     public final List<Unknown> variables;
 
     private ConstantLinearEquation(double time, double rhs,
             List<Double> coefficients, List<Unknown> variables) {
         this.time = time;
         this.constant = rhs;
-        this.coefficients = coefficients;
+        this.coefficients = new double[coefficients.size()];
+        for (int i = 0; i < coefficients.size(); i++) {
+            this.coefficients[i] = coefficients.get(i);
+        }
         this.variables = variables;
-    }
-
-    @Override
-    public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
-        return variables;
-    }
-
-    @Override
-    public double solveFor(final int index, Unknown v,
-            final SolvableDAE systemState) {
-        double val = this.time * systemState.currentTime;
-        int v_coeff = 0;
-        for (int i = 0; i < variables.size(); i++) {
-            final Unknown var = variables.get(i);
-            if (var != v) {
-                val += coefficients.get(i) * systemState.apply(var);
-            } else {
-                v_coeff += coefficients.get(i);
-            }
-        }
-        double d = (constant - val) / v_coeff;
-        systemState.logger.log(Level.INFO, "Returning {0}", d);
-        return d;
-    }
-
-    @Override
-    public double lhs(final SolvableDAE systemState) {
-        double val = this.time * systemState.currentTime;
-        for (int i = 0; i < variables.size(); i++) {
-            val += coefficients.get(i) * systemState.apply(variables.get(i));
-        }
-        return val;
-    }
-
-    @Override
-    public double rhs(final SolvableDAE systemState) {
-        return constant;
     }
 
     public String toString() {
         final StringBuilder b = new StringBuilder();
         b.append(String.format("(%f * time) + ", time));
         for (int i = 0; i < variables.size(); i++) {
-            b.append(String.format("(%f * %s) + ", coefficients.get(i),
+            b.append(String.format("(%f * %s) + ", coefficients[i],
                     variables.get(i)));
         }
         b.delete(b.length() - 3, b.length());
@@ -144,7 +106,7 @@ public final class ConstantLinearEquation implements ConstantLinear {
     }
 
     @Override
-    public List<Double> coefficients() {
+    public double[] coefficients() {
         return coefficients;
     }
 
@@ -156,5 +118,32 @@ public final class ConstantLinearEquation implements ConstantLinear {
     @Override
     public double constant() {
         return constant;
+    }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown, SolvableDAE system) {
+        final FunctionalEquation unknown2Function[] = new FunctionalEquation[variables
+                .size()];
+        for (int i = 0; i < variables.size(); i++) {
+            unknown2Function[i] = system.get(variables.get(i));
+        }
+        return new LinearFunctionalEquation(system.variables.get(unknown),
+                unknown2Function, coefficients, time, constant);
+    }
+
+    @Override
+    public UnivariateFunction residual(SolvableDAE system) {
+        final FunctionalEquation unknown2Function[] = new FunctionalEquation[variables
+                .size()];
+        for (int i = 0; i < variables.size(); i++) {
+            unknown2Function[i] = system.get(variables.get(i));
+        }
+        return new UnivariateLinearFunction(time, unknown2Function,
+                coefficients, constant);
+    }
+
+    @Override
+    public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
+        return variables;
     }
 }

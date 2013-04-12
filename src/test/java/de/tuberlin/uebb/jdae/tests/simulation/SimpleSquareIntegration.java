@@ -58,7 +58,7 @@ public class SimpleSquareIntegration {
     public void testCausalisation() {
         final SimulationRuntime runtime = new DefaultSimulationRuntime();
         final SolvableDAE dae = model(runtime);
-        assertEquals(1, dae.specialComputations[0].target);
+        assertEquals(1, dae.computationalOrder[0].unknown());
     }
 
     @Test
@@ -69,10 +69,10 @@ public class SimpleSquareIntegration {
         runtime.simulateFixedStep(dae, ImmutableMap.of("x", 0.0), stop_time,
                 FIXED_STEPS);
 
-        final double t = dae.currentTime;
-        assertEquals(stop_time, dae.currentTime, PRECISION);
-        assertEquals(2 * t + 1, (Double) dae.get(1), PRECISION);
-        assertEquals(t * t + t, (Double) dae.get(0), PRECISION);
+        final double t = dae.time;
+        assertEquals(stop_time, dae.time, PRECISION);
+        assertEquals(2 * t + 1, (Double) dae.value(1, dae.time), PRECISION);
+        assertEquals(t * t + t, (Double) dae.value(0, dae.time), PRECISION);
     }
 
     @Test
@@ -83,9 +83,9 @@ public class SimpleSquareIntegration {
         runtime.simulateVariableStep(dae, ImmutableMap.of("x", 0.0), stop_time,
                 MIN_STEPSIZE, MAX_STEPSIZE, PRECISION, RTOL);
 
-        final double t = dae.currentTime;
-        assertEquals(stop_time, dae.currentTime, PRECISION);
-        assertEquals(2 * t + 1, (Double) dae.get(1), PRECISION);
-        assertEquals(t * t + t, (Double) dae.get(0), PRECISION);
+        final double t = dae.time;
+        assertEquals(stop_time, dae.time, PRECISION);
+        assertEquals(2 * t + 1, dae.value(0, dae.time), PRECISION);
+        assertEquals(t * t + t, dae.value(1, dae.time), PRECISION);
     }
 }

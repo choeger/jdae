@@ -21,11 +21,13 @@ package de.tuberlin.uebb.jdae.builtins;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.math3.analysis.UnivariateFunction;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
 import de.tuberlin.uebb.jdae.dae.ConstantEquation;
-import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
@@ -37,6 +39,8 @@ import de.tuberlin.uebb.jdae.dae.Unknown;
  */
 public class DefaultConstantEquation implements ConstantEquation {
 
+    public static final double[] SINGLE_ONE = { 1.0 };
+
     public final Unknown u;
 
     public final double c;
@@ -45,29 +49,6 @@ public class DefaultConstantEquation implements ConstantEquation {
         super();
         this.u = u;
         this.c = c;
-    }
-
-    @Override
-    public Equation specialize(SolvableDAE system) {
-        return this;
-    }
-
-    @Override
-    public double solveFor(int unknown, Unknown v, SolvableDAE system) {
-        if (v == u)
-            return c;
-
-        throw new IllegalArgumentException("Cannot solve for: " + v);
-    }
-
-    @Override
-    public double lhs(SolvableDAE systemState) {
-        return systemState.apply(u);
-    }
-
-    @Override
-    public double rhs(SolvableDAE systemState) {
-        return c;
     }
 
     @Override
@@ -86,8 +67,8 @@ public class DefaultConstantEquation implements ConstantEquation {
     }
 
     @Override
-    public List<Double> coefficients() {
-        return ImmutableList.of(1.0);
+    public double[] coefficients() {
+        return SINGLE_ONE;
     }
 
     @Override
@@ -98,6 +79,17 @@ public class DefaultConstantEquation implements ConstantEquation {
     @Override
     public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
         return ImmutableList.of(u);
+    }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown, SolvableDAE system) {
+        assert (u == unknown);
+        return new ConstantFunctionalEquation(system.variables.get(u), c);
+    }
+
+    @Override
+    public UnivariateFunction residual(SolvableDAE system) {
+        return null; // who needs a constant's residual?
     }
 
 }

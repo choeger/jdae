@@ -40,7 +40,7 @@ public interface ConstantLinear extends Equation {
      * 
      * @return All but the first coefficient of this linear equation in order
      */
-    public List<Double> coefficients();
+    public double[] coefficients();
 
     /**
      * 

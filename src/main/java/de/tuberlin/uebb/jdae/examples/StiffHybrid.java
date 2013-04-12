@@ -21,6 +21,7 @@ package de.tuberlin.uebb.jdae.examples;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.ode.events.EventHandler;
 
 import com.google.common.base.Function;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import de.tuberlin.uebb.jdae.builtins.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.ContinuousEvent;
 import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
@@ -56,43 +58,40 @@ public final class StiffHybrid implements LoadableModel {
     final class Equation1 implements Equation {
 
         @Override
-        public Equation specialize(SolvableDAE system) {
-            return this;
-        }
-
-        @Override
         public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
             return ImmutableList.of(dx1);
         }
 
         @Override
-        public double solveFor(int unknown, Unknown v, SolvableDAE system) {
-            if (v == dx1) {
-                return Math.sin(system.currentTime * 10.0);
+        public FunctionalEquation specializeFor(Unknown unknown,
+                SolvableDAE system) {
+            if (unknown == dx1) {
+                final int i = system.variables.get(dx1);
+                return new FunctionalEquation() {
+
+                    @Override
+                    public int unknown() {
+                        return i;
+                    }
+
+                    @Override
+                    public double compute(double time) {
+                        return Math.sin(time * 10.0);
+                    }
+                };
             }
             throw new IllegalArgumentException("Cannot solve for " + unknown);
         }
 
         @Override
-        public double lhs(SolvableDAE systemState) {
-            return systemState.apply(dx1);
+        public UnivariateFunction residual(SolvableDAE system) {
+            // should not be needed
+            return null;
         }
 
-        @Override
-        public double rhs(SolvableDAE systemState) {
-            return Math.sin(systemState.currentTime * 10.0);
-        }
     }
 
     final class Equation2 implements Equation {
-
-        private int x1_index;
-
-        @Override
-        public Equation specialize(SolvableDAE system) {
-            x1_index = system.variables.get(x1);
-            return this;
-        }
 
         @Override
         public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
@@ -100,28 +99,37 @@ public final class StiffHybrid implements LoadableModel {
         }
 
         @Override
-        public double solveFor(int unknown, Unknown v, SolvableDAE system) {
-            if (v == x2) {
-                return system.get(x1_index) + delta;
-            } else if (v == x1) {
-                // actually in general this would be possible
+        public FunctionalEquation specializeFor(Unknown unknown,
+                SolvableDAE system) {
+            if (unknown == x2) {
+                final int i = system.variables.get(x2);
+                final FunctionalEquation f_x1 = system.get(system.variables
+                        .get(x1));
+                return new FunctionalEquation() {
+
+                    @Override
+                    public int unknown() {
+                        return i;
+                    }
+
+                    @Override
+                    public double compute(double time) {
+                        return f_x1.value(time) + delta;
+                    }
+                };
+            } else {
                 throw new IllegalArgumentException(
                         "This system should have been completely causalised!"
                                 + unknown);
             }
-
-            throw new IllegalArgumentException("Cannot solve for " + unknown);
         }
 
         @Override
-        public double lhs(SolvableDAE systemState) {
-            return systemState.apply(dx1);
+        public UnivariateFunction residual(SolvableDAE system) {
+            // not needed
+            return null;
         }
 
-        @Override
-        public double rhs(SolvableDAE systemState) {
-            return Math.sin(systemState.currentTime * 10.0);
-        }
     }
 
     public final class Event1 extends ContinuousEvent {

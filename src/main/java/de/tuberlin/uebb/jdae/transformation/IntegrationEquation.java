@@ -25,6 +25,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
 import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
 
@@ -51,27 +52,13 @@ public final class IntegrationEquation implements Equation {
     }
 
     @Override
-    public double solveFor(final int index, Unknown v,
-            final SolvableDAE systemState) {
-        throw new RuntimeException(
-                "Integration equations are not solved directly currently.");
+    public FunctionalEquation specializeFor(Unknown u, SolvableDAE system) {
+        return null;
     }
 
     @Override
-    public double lhs(final SolvableDAE systemState) {
-        throw new RuntimeException(
-                "Integration equations are not solved directly currently.");
-    }
-
-    @Override
-    public double rhs(final SolvableDAE systemState) {
-        throw new RuntimeException(
-                "Integration equations are not solved directly currently.");
-    }
-
-    @Override
-    public Equation specialize(SolvableDAE system) {
-        return this;
+    public FunctionalEquation residual(SolvableDAE system) {
+        return null;
     }
 
 }
