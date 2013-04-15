@@ -4,8 +4,8 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
 
 public abstract class FunctionalEquation implements UnivariateFunction {
 
-    double lastTime;
-    double lastValue;
+    protected double lastTime = Double.NaN;
+    protected double lastValue = Double.NaN;
 
     public abstract int unknown();
 

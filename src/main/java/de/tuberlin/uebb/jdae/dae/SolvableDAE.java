@@ -88,6 +88,11 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations {
     public boolean storeResultFlag = false;
     public final SimulationRuntime runtime;
 
+    /* inverse of the absolute event detection precision */
+    public double eventPrecisionInv = 10e6; // TODO: find a way to make this
+
+    // final
+
     protected SolvableDAE(final List<Unknown> states,
             final List<Computation> causalisation,
             final SimulationRuntime runtime,

@@ -49,9 +49,9 @@ public final class LinearFunctionalEquation extends FunctionalEquation {
         double c = 0;
 
         for (int i = 0; i < variables.length; i++) {
-            final int v_index = variables[i].unknown();
-            if (v_index != index)
-                val += coefficients[i] * variables[i].value(time);
+            final FunctionalEquation f = variables[i];
+            if (f != null) // null in case i == unknown() !
+                val += coefficients[i] * f.value(time);
             else
                 c += coefficients[i];
         }

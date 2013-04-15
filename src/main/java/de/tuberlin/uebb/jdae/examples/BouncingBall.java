@@ -32,6 +32,7 @@ import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
 import de.tuberlin.uebb.jdae.builtins.SimpleVar;
 import de.tuberlin.uebb.jdae.dae.ContinuousEvent;
 import de.tuberlin.uebb.jdae.dae.Equation;
+import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
 import de.tuberlin.uebb.jdae.dae.Unknown;
@@ -118,12 +119,22 @@ public class BouncingBall implements LoadableModel {
 
         final int v_i, h_i, b_i;
         final SolvableDAE ctxt;
+        final FunctionalEquation event;
 
-        public BounceEvent(SolvableDAE ctxt) {
+        public BounceEvent(SolvableDAE pCtxt) {
+            this.ctxt = pCtxt;
             v_i = ctxt.variables.get(v);
             h_i = ctxt.variables.get(h);
             b_i = ctxt.variables.get(b);
-            this.ctxt = ctxt;
+
+            event = new FunctionalEventEquation() {
+
+                @Override
+                public double compute(double time) {
+                    return ctxt.get(b_i).value(time);
+                }
+
+            };
         }
 
         @Override
@@ -132,10 +143,13 @@ public class BouncingBall implements LoadableModel {
                 System.out.println("Hit event @" + t);
                 events++;
 
-                /* ensure promise */
-                vars[h_i] = 0.5;
-
+                /* the bounce effect */
                 vars[v_i] = -0.8 * vars[v_i];
+                ctxt.get(v_i).setValue(t, vars[v_i]);
+
+                /* ensure promise */
+                event.setValue(t, 0.0);
+
                 ctxt.stop(t, vars);
                 return Action.STOP;
             }
@@ -144,9 +158,8 @@ public class BouncingBall implements LoadableModel {
 
         @Override
         public double g(double t, double[] vars) {
-            final double[] derivatives = new double[vars.length];
-            ctxt.computeDerivativesUpto(b_i, t, vars, derivatives);
-            return ctxt.get(b_i).value(t);
+            ctxt.stateVector = vars;
+            return event.value(t);
         }
 
         @Override
