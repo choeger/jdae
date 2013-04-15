@@ -98,13 +98,13 @@ public final class BouncingBallRadius {
                     return new FunctionalEquation() {
 
                         @Override
-                        public double compute(double x) {
-                            return evaluations;
+                        public int unknown() {
+                            return e_i;
                         }
 
                         @Override
-                        public int unknown() {
-                            return e_i;
+                        public double compute(double time) {
+                            return evaluations;
                         }
 
                     };
@@ -142,18 +142,18 @@ public final class BouncingBallRadius {
 
                 if (unknown == b) {
                     return new FunctionalEquation() {
-                        double lastTime = Double.NaN;
-                        double lastValue = Double.NaN;
-
-                        @Override
-                        public double compute(double t) {
-                            return lastValue;
-                        }
 
                         @Override
                         public int unknown() {
                             return bottom_i;
                         }
+
+                        @Override
+                        public double compute(double time) {
+                            evaluations++;
+                            return system.value(h_i, time) - 0.5;
+                        }
+
                     };
                 } else {
                     throw new IllegalArgumentException("Cannot solve for "
@@ -181,24 +181,37 @@ public final class BouncingBallRadius {
 
         final int v_i, h_i, b_i;
         final SolvableDAE ctxt;
+        final FunctionalEquation event;
 
-        public BounceEvent(SolvableDAE ctxt) {
-            b_i = ctxt.variables.get(b);
+        public BounceEvent(SolvableDAE pCtxt) {
+            this.ctxt = pCtxt;
             v_i = ctxt.variables.get(v);
             h_i = ctxt.variables.get(h);
-            this.ctxt = ctxt;
+            b_i = ctxt.variables.get(b);
+
+            event = new FunctionalEventEquation() {
+
+                @Override
+                public double compute(double time) {
+                    return ctxt.get(b_i).value(time);
+                }
+
+            };
         }
 
         @Override
         public Action eventOccurred(double t, double[] vars, boolean inc) {
             if (!inc) {
-                // System.out.println("Hit event @" + t);
+                System.out.println("Hit event @" + t);
                 events++;
 
-                /* ensure promise */
-                ctxt.get(h_i).setValue(t, radius);
-
+                /* the bounce effect */
                 vars[v_i] = -0.8 * vars[v_i];
+                ctxt.get(v_i).setValue(t, vars[v_i]);
+
+                /* ensure promise */
+                event.setValue(t, 0.0);
+
                 ctxt.stop(t, vars);
                 return Action.STOP;
             }
@@ -207,10 +220,8 @@ public final class BouncingBallRadius {
 
         @Override
         public double g(double t, double[] vars) {
-            final double[] derivatives = new double[vars.length];
-            System.out.println("Searching event for " + index);
-            ctxt.computeDerivativesUpto(b_i, t, vars, derivatives);
-            return ctxt.get(b_i).value(t);
+            ctxt.stateVector = vars;
+            return event.value(t);
         }
 
         @Override
