@@ -254,32 +254,33 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations {
     public final Map<Unknown, Double> integrate(final SimulationOptions options) {
         final List<Unknown> observables = Lists.newArrayList();
 
-        double t = options.startTime;
+        time = options.startTime;
         stateVector = new double[dimension];
 
         for (Unknown v : variables.keySet()) {
-            if (options.initialValues.containsKey(v.toString())) {
-                stateVector[variables.get(v)] = options.initialValues.get(v
-                        .toString());
-                observables.add(v);
+            final Integer v_i = variables.get(v);
+            if (v_i < dimension) {
+                if (options.initialValues.containsKey(v.toString())) {
+                    stateVector[v_i] = options.initialValues.get(v.toString());
+                    observables.add(v);
+                }
             }
         }
 
         logger.log(Level.INFO, "Done with initial values.");
         // integrator.addStepHandler(new Observer(observables));
 
-        while (t < options.stopTime) {
-
-            t = options.integrator.integrate(this, t, stateVector,
+        while (time < options.stopTime) {
+            time = options.integrator.integrate(this, time, stateVector,
                     options.stopTime, stateVector);
         }
 
         final ImmutableMap.Builder<Unknown, Double> results = ImmutableMap
                 .builder();
         for (Unknown v : variables.keySet())
-            results.put(v, get(v).value(t));
+            results.put(v, get(v).value(time));
 
-        runtime.lastResults().addResult(options.stopTime, derVector(t),
+        runtime.lastResults().addResult(options.stopTime, derVector(time),
                 stateVector);
 
         return results.build();
