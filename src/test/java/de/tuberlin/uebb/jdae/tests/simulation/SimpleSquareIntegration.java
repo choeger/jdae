@@ -70,9 +70,9 @@ public class SimpleSquareIntegration {
                 FIXED_STEPS);
 
         final double t = dae.time;
-        assertEquals(stop_time, dae.time, PRECISION);
-        assertEquals(2 * t + 1, (Double) dae.value(1, dae.time), PRECISION);
-        assertEquals(t * t + t, (Double) dae.value(0, dae.time), PRECISION);
+        assertEquals(stop_time, t, PRECISION);
+        assertEquals(2 * t + 1, (Double) dae.value(1, t), PRECISION);
+        assertEquals(t * t + t, (Double) dae.value(0, t), PRECISION);
     }
 
     @Test
@@ -84,8 +84,8 @@ public class SimpleSquareIntegration {
                 MIN_STEPSIZE, MAX_STEPSIZE, PRECISION, RTOL);
 
         final double t = dae.time;
-        assertEquals(stop_time, dae.time, PRECISION);
-        assertEquals(2 * t + 1, dae.value(0, dae.time), PRECISION);
-        assertEquals(t * t + t, dae.value(1, dae.time), PRECISION);
+        assertEquals(stop_time, t, PRECISION);
+        assertEquals(2 * t + 1, dae.value(1, t), PRECISION);
+        assertEquals(t * t + t, dae.value(0, t), PRECISION);
     }
 }
