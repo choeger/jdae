@@ -77,7 +77,7 @@ public final class ConstantLinearEquation implements ConstantLinear {
     public final double[] coefficients;
     public final List<Unknown> variables;
 
-    private ConstantLinearEquation(double time, double rhs,
+    public ConstantLinearEquation(double time, double rhs,
             List<Double> coefficients, List<Unknown> variables) {
         this.time = time;
         this.constant = rhs;

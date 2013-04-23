@@ -19,6 +19,8 @@
 
 package de.tuberlin.uebb.jdae.builtins;
 
+import org.apache.commons.math3.linear.RealMatrix;
+
 import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 
 public final class LinearFunctionalEquation extends FunctionalEquation {
@@ -64,6 +66,12 @@ public final class LinearFunctionalEquation extends FunctionalEquation {
     @Override
     public int unknown() {
         return index;
+    }
+
+    public void setMatrix(double t, RealMatrix m) {
+        for (int i = 0; i < variables.length; i++) {
+            m.setEntry(index, i, constant - t * timeCoefficient);
+        }
     }
 
 }
