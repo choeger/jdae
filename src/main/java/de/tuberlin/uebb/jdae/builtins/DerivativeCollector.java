@@ -56,4 +56,9 @@ public final class DerivativeCollector implements DerivativeRelation {
     public Map<Unknown, Unknown> asMap() {
         return map;
     }
+
+    @Override
+    public void remove(Unknown v) {
+        map.remove(v);
+    }
 }

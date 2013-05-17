@@ -1,9 +1,9 @@
 package de.tuberlin.uebb.jdae.dae;
 
-import org.apache.commons.math3.analysis.UnivariateVectorFunction;
+import org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableVectorFunction;
 
 public abstract class FunctionalVectorEquation implements
-        UnivariateVectorFunction {
+        UnivariateDifferentiableVectorFunction {
 
     protected double lastTime = Double.NaN;
     protected double[] lastValue = null;

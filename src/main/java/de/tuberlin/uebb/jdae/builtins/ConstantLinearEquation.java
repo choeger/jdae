@@ -26,6 +26,7 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
+import de.tuberlin.uebb.jdae.dae.ADEquation;
 import de.tuberlin.uebb.jdae.dae.ConstantLinear;
 import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
@@ -145,5 +146,23 @@ public final class ConstantLinearEquation implements ConstantLinear {
     @Override
     public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
         return variables;
+    }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown,
+            SolvableDAE system, int der_index) {
+        if (der_index == 0)
+            return specializeFor(unknown, system);
+        else {
+            final ADEquation unknown2Function[] = new ADEquation[variables
+                    .size()];
+            for (int i = 0; i < variables.size(); i++) {
+                /* This cast should never fail, if index reduction went correct */
+                unknown2Function[i] = (ADEquation) system.get(variables.get(i));
+            }
+            return new ADLinearFunctionalEquation(der_index,
+                    system.variables.get(unknown), unknown2Function,
+                    coefficients, time, constant);
+        }
     }
 }

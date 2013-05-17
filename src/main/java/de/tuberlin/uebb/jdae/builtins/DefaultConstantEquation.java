@@ -22,10 +22,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 
+import de.tuberlin.uebb.jdae.dae.ADEquation;
 import de.tuberlin.uebb.jdae.dae.ConstantEquation;
 import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.SolvableDAE;
@@ -40,6 +42,29 @@ import de.tuberlin.uebb.jdae.dae.Unknown;
 public class DefaultConstantEquation implements ConstantEquation {
 
     public static final double[] SINGLE_ONE = { 1.0 };
+
+    final class ZeroDerivative extends ADEquation {
+
+        final int u;
+        final DerivativeStructure constant;
+
+        public ZeroDerivative(int u, int order, double c) {
+            super(order);
+            this.u = u;
+            constant = new DerivativeStructure(1, order, c);
+        }
+
+        @Override
+        public DerivativeStructure compute(DerivativeStructure time) {
+            return constant;
+        }
+
+        @Override
+        public int unknown() {
+            return u;
+        }
+
+    };
 
     public final Unknown u;
 
@@ -90,6 +115,16 @@ public class DefaultConstantEquation implements ConstantEquation {
     @Override
     public UnivariateFunction residual(SolvableDAE system) {
         return null; // who needs a constant's residual?
+    }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown,
+            SolvableDAE system, int der_index) {
+        if (der_index == 0)
+            return specializeFor(unknown, system);
+        else
+            return new ZeroDerivative(system.variables.get(unknown), der_index,
+                    c);
     }
 
 }

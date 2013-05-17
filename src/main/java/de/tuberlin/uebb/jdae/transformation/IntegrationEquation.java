@@ -61,4 +61,10 @@ public final class IntegrationEquation implements Equation {
         return null;
     }
 
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown,
+            SolvableDAE system, int der_index) {
+        return null;
+    }
+
 }

@@ -19,6 +19,8 @@
 
 package de.tuberlin.uebb.jdae.builtins;
 
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import org.apache.commons.math3.exception.MathIllegalArgumentException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -113,6 +115,13 @@ public final class LinearFunctionalVectorEquation extends
     @Override
     public int[] unknown() {
         return unknowns;
+    }
+
+    @Override
+    public DerivativeStructure[] value(DerivativeStructure x)
+            throws MathIllegalArgumentException {
+        // TODO Automatisch generierter Methodenstub
+        return null;
     }
 
 }

@@ -119,6 +119,13 @@ public final class BouncingBallRadius {
                 return null; // Should not be needed
             }
 
+            @Override
+            public FunctionalEquation specializeFor(Unknown unknown,
+                    SolvableDAE system, int der_index) {
+                // should not be needed
+                return null;
+            }
+
         };
 
         this.bottom = new Equation() {
@@ -164,6 +171,15 @@ public final class BouncingBallRadius {
             @Override
             public UnivariateFunction residual(SolvableDAE system) {
                 return null;
+            }
+
+            @Override
+            public FunctionalEquation specializeFor(Unknown unknown,
+                    SolvableDAE system, int der_index) {
+                if (der_index == 0)
+                    return specializeFor(unknown, system);
+                else
+                    return null; // Should not be needed
             }
         };
         this.accel = new EqualityEquation(v, dh);

@@ -35,4 +35,6 @@ public interface DerivativeRelation extends Function<Unknown, Unknown> {
 
     public Map<Unknown, Unknown> asMap();
 
+    public void remove(Unknown v);
+
 }

@@ -18,6 +18,13 @@ public abstract class FunctionalEquation implements UnivariateFunction {
         return lastValue;
     }
 
+    public double value(double time, int derIndex) {
+        if (derIndex == 0)
+            return value(time);
+
+        throw new RuntimeException("Unexpected derivative request!");
+    }
+
     abstract public double compute(double time);
 
     public void setValue(double t, double v) {

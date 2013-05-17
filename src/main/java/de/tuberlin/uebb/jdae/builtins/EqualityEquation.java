@@ -80,4 +80,12 @@ public final class EqualityEquation implements Equality {
 
         };
     }
+
+    @Override
+    public FunctionalEquation specializeFor(Unknown unknown,
+            SolvableDAE system, int der_index) {
+        /* to prevent cycling, this should actually not happen ?? */
+        throw new UnsupportedOperationException(
+                "Equality should be equivalence!");
+    }
 }

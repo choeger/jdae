@@ -38,33 +38,6 @@ import de.tuberlin.uebb.jdae.transformation.Causalisation.Computation;
 
 public final class SolvableDAE implements FirstOrderDifferentialEquations {
 
-    /**
-     * A plain copy from a state to a derivative does not require any
-     * computation. It is necessary, though, because Java arrays must not
-     * overlap.
-     * 
-     * @author choeger
-     * 
-     */
-    public final static class CopyOp {
-        /**
-         * The index of the state variable.
-         */
-        public final int source;
-
-        /**
-         * The index of the derivative variable. Note: This is the index in the
-         * derivatives array and not the index in the system!
-         */
-        public final int target;
-
-        public CopyOp(int target, int source) {
-            super();
-            this.target = target;
-            this.source = source;
-        }
-    }
-
     public final int dimension;
 
     public long evaluations = 0;
@@ -129,8 +102,17 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations {
 
         for (int i = 0; i < causalisation.size(); i++) {
             final Computation c = causalisation.get(i);
-            computationalOrder[i] = c.eq.specializeFor(c.var, this);
-            set(variables.get(c.var), computationalOrder[i]);
+
+            computationalOrder[i] = c.eq
+                    .specializeFor(c.var, this, c.der_index);
+
+            final Integer index = variables.get(c.computed);
+            if (index >= dimension && c.der_index > 0)
+                /* AD derivative */
+                set(index, new FunctionalProxyEquation(index, 1,
+                        computationalOrder[i]));
+            else
+                set(index, computationalOrder[i]);
         }
     }
 
@@ -166,7 +148,7 @@ public final class SolvableDAE implements FirstOrderDifferentialEquations {
             if (k != null) {
                 b.put(d, k);
             } else {
-                b.put(d, b.get(state) + dimension);
+                b.put(drep, b.get(state) + dimension);
             }
         }
 

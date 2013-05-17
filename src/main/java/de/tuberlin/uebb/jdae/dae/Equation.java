@@ -30,6 +30,9 @@ public interface Equation {
     public FunctionalEquation specializeFor(final Unknown unknown,
             final SolvableDAE system);
 
+    public FunctionalEquation specializeFor(final Unknown unknown,
+            final SolvableDAE system, int der_index);
+
     public Collection<Unknown> canSolveFor(final Function<Unknown, Unknown> der);
 
     public UnivariateFunction residual(final SolvableDAE system);

@@ -89,6 +89,13 @@ public final class StiffHybrid implements LoadableModel {
             return null;
         }
 
+        @Override
+        public FunctionalEquation specializeFor(Unknown unknown,
+                SolvableDAE system, int der_index) {
+            // should not be needed
+            return null;
+        }
+
     }
 
     final class Equation2 implements Equation {
@@ -127,6 +134,13 @@ public final class StiffHybrid implements LoadableModel {
         @Override
         public UnivariateFunction residual(SolvableDAE system) {
             // not needed
+            return null;
+        }
+
+        @Override
+        public FunctionalEquation specializeFor(Unknown unknown,
+                SolvableDAE system, int der_index) {
+            // should not be needed
             return null;
         }
 
