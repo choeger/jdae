@@ -128,12 +128,9 @@ public class BouncingBall implements LoadableModel {
         public Action handleEvent(boolean increasing, ExecutableDAE dae) {
             if (!increasing) {
                 events++;
-                System.out.println("Hit event at " + dae.time() + " v = "
-                        + dae.load(v));
 
                 /* the bounce effect */
                 dae.set(v, dae.load(v) * -0.8);
-                System.out.println("v: " + dae.load(v));
                 return Action.STOP;
             }
             return Action.CONTINUE;

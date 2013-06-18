@@ -143,10 +143,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
                     }
                     index++;
                 }
-            /*
-             * System.out.println("==== Jacobian:"); for (double[] r : ret)
-             * System.out.println(Arrays.toString(r));
-             */
 
             return ret;
         }

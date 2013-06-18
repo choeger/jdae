@@ -114,19 +114,15 @@ public final class ResultStorage implements StepHandler {
      * @return a list of data points of this result
      */
     public List<double[][]> select(double from, double to, final double step) {
-        System.out.println("selecting from " + from + " to " + to
-                + "precision: " + step);
         final List<double[][]> steps = Lists
                 .newArrayListWithExpectedSize((int) ((to - from) / step));
 
         for (double[][] r : results) {
-            System.out.println("Checking " + r[0][0]);
             if (r[0][0] >= from) {
                 steps.add(r);
                 if ((from += step) >= to) {
                     break;
                 }
-                System.out.println("Going on to " + from);
             }
         }
         return steps;

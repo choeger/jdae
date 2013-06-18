@@ -38,8 +38,6 @@ public class SquareRootEquation implements
 
     @Override
     public double[] value(double[] point) throws IllegalArgumentException {
-        System.out.println("Value at " + point[0] + " = "
-                + (point[0] * point[0] + y * y - 1));
         return new double[] { point[0] * point[0] + y * y - 1 };
     }
 
