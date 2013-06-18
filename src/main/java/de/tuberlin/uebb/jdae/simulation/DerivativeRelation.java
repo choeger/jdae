@@ -23,7 +23,7 @@ import java.util.Set;
 
 import com.google.common.base.Function;
 
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 
 /**
  * @author choeger

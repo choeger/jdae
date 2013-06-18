@@ -23,15 +23,21 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
+
+import static org.hamcrest.CoreMatchers.is;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class LinearSystemTest {
 
@@ -40,35 +46,38 @@ public class LinearSystemTest {
      */
 
     private static final double PRECISION = 0.0001;
-    private static final int FIXED_STEPS = 250000;
+    private static final int FIXED_STEPS = 25000;
 
-    final static Unknown x = new SimpleVar("x");
-    final static Unknown y = new SimpleVar("y");
-    final static Equation LINEAR1 = ConstantLinearEquation.builder()
-            .add(x, 1.0).addTime(-1.0).build();
-    final static Equation LINEAR2 = ConstantLinearEquation.builder()
-            .add(x, 1.0).add(y, 1.0).addTime(-2.0).build();
+    final static de.tuberlin.uebb.jdae.hlmsl.Unknown x = new Unknown("x", 1, 0);
+    final static Unknown y = new Unknown("y", 2, 0);
+    final static Equation LINEAR1 = new ConstantLinear(-1.0, 0,
+            new double[] { 1.0 }, ImmutableList.of(x));
+    final static Equation LINEAR2 = new ConstantLinear(-2.0, 0, new double[] {
+            1.0, 1.0 }, ImmutableList.of(x, y));
+
+    final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    final Reduction reduction = runtime.reduce(ImmutableList.of(LINEAR1,
+            LINEAR2));
+    final ExecutableDAE dae = runtime.causalise(reduction,
+            ImmutableList.<GlobalEquation> of(),
+            ImmutableMap.<GlobalVariable, Double> of());
 
     @Test
     public void testCausalisation() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
-        final SolvableDAE dae = runtime.causalise(ImmutableList.of(LINEAR1,
-                LINEAR2));
         assertNotNull(dae);
+
+        assertThat(dae.layout.rows.length, is(2));
+        assertThat(dae.blocks.length, is(2));
+        assertThat(dae.states.size(), is(0));
+
     }
 
     @Test
     public void testSimulation() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
-        final SolvableDAE dae = runtime.causalise(ImmutableList.of(LINEAR1,
-                LINEAR2));
-
         double stopTime = 1.0;
-        runtime.simulateFixedStep(dae, ImmutableMap.of("x", 0.0, "y", 0.0),
-                stopTime, FIXED_STEPS);
-        assertEquals(stopTime, dae.time, PRECISION);
-        assertEquals((Double) dae.time, dae.value(x, dae.time), PRECISION);
-        assertEquals((Double) dae.time, dae.value(y, dae.time), PRECISION);
-
+        runtime.simulateFixedStep(dae, stopTime, FIXED_STEPS);
+        assertEquals(stopTime, dae.time(), PRECISION);
+        assertEquals((Double) dae.time(), dae.load(reduction, x), PRECISION);
+        assertEquals((Double) dae.time(), dae.load(reduction, y), PRECISION);
     }
 }

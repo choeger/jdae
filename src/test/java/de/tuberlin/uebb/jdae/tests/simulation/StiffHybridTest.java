@@ -18,31 +18,74 @@
  */
 package de.tuberlin.uebb.jdae.tests.simulation;
 
+import org.apache.commons.math3.ode.events.EventHandler;
 import org.junit.Test;
 
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+
 import de.tuberlin.uebb.jdae.examples.StiffHybrid;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 public class StiffHybridTest {
 
+    final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    final StiffHybrid model = new StiffHybrid(runtime);
+    final Reduction reduction = runtime.reduce(model.equations());
+
+    private GlobalEquation x1_init = new ConstantGlobalEquation(
+            reduction.ctxt.get(model.x1), 0.0);
+
+    final ExecutableDAE dae = runtime.causalise(reduction,
+            ImmutableList.of(x1_init), model.initials(reduction.ctxt));
+    final Iterable<EventHandler> events = Iterables.transform(
+            model.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+
     @Test
-    public void test() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    public void testCausalisation() {
+        assertThat(reduction.reduced.size(), is(2));
 
-        final StiffHybrid model = new StiffHybrid(runtime);
+        assertNotNull(dae);
 
-        final SolvableDAE dae = runtime.causalise(model.equations());
-
-        runtime.simulateVariableStep(dae, model.events(dae), model.initials(),
-                1000, 5e-4, Double.POSITIVE_INFINITY, 1e-4, 1e-4);
-
-        assertThat(model.events, is(1592));
+        assertThat(dae.getDimension(), is(1));
+        assertThat(dae.layout.rows.length, is(2));
     }
 
+    @Test
+    public void testInitialization() {
+
+        final ExecutableDAE dae = runtime.causalise(reduction,
+                ImmutableList.<GlobalEquation> of(x1_init),
+                model.initials(reduction.ctxt));
+
+        dae.initialize();
+
+        assertEquals(0, dae.load(reduction, model.x1.der()), 1e-8);
+        assertEquals(0.0, dae.load(reduction, model.x1), 1e-8);
+        assertEquals(1.0, dae.load(reduction, model.x2), 1e-8);
+    }
+
+    @Test
+    public void testSimulation() {
+        dae.initialize();
+
+        runtime.simulateVariableStep(dae, events, 10, Double.MIN_VALUE,
+                Double.MAX_VALUE, 1e-9, 1e-9);
+
+        assertEquals(10, dae.data[0][0], 1e-8);
+        assertThat(model.events, is(16));
+
+    }
 }

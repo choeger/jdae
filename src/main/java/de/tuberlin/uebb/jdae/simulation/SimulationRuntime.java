@@ -19,50 +19,45 @@
 package de.tuberlin.uebb.jdae.simulation;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.ode.events.EventHandler;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 public interface SimulationRuntime {
 
-    /**
-     * Create a solvable dae instance from a list of equations.
-     * 
-     * @param equations
-     *            the equations that form the model. Note: Any derivatives need
-     *            to be collected with {@code derivative_collector}!
-     * @return a solvable dae
-     */
-    public abstract SolvableDAE causalise(
-            Collection<? extends Equation> equations);
+    public Unknown newUnknown(String name);
 
-    public Function<Unknown, Unknown> der();
+    public Reduction reduce(Collection<Equation> equations);
 
-    public abstract void simulate(SolvableDAE dae,
+    public abstract ExecutableDAE causalise(Reduction reduction,
+            List<GlobalEquation> initialEquations,
+            Map<GlobalVariable, Double> startValues);
+
+    public abstract void simulate(ExecutableDAE dae,
             Iterable<EventHandler> events, SimulationOptions options);
 
-    public abstract void simulateFixedStep(SolvableDAE dae,
-            Iterable<EventHandler> events, Map<String, Double> inits,
-            double stop_time, int steps);
+    public abstract void simulateFixedStep(ExecutableDAE dae,
+            Iterable<EventHandler> events, double stop_time, int steps);
 
-    public abstract void simulateVariableStep(SolvableDAE dae,
-            Map<String, Double> inits, double stop_time, double minStep,
-            double maxStep, double absoluteTolerance, double relativeTolerance);
+    public abstract void simulateVariableStep(ExecutableDAE dae,
+            double stop_time, double minStep, double maxStep,
+            double absoluteTolerance, double relativeTolerance);
 
-    void simulateVariableStep(SolvableDAE dae, Iterable<EventHandler> events,
-            Map<String, Double> inits, double stop_time, double minStep,
-            double maxStep, double absoluteTolerance, double relativeTolerance);
+    void simulateVariableStep(ExecutableDAE dae, Iterable<EventHandler> events,
+            double stop_time, double minStep, double maxStep,
+            double absoluteTolerance, double relativeTolerance);
 
     ResultStorage lastResults();
 
-    public abstract void simulateFixedStep(SolvableDAE dae,
-            ImmutableMap<String, Double> of, double stopTime, int fixedSteps);
+    public abstract void simulateFixedStep(ExecutableDAE dae, double stopTime,
+            int fixedSteps);
 
 }

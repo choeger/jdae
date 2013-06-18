@@ -19,8 +19,6 @@
 
 package de.tuberlin.uebb.jdae.simulation;
 
-import java.util.Map;
-
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 
 import com.google.common.base.Objects;
@@ -36,11 +34,8 @@ public final class SimulationOptions {
 
     public final double tolerance;
 
-    public final Map<String, Double> initialValues;
-
     public SimulationOptions(double startTime, double stopTime, double tol,
-            double minStep, double maxStep, FirstOrderIntegrator integrator,
-            Map<String, Double> initials) {
+            double minStep, double maxStep, FirstOrderIntegrator integrator) {
         super();
         this.startTime = startTime;
         this.minStepSize = minStep;
@@ -48,7 +43,6 @@ public final class SimulationOptions {
         this.tolerance = tol;
         this.stopTime = stopTime;
         this.integrator = integrator;
-        this.initialValues = initials;
     }
 
     public String toString() {
@@ -56,7 +50,6 @@ public final class SimulationOptions {
                 .add("stopTime", stopTime).add("integrator", integrator)
                 .add("minStepSize", minStepSize)
                 .add("maxStepSize", maxStepSize).add("tolerance", tolerance)
-                .add("initial values", initialValues).toString();
+                .toString();
     }
-
 }

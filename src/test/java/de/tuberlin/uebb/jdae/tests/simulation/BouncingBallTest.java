@@ -18,36 +18,77 @@
  */
 package de.tuberlin.uebb.jdae.tests.simulation;
 
+import org.apache.commons.math3.ode.events.EventHandler;
 import org.junit.Test;
 
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+
 import de.tuberlin.uebb.jdae.examples.BouncingBall;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 public class BouncingBallTest {
 
+    final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    final BouncingBall model = new BouncingBall(runtime);
+    final Reduction reduction = runtime.reduce(model.equations());
+
+    private GlobalEquation h_init = new ConstantGlobalEquation(
+            reduction.ctxt.get(model.h), 10.0);
+
+    final ExecutableDAE dae = runtime.causalise(reduction,
+            ImmutableList.of(h_init), model.initials(reduction.ctxt));
+    final Iterable<EventHandler> events = Iterables.transform(
+            model.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+
     @Test
-    public void test() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    public void testCausalisation() {
+        /* d2h and b */
+        assertThat(reduction.reduced.size(), is(2));
 
-        final BouncingBall model = new BouncingBall(runtime);
+        assertNotNull(dae);
 
-        final SolvableDAE dae = runtime.causalise(model.equations());
+        /* h and dh */
+        assertThat(dae.getDimension(), is(2));
 
-        runtime.simulateVariableStep(dae, model.events(dae), model.initials(),
-                10.0, Double.MAX_VALUE, Double.MAX_VALUE, 1e-6, 1e-6);
+        /* h and b */
+        assertThat(dae.layout.rows.length, is(2));
+    }
 
-        /*
-         * runtime.simulateFixedStep(dae, model.events(dae), model.initials(),
-         * 10, 10000);
-         */
+    @Test
+    public void testInitialization() {
 
+        final ExecutableDAE dae = runtime.causalise(reduction,
+                ImmutableList.<GlobalEquation> of(h_init),
+                model.initials(reduction.ctxt));
+
+        dae.initialize();
+
+        assertEquals(10.0, dae.load(reduction, model.h), 1e-6);
+    }
+
+    @Test
+    public void testSimulation() {
+        dae.initialize();
+
+        runtime.simulateVariableStep(dae, events, 10, Double.MIN_VALUE,
+                Double.MAX_VALUE, 1e-6, 1e-6);
+
+        assertEquals(10, dae.data[0][0], 1e-8);
         assertThat(model.events, is(7));
+
     }
 
 }

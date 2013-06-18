@@ -23,14 +23,21 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class SimpleIntegrationTest {
 
@@ -41,25 +48,33 @@ public class SimpleIntegrationTest {
      * der(x) = x;
      */
     final SimulationRuntime runtime = new DefaultSimulationRuntime();
-    final Unknown x = new SimpleVar("x");
-    final Unknown dx = runtime.der().apply(x);
-    final Equation eq = ConstantLinearEquation.builder().add(dx, 1.0)
-            .add(x, -1).build();
+    final Unknown x = new Unknown("x", 1, 0);
+    final Unknown dx = x.der();
+    final Equation eq = new ConstantLinear(0, 0, new double[] { 1, -1 },
+            ImmutableList.of(x, dx));
+
+    final Reduction reduction = runtime.reduce(ImmutableList.of(eq));
+    final ExecutableDAE dae = runtime
+            .causalise(reduction, ImmutableList.of(new ConstantEquation(x, 1.0)
+                    .bind(reduction.ctxt)), ImmutableMap
+                    .<GlobalVariable, Double> of());
 
     @Test
     public void testCausalisation() {
-        final SolvableDAE dae = runtime.causalise(ImmutableList.of(eq));
-        assertEquals(dae.variables.get(dx),
-                (Integer) dae.computationalOrder[0].unknown());
+        assertThat(dae, is(notNullValue()));
+        assertThat(dae.layout.rows.length, is(1));
+        assertThat(dae.states.size(), is(1));
     }
 
     @Test
     public void testSimulation() {
+        dae.initialize();
+        assertEquals(1.0, dae.load(reduction, x), PRECISION);
+        assertEquals(1.0, dae.load(reduction, dx), PRECISION);
+
         int stop_time = 1;
-        SolvableDAE dae = runtime.causalise(ImmutableList.of(eq));
-        runtime.simulateFixedStep(dae, ImmutableMap.of("x", 1.0), stop_time,
-                FIXED_STEPS);
-        assertEquals((Double) dae.value(x, stop_time), Math.exp(stop_time),
+        runtime.simulateFixedStep(dae, stop_time, FIXED_STEPS);
+        assertEquals(Math.exp(stop_time), (Double) dae.load(reduction, x),
                 PRECISION);
     }
 }

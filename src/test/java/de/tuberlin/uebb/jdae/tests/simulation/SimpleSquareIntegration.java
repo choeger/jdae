@@ -23,69 +23,57 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
+import de.tuberlin.uebb.jdae.transformation.Reduction;
+
+import static org.hamcrest.CoreMatchers.is;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class SimpleSquareIntegration {
 
     private static final double PRECISION = 0.0001;
     private static final int FIXED_STEPS = 250000;
 
-    private static final double MIN_STEPSIZE = PRECISION;
-    private static final double MAX_STEPSIZE = 1.0;
-    private static final double RTOL = 0.0001;
-
-    public static SolvableDAE model(SimulationRuntime runtime) {
-
-        /*
-         * der(x) = 2*time + 1;
-         */
-        final Unknown x = new SimpleVar("x");
-        final Unknown dx = runtime.der().apply(x);
-        final Equation eq = ConstantLinearEquation.builder().add(dx, 1.0)
-                .addTime(-2).addConstant(1.0).build();
-
-        return runtime.causalise(ImmutableList.of(eq));
-    }
+    /*
+     * der(x) = 2*time + 1; der(x) - 2*time = 1;
+     */
+    final SimulationRuntime runtime = new DefaultSimulationRuntime();
+    final Unknown x = new Unknown("x", 1, 0);
+    final Unknown dx = x.der();
+    final Equation eq = new ConstantLinear(-2, 1, new double[] { 1 },
+            ImmutableList.of(dx));
+    final Reduction reduction = runtime.reduce(ImmutableList.of(eq));
+    final ExecutableDAE dae = runtime
+            .causalise(reduction, ImmutableList.of(new ConstantEquation(x, 0.0)
+                    .bind(reduction.ctxt)), ImmutableMap
+                    .<GlobalVariable, Double> of());
 
     @Test
     public void testCausalisation() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
-        final SolvableDAE dae = model(runtime);
-        assertEquals(1, dae.computationalOrder[0].unknown());
+
+        assertThat(dae.layout.rows.length, is(1));
+        assertThat(dae.blocks.length, is(1));
+        assertThat(dae.states.size(), is(1));
     }
 
     @Test
     public void testSimulation() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
         int stop_time = 2;
-        final SolvableDAE dae = model(runtime);
-        runtime.simulateFixedStep(dae, ImmutableMap.of("x", 0.0), stop_time,
-                FIXED_STEPS);
 
-        final double t = dae.time;
+        runtime.simulateFixedStep(dae, stop_time, FIXED_STEPS);
+
+        final double t = dae.time();
         assertEquals(stop_time, t, PRECISION);
-        assertEquals(2 * t + 1, (Double) dae.value(1, t), PRECISION);
-        assertEquals(t * t + t, (Double) dae.value(0, t), PRECISION);
-    }
-
-    @Test
-    public void testVariableStepSimulation() {
-        final SimulationRuntime runtime = new DefaultSimulationRuntime();
-        int stop_time = 2;
-        final SolvableDAE dae = model(runtime);
-        runtime.simulateVariableStep(dae, ImmutableMap.of("x", 0.0), stop_time,
-                MIN_STEPSIZE, MAX_STEPSIZE, PRECISION, RTOL);
-
-        final double t = dae.time;
-        assertEquals(stop_time, t, PRECISION);
-        assertEquals(2 * t + 1, dae.value(1, t), PRECISION);
-        assertEquals(t * t + t, dae.value(0, t), PRECISION);
+        assertEquals(2 * t + 1, (Double) dae.load(reduction, dx), PRECISION);
+        assertEquals(t * t + t, (Double) dae.load(reduction, x), PRECISION);
     }
 }

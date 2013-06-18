@@ -19,38 +19,43 @@
 package de.tuberlin.uebb.jdae.examples;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.ode.events.EventHandler;
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import org.apache.commons.math3.ode.events.EventHandler.Action;
+import org.apache.commons.math3.util.FastMath;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.ContinuousEvent;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
+import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.IBlock;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 public final class StiffHybrid implements LoadableModel {
 
+    public final Unknown x1;
+    public final Unknown x2;
+    final Unknown dx1;
     final SimulationRuntime runtime;
 
     public StiffHybrid(SimulationRuntime runtime) {
         super();
         this.runtime = runtime;
-
-        dx1 = runtime.der().apply(x1);
+        x1 = runtime.newUnknown("x1");
+        x2 = runtime.newUnknown("x2");
+        dx1 = x1.der();
     }
-
-    final Unknown x1 = new SimpleVar("x1");
-    final Unknown x2 = new SimpleVar("x2");
-    final Unknown dx1;
 
     int delta = 1;
     public int events = 0;
@@ -58,42 +63,62 @@ public final class StiffHybrid implements LoadableModel {
     final class Equation1 implements Equation {
 
         @Override
-        public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
+        public Collection<Unknown> unknowns() {
             return ImmutableList.of(dx1);
         }
 
         @Override
-        public FunctionalEquation specializeFor(Unknown unknown,
-                SolvableDAE system) {
-            if (unknown == dx1) {
-                final int i = system.variables.get(dx1);
-                return new FunctionalEquation() {
+        public GlobalEquation bind(final Map<Unknown, GlobalVariable> ctxt) {
+            return new GlobalEquation() {
 
-                    @Override
-                    public int unknown() {
-                        return i;
-                    }
+                final GlobalVariable gdx1 = ctxt.get(dx1);
 
-                    @Override
-                    public double compute(double time) {
-                        return Math.sin(time * 10.0);
-                    }
-                };
-            }
-            throw new IllegalArgumentException("Cannot solve for " + unknown);
-        }
+                @Override
+                public boolean canSpecializeFor(GlobalVariable v) {
+                    return v.equals(gdx1);
+                }
 
-        @Override
-        public UnivariateFunction residual(SolvableDAE system) {
-            // should not be needed
-            return null;
-        }
+                @Override
+                public IBlock specializeFor(final GlobalVariable v,
+                        final ExecutableDAE dae) {
+                    if (v.equals(gdx1))
+                        return new IBlock() {
 
-        @Override
-        public FunctionalEquation specializeFor(Unknown unknown,
-                SolvableDAE system, int der_index) {
-            // should not be needed
-            return null;
+                            @Override
+                            public void exec() {
+                                dae.data[gdx1.index][gdx1.der] = FastMath
+                                        .sin(10 * dae.time());
+                            }
+
+                            @Override
+                            public Iterable<GlobalVariable> variables() {
+                                return ImmutableList.of(gdx1);
+                            }
+
+                        };
+                    throw new IllegalArgumentException("Cannot specialize for "
+                            + v);
+                }
+
+                @Override
+                public List<GlobalVariable> need() {
+                    return ImmutableList.of(gdx1);
+                }
+
+                @Override
+                public BlockEquation bind(
+                        final Map<GlobalVariable, BlockVariable> blockCtxt) {
+                    final BlockVariable bdx1 = blockCtxt.get(gdx1);
+                    return new BlockEquation() {
+
+                        @Override
+                        public DerivativeStructure exec(ExecutionContext m) {
+                            return m.load(bdx1).subtract(
+                                    m.time().multiply(10).sin());
+                        }
+                    };
+                }
+            };
         }
 
     }
@@ -101,79 +126,110 @@ public final class StiffHybrid implements LoadableModel {
     final class Equation2 implements Equation {
 
         @Override
-        public Collection<Unknown> canSolveFor(Function<Unknown, Unknown> der) {
+        public Collection<Unknown> unknowns() {
             return ImmutableList.of(x1, x2);
         }
 
         @Override
-        public FunctionalEquation specializeFor(Unknown unknown,
-                SolvableDAE system) {
-            if (unknown == x2) {
-                final int i = system.variables.get(x2);
-                final FunctionalEquation f_x1 = system.get(system.variables
-                        .get(x1));
-                return new FunctionalEquation() {
+        public GlobalEquation bind(final Map<Unknown, GlobalVariable> ctxt) {
+            final GlobalVariable gx1 = ctxt.get(x1), gx2 = ctxt.get(x2);
+            return new GlobalEquation() {
 
-                    @Override
-                    public int unknown() {
-                        return i;
+                @Override
+                public List<GlobalVariable> need() {
+                    return ImmutableList.of(gx1, gx2);
+                }
+
+                @Override
+                public boolean canSpecializeFor(GlobalVariable v) {
+                    return !gx1.equals(gx2) && (v.equals(gx1) || v.equals(gx2));
+                }
+
+                @Override
+                public IBlock specializeFor(GlobalVariable v,
+                        final ExecutableDAE dae) {
+                    if (v.equals(gx1)) {
+                        return new IBlock() {
+
+                            @Override
+                            public void exec() {
+                                dae.data[gx1.index][gx1.der] = dae.data[gx2.index][gx2.der]
+                                        - delta;
+                            }
+
+                            @Override
+                            public Iterable<GlobalVariable> variables() {
+                                return ImmutableList.of(gx1);
+                            }
+                        };
+                    } else if (v.equals(gx2)) {
+                        return new IBlock() {
+
+                            @Override
+                            public void exec() {
+                                dae.data[gx2.index][gx2.der] = dae.data[gx1.index][gx1.der]
+                                        + delta;
+                            }
+
+                            @Override
+                            public Iterable<GlobalVariable> variables() {
+                                return ImmutableList.of(gx2);
+                            }
+                        };
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Cannot specialize for " + v);
                     }
+                }
 
-                    @Override
-                    public double compute(double time) {
-                        return f_x1.value(time) + delta;
-                    }
-                };
-            } else {
-                throw new IllegalArgumentException(
-                        "This system should have been completely causalised!"
-                                + unknown);
-            }
-        }
+                @Override
+                public BlockEquation bind(
+                        final Map<GlobalVariable, BlockVariable> blockCtxt) {
+                    final BlockVariable bx1 = blockCtxt.get(gx1), bx2 = blockCtxt
+                            .get(gx2);
+                    return new BlockEquation() {
 
-        @Override
-        public UnivariateFunction residual(SolvableDAE system) {
-            // not needed
-            return null;
-        }
-
-        @Override
-        public FunctionalEquation specializeFor(Unknown unknown,
-                SolvableDAE system, int der_index) {
-            // should not be needed
-            return null;
+                        @Override
+                        public DerivativeStructure exec(ExecutionContext m) {
+                            return m.load(bx2).subtract(m.load(bx1).add(delta));
+                        }
+                    };
+                }
+            };
         }
 
     }
 
     public final class Event1 extends ContinuousEvent {
 
-        final int x1;
-        final SolvableDAE system;
+        final GlobalVariable x1;
 
-        public Event1(int x1, SolvableDAE dae) {
+        public Event1(GlobalVariable x1) {
             super();
             this.x1 = x1;
-            this.system = dae;
         }
 
         @Override
-        public Action eventOccurred(double t, double[] y, boolean increasing) {
-            // System.err.println("Event hit t=" + t + " x1=" + y[x1] + " inc="
-            // + increasing);
-            if (increasing) {
+        public Collection<GlobalVariable> vars() {
+            return ImmutableList.of(x1);
+        }
+
+        @Override
+        public Action handleEvent(boolean increasing, ExecutableDAE dae) {
+            if (!increasing) {
                 events++;
                 delta = delta == 1 ? 0 : 1;
+                return Action.STOP;
             }
             return Action.CONTINUE;
         }
 
         @Override
-        public double g(double t, double[] y) {
-            final double[] derivatives = new double[y.length];
-            system.computeDerivatives(t, y, derivatives);
-            return y[x1] - 1.1;
+        public double f(ExecutableDAE dae) {
+            final double load = dae.load(x1);
+            return load - 0.1;
         }
+
     }
 
     public ImmutableList<Equation> equations() {
@@ -181,8 +237,9 @@ public final class StiffHybrid implements LoadableModel {
     }
 
     @Override
-    public Map<String, Double> initials() {
-        return ImmutableMap.of("x1", 1.0, "x2", 0.0);
+    public Map<GlobalVariable, Double> initials(
+            Map<Unknown, GlobalVariable> ctxt) {
+        return ImmutableMap.of(ctxt.get(x1), 1.0, ctxt.get(x2), 0.0);
     }
 
     @Override
@@ -191,8 +248,9 @@ public final class StiffHybrid implements LoadableModel {
     }
 
     @Override
-    public Collection<EventHandler> events(SolvableDAE dae) {
-        return ImmutableList.<EventHandler> of(new Event1(
-                dae.variables.get(x1), dae));
+    public Collection<ContinuousEvent> events(
+            final Map<Unknown, GlobalVariable> ctxt) {
+        final ContinuousEvent e = new Event1(ctxt.get(x1));
+        return ImmutableList.of(e);
     }
 }

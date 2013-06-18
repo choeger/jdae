@@ -19,24 +19,26 @@
 package de.tuberlin.uebb.jdae.examples;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.ode.events.EventHandler;
+import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import org.apache.commons.math3.ode.events.EventHandler.Action;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
-import de.tuberlin.uebb.jdae.builtins.DefaultConstantEquation;
-import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.ContinuousEvent;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
+import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
+import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
+import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 /**
@@ -55,12 +57,7 @@ public final class BouncingBallRadius {
     final double radius = 0.5;
     final int index;
 
-    public final Unknown e;
-    final Unknown h;
-    final Unknown v;
-    final Unknown b;
-    final Unknown dh;
-    final Unknown dv;
+    public final Unknown e, h, v, b, dh, dv;
 
     final Equation evals, freeFall, accel, bottom;
     private final BouncingBallArray parent;
@@ -71,59 +68,49 @@ public final class BouncingBallRadius {
         this.index = idx;
         this.parent = parent;
 
-        this.e = new SimpleVar(MessageFormat.format("ball[{0}].evals", idx));
-        this.b = new SimpleVar(MessageFormat.format("ball[{0}].bottom", idx));
-        this.h = new SimpleVar(MessageFormat.format("ball[{0}].h", idx));
-        this.v = new SimpleVar(MessageFormat.format("ball[{0}].v", idx));
+        this.e = runtime.newUnknown(MessageFormat
+                .format("ball[{0}].evals", idx));
+        this.b = runtime.newUnknown(MessageFormat.format("ball[{0}].bottom",
+                idx));
+        this.h = runtime.newUnknown(MessageFormat.format("ball[{0}].h", idx));
+        this.v = runtime.newUnknown(MessageFormat.format("ball[{0}].v", idx));
 
         this.runtime = runtime;
-        this.dh = runtime.der().apply(h);
-        this.dv = runtime.der().apply(v);
+        this.dh = h.der();
+        this.dv = v.der();
 
-        this.freeFall = new DefaultConstantEquation(dv, -9.81);
+        this.freeFall = new ConstantEquation(dv, -9.81);
 
         this.evals = new Equation() {
 
             @Override
-            public Collection<Unknown> canSolveFor(
-                    Function<Unknown, Unknown> der) {
-                return ImmutableList.of(e, b);
+            public Collection<Unknown> unknowns() {
+                return ImmutableList.of(e);
             }
 
             @Override
-            public FunctionalEquation specializeFor(Unknown unknown,
-                    SolvableDAE system) {
-                final int e_i = system.variables.get(e);
-                if (unknown == e) {
-                    return new FunctionalEquation() {
+            public GlobalEquation bind(final Map<Unknown, GlobalVariable> ctxt) {
+                return new GlobalEquation() {
+                    final GlobalVariable ge = ctxt.get(e);
 
-                        @Override
-                        public int unknown() {
-                            return e_i;
-                        }
+                    @Override
+                    public List<GlobalVariable> need() {
+                        return ImmutableList.of(ge);
+                    }
 
-                        @Override
-                        public double compute(double time) {
-                            return evaluations;
-                        }
+                    @Override
+                    public BlockEquation bind(
+                            final Map<GlobalVariable, BlockVariable> blockCtxt) {
+                        return new BlockEquation() {
+                            final BlockVariable be = blockCtxt.get(ge);
 
-                    };
-                }
-
-                throw new IllegalArgumentException("Cannot solve for "
-                        + unknown);
-            }
-
-            @Override
-            public UnivariateFunction residual(SolvableDAE system) {
-                return null; // Should not be needed
-            }
-
-            @Override
-            public FunctionalEquation specializeFor(Unknown unknown,
-                    SolvableDAE system, int der_index) {
-                // should not be needed
-                return null;
+                            @Override
+                            public DerivativeStructure exec(ExecutionContext m) {
+                                return m.load(be).subtract(evaluations);
+                            }
+                        };
+                    }
+                };
             }
 
         };
@@ -131,123 +118,79 @@ public final class BouncingBallRadius {
         this.bottom = new Equation() {
 
             @Override
-            public Collection<Unknown> canSolveFor(
-                    Function<Unknown, Unknown> der) {
-                ArrayList<Unknown> pseudodeps = Lists
-                        .newArrayListWithCapacity(index);
-                for (int i = 0; i < index; i++)
-                    pseudodeps.add(parent.balls[i].b);
-
-                return pseudodeps;
+            public Collection<Unknown> unknowns() {
+                return ImmutableList.of(b, h);
             }
 
             @Override
-            public FunctionalEquation specializeFor(final Unknown unknown,
-                    final SolvableDAE system) {
-                final int bottom_i = system.variables.get(b);
-                final int h_i = system.variables.get(h);
+            public GlobalEquation bind(final Map<Unknown, GlobalVariable> ctxt) {
+                return new GlobalEquation() {
+                    final GlobalVariable gb = ctxt.get(b), gh = ctxt.get(h);
 
-                if (unknown == b) {
-                    return new FunctionalEquation() {
+                    @Override
+                    public List<GlobalVariable> need() {
+                        return ImmutableList.of(gb, gh);
+                    }
 
-                        @Override
-                        public int unknown() {
-                            return bottom_i;
-                        }
+                    @Override
+                    public BlockEquation bind(
+                            final Map<GlobalVariable, BlockVariable> blockCtxt) {
+                        return new BlockEquation() {
+                            final BlockVariable bb = blockCtxt.get(gb),
+                                    bh = blockCtxt.get(gh);
 
-                        @Override
-                        public double compute(double time) {
-                            evaluations++;
-                            return system.value(h_i, time) - 0.5;
-                        }
-
-                    };
-                } else {
-                    throw new IllegalArgumentException("Cannot solve for "
-                            + unknown);
-                }
-            }
-
-            @Override
-            public UnivariateFunction residual(SolvableDAE system) {
-                return null;
-            }
-
-            @Override
-            public FunctionalEquation specializeFor(Unknown unknown,
-                    SolvableDAE system, int der_index) {
-                if (der_index == 0)
-                    return specializeFor(unknown, system);
-                else
-                    return null; // Should not be needed
+                            @Override
+                            public DerivativeStructure exec(ExecutionContext m) {
+                                evaluations++;
+                                return m.load(bb).subtract(m.load(bh)).add(0.5);
+                            }
+                        };
+                    }
+                };
             }
         };
-        this.accel = new EqualityEquation(v, dh);
+        this.accel = new Equality(v, dh);
     }
 
     public Collection<Equation> equations() {
         return ImmutableList.of(bottom, freeFall, accel, evals);
     }
 
-    public Collection<EventHandler> events(SolvableDAE ctxt) {
-        return ImmutableList.<EventHandler> of(new BounceEvent(ctxt));
+    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
+        return ImmutableList.of((ContinuousEvent) new BounceEvent(ctxt.get(b),
+                ctxt.get(v)));
     }
 
     public final class BounceEvent extends ContinuousEvent {
 
-        final int v_i, h_i, b_i;
-        final SolvableDAE ctxt;
-        final FunctionalEquation event;
+        final GlobalVariable b, v;
 
-        public BounceEvent(SolvableDAE pCtxt) {
-            this.ctxt = pCtxt;
-            v_i = ctxt.variables.get(v);
-            h_i = ctxt.variables.get(h);
-            b_i = ctxt.variables.get(b);
-
-            event = new FunctionalEventEquation() {
-
-                @Override
-                public double compute(double time) {
-                    return ctxt.get(b_i).value(time);
-                }
-
-            };
+        public BounceEvent(GlobalVariable b, GlobalVariable v) {
+            super();
+            this.b = b;
+            this.v = v;
         }
 
         @Override
-        public Action eventOccurred(double t, double[] vars, boolean inc) {
-            if (!inc) {
-                System.out.println("Hit event @" + t);
+        public Collection<GlobalVariable> vars() {
+            return ImmutableList.of(b);
+        }
+
+        @Override
+        public Action handleEvent(boolean increasing, ExecutableDAE dae) {
+            if (!increasing) {
                 events++;
 
                 /* the bounce effect */
-                vars[v_i] = -0.8 * vars[v_i];
-                ctxt.get(v_i).setValue(t, vars[v_i]);
-
-                /* ensure promise */
-                event.setValue(t, 0.0);
-
-                ctxt.stop(t, vars);
+                dae.set(v, dae.load(v) * -0.8);
                 return Action.STOP;
             }
             return Action.CONTINUE;
         }
 
         @Override
-        public double g(double t, double[] vars) {
-            ctxt.stateVector = vars;
-            return event.value(t);
-        }
-
-        @Override
-        public void init(double t0, double[] vars, double t) {
-
-        }
-
-        @Override
-        public void resetState(double time, double[] vars) {
-            vars[v_i] = -0.8 * vars[v_i];
+        public double f(ExecutableDAE dae) {
+            return dae.load(b);
         }
 
     }

@@ -24,10 +24,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
@@ -39,38 +37,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
 
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 
 public final class ResultStorage implements StepHandler {
 
-    public static final class Step {
-        public final double time;
-        public final double[] states;
-        public final double[] algebraics;
-        public final double[] derivatives;
+    private final ExecutableDAE dae;
+    public final LinkedList<double[][]> results;
 
-        public Step(double time, double[] derivatives, double[] states,
-                double[] algebraics) {
-            super();
-            this.time = time;
-            this.states = states;
-            this.derivatives = derivatives;
-            this.algebraics = algebraics;
-        }
-
-        public String toString() {
-            return String.format(Locale.ENGLISH,
-                    "derivatives: %s algebraics: %s states: %s", states,
-                    derivatives, algebraics);
-
-        }
-    }
-
-    private final SolvableDAE dae;
-    public final LinkedList<Step> results;
-
-    public ResultStorage(SolvableDAE dae, int estimatedSteps) {
+    public ResultStorage(ExecutableDAE dae) {
         super();
         this.dae = dae;
         results = Lists.newLinkedList();
@@ -78,10 +53,12 @@ public final class ResultStorage implements StepHandler {
 
     @Override
     public void handleStep(StepInterpolator arg0, boolean arg1) {
+        if (dae.data[0][0] != arg0.getInterpolatedTime()) {
+            dae.computeDerivatives(arg0.getInterpolatedTime(),
+                    arg0.getInterpolatedState(), new double[dae.getDimension()]);
+        }
 
-        addResult(arg0.getInterpolatedTime(),
-                arg0.getInterpolatedDerivatives(), arg0.getInterpolatedState());
-
+        addResult(dae.data);
     }
 
     // TODO Automatisch generierter Methodenstub
@@ -100,14 +77,14 @@ public final class ResultStorage implements StepHandler {
 
             JsonArray jResults = new JsonArray();
 
-            for (Unknown u : dae.variables.keySet()) {
+            for (GlobalVariable var : dae.layout) {
                 JsonObject obj = new JsonObject();
-                obj.add("label", new JsonPrimitive(u.toString()));
+                obj.add("label", new JsonPrimitive(var.toString()));
                 JsonArray data = new JsonArray();
-                for (Step step : results) {
+                for (double[][] step : results) {
                     JsonArray point = new JsonArray();
-                    point.add(new JsonPrimitive(step.time));
-                    point.add(new JsonPrimitive(dae.valueAt(step, u)));
+                    point.add(new JsonPrimitive(step[0][0]));
+                    point.add(new JsonPrimitive(step[var.index][var.der]));
                     data.add(point);
                 }
                 obj.add("data", data);
@@ -136,15 +113,15 @@ public final class ResultStorage implements StepHandler {
      *            the maximal step size between to data points in the view
      * @return a list of data points of this result
      */
-    public List<Step> select(double from, double to, final double step) {
+    public List<double[][]> select(double from, double to, final double step) {
         System.out.println("selecting from " + from + " to " + to
                 + "precision: " + step);
-        final List<Step> steps = Lists
+        final List<double[][]> steps = Lists
                 .newArrayListWithExpectedSize((int) ((to - from) / step));
 
-        for (Step r : results) {
-            System.out.println("Checking " + r.time);
-            if (r.time >= from) {
+        for (double[][] r : results) {
+            System.out.println("Checking " + r[0][0]);
+            if (r[0][0] >= from) {
                 steps.add(r);
                 if ((from += step) >= to) {
                     break;
@@ -152,36 +129,15 @@ public final class ResultStorage implements StepHandler {
                 System.out.println("Going on to " + from);
             }
         }
-
-        for (Step step2 : steps) {
-            System.out.println(step2.time + " "
-                    + Arrays.toString(step2.algebraics));
-        }
-
         return steps;
     }
 
-    public Iterable<Unknown> variables() {
-        return dae.variables.keySet();
-    }
-
-    public double valueAt(Step step, Unknown u) {
-        return dae.valueAt(step, u);
-    }
-
-    public void addResult(double time, double[] derivatives, double[] states) {
-        while (!results.isEmpty() && (results.peekLast().time >= time)) {
+    public void addResult(double[][] data) {
+        while (!results.isEmpty() && (results.peekLast()[0][0] >= data[0][0])) {
             results.removeLast();
         }
 
-        final double algVector[] = new double[dae.algebraics.length];
-
-        for (int i = 0; i < algVector.length; i++) {
-            algVector[i] = dae.algebraics[i].value(time);
-        }
-
-        results.add(new Step(time, Arrays.copyOf(derivatives, dae.dimension),
-                Arrays.copyOf(states, dae.dimension), algVector));
+        results.add(data);
     }
 
 }

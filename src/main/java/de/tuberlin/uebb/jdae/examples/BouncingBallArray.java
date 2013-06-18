@@ -22,15 +22,15 @@ package de.tuberlin.uebb.jdae.examples;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 
-import de.tuberlin.uebb.jdae.dae.Equation;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 public class BouncingBallArray implements LoadableModel {
@@ -43,9 +43,9 @@ public class BouncingBallArray implements LoadableModel {
     }
 
     @Override
-    public Map<String, Double> initials() {
-        return ImmutableMap.of(balls[0].h.toString(), 5.0,
-                balls[1].h.toString(), 10.0, balls[2].h.toString(), 20.0);
+    public Map<GlobalVariable, Double> initials(Map<Unknown, GlobalVariable> ctxt) {
+        return ImmutableMap.of(ctxt.get(balls[0].h), 5.0, ctxt.get(balls[1].h), 10.0, ctxt.get(balls[2].h),
+                20.0);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class BouncingBallArray implements LoadableModel {
     }
 
     @Override
-    public Collection<EventHandler> events(SolvableDAE ctxt) {
+    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
         return ImmutableList.copyOf(Iterables.concat(balls[0].events(ctxt),
                 balls[1].events(ctxt), balls[2].events(ctxt)));
     }

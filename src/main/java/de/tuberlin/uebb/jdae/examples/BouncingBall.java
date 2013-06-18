@@ -21,21 +21,20 @@ package de.tuberlin.uebb.jdae.examples;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler;
+import org.apache.commons.math3.ode.events.EventHandler.Action;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import de.tuberlin.uebb.jdae.builtins.ConstantLinearEquation;
-import de.tuberlin.uebb.jdae.builtins.DefaultConstantEquation;
-import de.tuberlin.uebb.jdae.builtins.EqualityEquation;
-import de.tuberlin.uebb.jdae.builtins.SimpleVar;
-import de.tuberlin.uebb.jdae.dae.ContinuousEvent;
-import de.tuberlin.uebb.jdae.dae.Equation;
-import de.tuberlin.uebb.jdae.dae.FunctionalEquation;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
-import de.tuberlin.uebb.jdae.dae.SolvableDAE;
-import de.tuberlin.uebb.jdae.dae.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
+import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 /**
@@ -50,11 +49,15 @@ public class BouncingBall implements LoadableModel {
 
     final SimulationRuntime runtime;
 
-    final Unknown h = new SimpleVar("h");
-    final Unknown v = new SimpleVar("v");
-    final Unknown b = new SimpleVar("b");
+    public final Unknown h;
 
-    final Unknown dh, dv;
+    final Unknown v;
+
+    final Unknown b;
+
+    final Unknown dh;
+
+    final Unknown dv;
 
     final Equation freeFall;
     final Equation bottom;
@@ -63,14 +66,16 @@ public class BouncingBall implements LoadableModel {
     public BouncingBall(SimulationRuntime runtime) {
         super();
         this.runtime = runtime;
-        this.dh = runtime.der().apply(h);
-        this.dv = runtime.der().apply(v);
+        this.h = runtime.newUnknown("h");
+        this.v = runtime.newUnknown("v");
+        this.b = runtime.newUnknown("b");
+        this.dh = h.der();
+        this.dv = v.der();
 
-        this.bottom = ConstantLinearEquation.builder().add(b, 1).add(h, -1)
-                .addConstant(-0.5).build();
-
-        this.freeFall = new DefaultConstantEquation(dv, -9.81);
-        this.accel = new EqualityEquation(v, dh);
+        this.bottom = new ConstantLinear(0.0, -0.5, new double[] { 1, -1 },
+                ImmutableList.of(b, h));
+        this.freeFall = new ConstantEquation(dv, -9.81);
+        this.accel = new Equality(v, dh);
     }
 
     /*
@@ -79,8 +84,9 @@ public class BouncingBall implements LoadableModel {
      * @see de.tuberlin.uebb.jdae.dae.LoadableModel#initials()
      */
     @Override
-    public Map<String, Double> initials() {
-        return ImmutableMap.of("h", 10.0);
+    public Map<GlobalVariable, Double> initials(
+            Map<Unknown, GlobalVariable> ctxt) {
+        return ImmutableMap.of(ctxt.get(h), 10.0);
     }
 
     /*
@@ -103,75 +109,48 @@ public class BouncingBall implements LoadableModel {
         return "Bouncing Ball";
     }
 
-    /*
-     * (nicht-Javadoc)
-     * 
-     * @see
-     * de.tuberlin.uebb.jdae.dae.LoadableModel#events(de.tuberlin.uebb.jdae.
-     * dae.SolvableDAE)
-     */
-    @Override
-    public Collection<EventHandler> events(SolvableDAE ctxt) {
-        return ImmutableList.<EventHandler> of(new BounceEvent(ctxt));
-    }
-
     public final class BounceEvent extends ContinuousEvent {
 
-        final int v_i, h_i, b_i;
-        final SolvableDAE ctxt;
-        final FunctionalEquation event;
+        final GlobalVariable h, v;
 
-        public BounceEvent(SolvableDAE pCtxt) {
-            this.ctxt = pCtxt;
-            v_i = ctxt.variables.get(v);
-            h_i = ctxt.variables.get(h);
-            b_i = ctxt.variables.get(b);
-
-            event = new FunctionalEventEquation() {
-
-                @Override
-                public double compute(double time) {
-                    return ctxt.get(b_i).value(time);
-                }
-
-            };
+        public BounceEvent(GlobalVariable h, GlobalVariable v) {
+            super();
+            this.h = h;
+            this.v = v;
         }
 
         @Override
-        public Action eventOccurred(double t, double[] vars, boolean inc) {
-            if (!inc) {
-                System.out.println("Hit event @" + t);
+        public Collection<GlobalVariable> vars() {
+            return ImmutableList.of(this.h);
+        }
+
+        @Override
+        public Action handleEvent(boolean increasing, ExecutableDAE dae) {
+            if (!increasing) {
                 events++;
+                System.out.println("Hit event at " + dae.time() + " v = "
+                        + dae.load(v));
 
                 /* the bounce effect */
-                vars[v_i] = -0.8 * vars[v_i];
-                ctxt.get(v_i).setValue(t, vars[v_i]);
-
-                /* ensure promise */
-                event.setValue(t, 0.0);
-
-                ctxt.stop(t, vars);
+                dae.set(v, dae.load(v) * -0.8);
+                System.out.println("v: " + dae.load(v));
                 return Action.STOP;
             }
             return Action.CONTINUE;
         }
 
         @Override
-        public double g(double t, double[] vars) {
-            ctxt.stateVector = vars;
-            return event.value(t);
+        public double f(ExecutableDAE dae) {
+            final double load = dae.load(this.h);
+            return load;
         }
 
-        @Override
-        public void init(double t0, double[] vars, double t) {
+    }
 
-        }
-
-        @Override
-        public void resetState(double time, double[] vars) {
-            vars[v_i] = -0.8 * vars[v_i];
-        }
-
+    @Override
+    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
+        ContinuousEvent bounce = new BounceEvent(ctxt.get(h), ctxt.get(v));
+        return ImmutableList.of(bounce);
     }
 
 }

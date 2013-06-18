@@ -21,7 +21,10 @@ package de.tuberlin.uebb.jdae.dae;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler;
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 
 /**
  * @author choeger
@@ -29,12 +32,13 @@ import org.apache.commons.math3.ode.events.EventHandler;
  */
 public interface LoadableModel {
 
-    public Map<String, Double> initials();
+    public Map<GlobalVariable, Double> initials(
+            Map<Unknown, GlobalVariable> ctxt);
 
     public Collection<Equation> equations();
 
     public String name();
 
-    public Collection<EventHandler> events(SolvableDAE ctxt);
+    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
 
 }
