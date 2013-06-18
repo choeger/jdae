@@ -26,11 +26,7 @@ import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.collect.ImmutableList;
 
-import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
-import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
-import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
-import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.*;
 
 public final class ConstantGlobalEquation extends GlobalEquation {
 
@@ -63,6 +59,26 @@ public final class ConstantGlobalEquation extends GlobalEquation {
 
     public String toString() {
         return String.format("%s = %f", var, c);
+    }
+
+    public boolean canSpecializeFor(GlobalVariable v) {
+        return var.equals(v);
+    }
+
+    public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
+
+	return new IBlock() {	     
+	    
+	    @Override 
+	    public Iterable<GlobalVariable> variables() {
+		return ImmutableList.of(var);
+	    }
+
+	    @Override
+	    public void exec() {
+		dae.set(var, c);
+	    }
+	};
     }
 
 }
