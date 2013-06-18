@@ -31,14 +31,6 @@ public class OptimalitySolverTest {
     final OptimalitySolver solver = new OptimalitySolver();
 
     @Test
-    public void test1() {
-        final FactorialEquation f = new FactorialEquation(1.0);
-        assertEquals(1.0,
-                solver.solve(Integer.MAX_VALUE, f, new double[] { 1.1 })[0],
-                1e-6);
-    }
-
-    @Test
     public void test6() {
         final FactorialEquation f = new FactorialEquation(6.0);
         assertEquals(3.0,
@@ -58,7 +50,7 @@ public class OptimalitySolverTest {
     public void test120() {
         final FactorialEquation f = new FactorialEquation(120.0);
         assertEquals(5.0,
-                solver.solve(Integer.MAX_VALUE, f, new double[] { 2.0 })[0],
+                solver.solve(Integer.MAX_VALUE, f, new double[] { 3.0 })[0],
                 1e-6);
     }
 
@@ -66,7 +58,7 @@ public class OptimalitySolverTest {
     public void test720() {
         final FactorialEquation f = new FactorialEquation(720.0);
         assertEquals(6.0,
-                solver.solve(Integer.MAX_VALUE, f, new double[] { 2.0 })[0],
+                solver.solve(Integer.MAX_VALUE, f, new double[] { 4.0 })[0],
                 1e-6);
     }
 
@@ -74,7 +66,7 @@ public class OptimalitySolverTest {
     public void test5040() {
         final FactorialEquation f = new FactorialEquation(5040.0);
         assertEquals(7.0,
-                solver.solve(Integer.MAX_VALUE, f, new double[] { 2.0 })[0],
+                solver.solve(Integer.MAX_VALUE, f, new double[] { 5.0 })[0],
                 1e-6);
     }
 
@@ -82,7 +74,7 @@ public class OptimalitySolverTest {
     public void test40320() {
         final FactorialEquation f = new FactorialEquation(40320.0);
         assertEquals(8.0,
-                solver.solve(Integer.MAX_VALUE, f, new double[] { 2.0 })[0],
+                solver.solve(Integer.MAX_VALUE, f, new double[] { 6.0 })[0],
                 1e-6);
     }
 

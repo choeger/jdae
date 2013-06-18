@@ -44,12 +44,11 @@ public class FactorialEquation implements
     }
 
     private final DerivativeStructure dfactorial(final DerivativeStructure ds) {
-        final DerivativeStructure one = new DerivativeStructure(
-                ds.getFreeParameters(), 1, 1.0);
         if (ds.getValue() <= 1.0) {
-            return one;
+            final DerivativeStructure divide = ds.divide(ds);
+            return divide;
         } else
-            return ds.multiply(dfactorial(ds.subtract(one)));
+            return ds.multiply(dfactorial(ds.subtract(1.0)));
     }
 
     @Override
