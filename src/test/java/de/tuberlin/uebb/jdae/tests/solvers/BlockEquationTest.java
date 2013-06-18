@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import org.apache.commons.math3.exception.ConvergenceException;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -71,17 +72,12 @@ public final class BlockEquationTest {
     final Block b = new Block(data, layout, ImmutableSet.of(x, y),
             ImmutableSet.of(eq2.der(0), eq1.der(0)));
 
-    @Test
-    public void testInvarianceOnSolution() {
-
+    @Test(expected = ConvergenceException.class)
+    public void testSingularBlock() {
         data[1][0] = 0.0;
         data[2][0] = 1.0;
 
         b.exec();
-
-        assertEquals(data[0][0], 0.0, Double.MIN_VALUE);
-        assertEquals(data[1][0], 0.0, Double.MIN_VALUE);
-        assertEquals(data[2][0], 1.0, Double.MIN_VALUE);
     }
 
     @Test
