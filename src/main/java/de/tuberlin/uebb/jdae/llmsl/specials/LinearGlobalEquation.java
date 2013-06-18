@@ -31,6 +31,9 @@ import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.IBlock;
+
 
 /**
  * @author choeger
@@ -66,6 +69,32 @@ public final class LinearGlobalEquation extends GlobalEquation {
     @Override
     public List<GlobalVariable> need() {
         return variables;
+    }
+
+    public boolean canSpecializeFor(GlobalVariable v) {
+        return variables.contains(v);
+    }
+
+    public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
+
+	return new IBlock() {	     
+	    final int j = need().indexOf(v);
+
+	    @Override 
+	    public Iterable<GlobalVariable> variables() {
+		return need();
+	    }
+
+	    @Override
+	    public void exec() {
+                double ret = dae.time() * time;
+                for (int i = 0; i < coefficients.length; i++)
+		    if (i != j)
+			ret += dae.load(need().get(i)) * coefficients[i];
+		
+		dae.set(v, (ret-constant) / -coefficients[j]);
+	    }
+	};
     }
 
     @Override

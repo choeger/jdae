@@ -90,6 +90,18 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                     iCausalisation.iteratees.get(i++), block);
     }
 
+    public ExecutableDAE(final DataLayout layout, final IBlock[] blocks, 
+			 final IBlock[] initials, final List<GlobalVariable> states) {
+
+        this.logger = Logger.getLogger(this.getClass().toString());
+        this.layout = layout;
+        this.states = states;
+        data = layout.alloc();
+
+        this.blocks = blocks;
+	this.initials = initials;
+    }
+
     public void initialize() {
         for (IBlock iB : initials)
             iB.exec();
