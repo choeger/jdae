@@ -15,11 +15,8 @@ resolvers += "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
 
 libraryDependencies ++= Seq(
 		    "com.google.guava" % "guava" % "14.0-rc1",
-		    "org.hamcrest" % "hamcrest-integration" % "1.3.RC2",
-		    "org.ow2.asm" % "asm-all" % "4.0",
-		    "net.sf.jgrapht" % "jgrapht" % "0.8.3",
+		    "org.hamcrest" % "hamcrest-all" % "1.3",
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
-		    "net.sourceforge.jmatio" % "jmatio" % "1.0",
 		    "junit" % "junit" % "4.10",
 		  	"com.google.code.gson" % "gson" % "2.2.2",
 		     "com.novocode" % "junit-interface" % "0.10-M2" % "test"
