@@ -77,15 +77,10 @@ public class Block implements MultivariateVectorFunction, IBlock {
         this.view = new ExecutionContext(0, this.variables, data);
 
         final Map<Integer, Integer> gvIndex = Maps.newTreeMap();
+
         for (int i = 0; i < this.variables.length; i++) {
-            gvIndex.put(this.variables[i].index, i + 1);
-            final int last = this.variables[i].index;
-
-            /* skip over derivatives */
-
-            while (++i < this.variables.length
-                    && this.variables[i].index == last)
-                ;
+            if (!gvIndex.containsKey(this.variables[i].index))
+                gvIndex.put(this.variables[i].index, i + 1);
         }
         final Map<GlobalVariable, BlockVariable> blockVars = makeBlockVars(
                 layout, equations, gvIndex);
@@ -132,7 +127,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
                 for (int i = relative - 1; i < variables.length
                         && variables[i].index == gv.index; i++)
                     if (variables[i].equals(gv))
-                        return relative + i;
+                        return i + 1;
 
                 return -(relative - 1);
             } else {
