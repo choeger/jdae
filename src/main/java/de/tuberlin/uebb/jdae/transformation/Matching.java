@@ -37,8 +37,8 @@ public final class Matching {
         sigma = new int[n][];
 
         for (int i = 0; i < n; i++) {
+            sigma[i] = new int[n];
             for (int j = 0; j < n; j++) {
-                sigma[i] = new int[n];
                 sigma[i][j] = Integer.MAX_VALUE;
             }
             for (GlobalVariable v : reduction.reduced.get(i).need()) {

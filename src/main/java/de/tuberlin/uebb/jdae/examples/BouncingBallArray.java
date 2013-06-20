@@ -43,15 +43,16 @@ public class BouncingBallArray implements LoadableModel {
     }
 
     @Override
-    public Map<GlobalVariable, Double> initials(Map<Unknown, GlobalVariable> ctxt) {
-        return ImmutableMap.of(ctxt.get(balls[0].h), 5.0, ctxt.get(balls[1].h), 10.0, ctxt.get(balls[2].h),
-                20.0);
+    public Map<GlobalVariable, Double> initials(
+            Map<Unknown, GlobalVariable> ctxt) {
+        return ImmutableMap.of(ctxt.get(balls[0].h), 5.0, ctxt.get(balls[1].h),
+                10.0, ctxt.get(balls[2].h), 20.0);
     }
 
     @Override
     public Collection<Equation> equations() {
-        return ImmutableList.copyOf(Iterables.concat(balls[0].equations(),
-                balls[1].equations(), balls[2].equations()));
+        return ImmutableList.copyOf(Iterables.concat(balls[2].equations(),
+                balls[1].equations(), balls[0].equations()));
     }
 
     @Override

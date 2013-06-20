@@ -23,7 +23,6 @@ public final class BlockVariable {
 
     public static final BlockVariable TIME = new BlockVariable(0, 0, 0);
 
-    public final int[] relativeDerivatives;
     public final int absoluteIndex;
     public final int derivationOrder;
     public final int relativeIndex;
@@ -37,9 +36,8 @@ public final class BlockVariable {
     }
 
     public BlockVariable(int absoluteIndex, int derivationOrder,
-            int relativeIndex, int... relativeDerivatives) {
+            int relativeIndex) {
         super();
-        this.relativeDerivatives = relativeDerivatives;
         this.absoluteIndex = absoluteIndex;
         this.derivationOrder = derivationOrder;
         this.relativeIndex = relativeIndex;
@@ -76,6 +74,16 @@ public final class BlockVariable {
     public final GlobalVariable global(DataLayout layout) {
         return new GlobalVariable(layout.rows[absoluteIndex - 1].name,
                 absoluteIndex, derivationOrder);
+    }
+
+    public final BlockVariable der(ExecutionContext m) {
+	return m.der(this);
+    }
+
+    public final BlockVariable der(ExecutionContext m, int order) {
+	if (order == 0)return this;
+	else
+	    return this.der(m).der(m, order-1);
     }
 
 }

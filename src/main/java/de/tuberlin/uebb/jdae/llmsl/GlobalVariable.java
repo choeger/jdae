@@ -89,6 +89,21 @@ public final class GlobalVariable implements Comparable<GlobalVariable> {
         return true;
     }
 
+    /**
+     * @return true, iff this is <br>exactly</br> one of the provided variables
+     */
+    public boolean isOneOf(GlobalVariable... vars) {
+	for (int i = 0; i < vars.length; i++)
+	    if (equals(vars[i])) return noneOf(i+1, vars);
+	return false;
+    }
+
+    private boolean noneOf(int start, GlobalVariable... vars) {
+	for (int i = start; i < vars.length; i++)
+	    if (equals(vars[i])) return false;
+	return true;
+    }
+
     public GlobalVariable[] derivatives(DataLayout layout) {
         final GlobalVariable[] derivatives = new GlobalVariable[Math.max(0,
                 layout.rows[index - 1].derOrder - der)];
@@ -127,11 +142,7 @@ public final class GlobalVariable implements Comparable<GlobalVariable> {
         for (int i = 0; i < index; offset += layout.rows[i++].derOrder)
             ;
 
-        final int derivatives[] = new int[layout.rows[index].derOrder - der];
-        for (int i = 0; i < derivatives.length; i++)
-            derivatives[i] = offset + i;
-
-        return new BlockVariable(index, der, offset, derivatives);
+        return new BlockVariable(index, der, offset);
     }
 
     public GlobalVariable base() {

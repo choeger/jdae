@@ -20,7 +20,7 @@
 package de.tuberlin.uebb.jdae.llmsl;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,8 +28,9 @@ import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
 import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.solvers.OptimalitySolver;
@@ -52,37 +53,42 @@ public class Block implements MultivariateVectorFunction, IBlock {
         }
     }
 
-    public final BlockVariable[] variables;
+    public final GlobalVariable[] variables;
     public final Residual[] equations;
     public final ExecutionContext[] views;
 
     /* memoization */
     private final DerivativeStructure[] residuals;
     private double[] lastPoint = null;
-    private final Set<GlobalVariable> iteratees;
 
     /* equation solver */
     final OptimalitySolver solver = new OptimalitySolver();
     final ExecutionContext view;
 
+    final double test = 1.0 / 0.0;
+
     public Block(double[][] data, DataLayout layout,
             Set<GlobalVariable> variables, Set<DerivedEquation> equations) {
-        this.iteratees = variables;
 
-        final List<GlobalVariable> iteratees = ImmutableList.copyOf(variables);
-        this.view = new ExecutionContext(1, iteratees.size() + 1, data);
+        this.variables = variables
+                .toArray(new GlobalVariable[variables.size()]);
+        Arrays.sort(this.variables, Ordering.natural());
 
-        final Map<GlobalVariable, Integer> gvIndex = Maps.newHashMap();
-        this.variables = new BlockVariable[iteratees.size()];
+        this.view = new ExecutionContext(0, this.variables, data);
 
-        for (int i = 0; i < iteratees.size(); i++)
-            gvIndex.put(iteratees.get(i), i + 1);
+        final Map<Integer, Integer> gvIndex = Maps.newTreeMap();
+        for (int i = 0; i < this.variables.length; i++) {
+            gvIndex.put(this.variables[i].index, i + 1);
+            final int last = this.variables[i].index;
 
+            /* skip over derivatives */
+
+            while (++i < this.variables.length
+                    && this.variables[i].index == last)
+                ;
+        }
         final Map<GlobalVariable, BlockVariable> blockVars = makeBlockVars(
                 layout, equations, gvIndex);
-        for (int i = 0; i < iteratees.size(); i++) {
-            this.variables[i] = blockVars.get(iteratees.get(i));
-        }
 
         this.views = new ExecutionContext[equations.size()];
         this.equations = new Residual[equations.size()];
@@ -98,8 +104,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     }
 
     private Map<GlobalVariable, BlockVariable> makeBlockVars(DataLayout layout,
-            Set<DerivedEquation> equations,
-            final Map<GlobalVariable, Integer> gvIndex) {
+            Set<DerivedEquation> equations, final Map<Integer, Integer> gvIndex) {
         final Map<GlobalVariable, BlockVariable> blockVars = Maps.newHashMap();
 
         final Set<GlobalVariable> needed = Sets.newHashSet();
@@ -110,18 +115,32 @@ public class Block implements MultivariateVectorFunction, IBlock {
                     needed.add(gv.der(i));
         }
         for (GlobalVariable gv : needed) {
-            final GlobalVariable[] derivatives = gv.derivatives(layout);
-            final int[] relativeDerivatives = new int[derivatives.length];
-            for (int i = 0; i < derivatives.length; i++)
-                relativeDerivatives[i] = gvIndex.containsKey(derivatives[i]) ? gvIndex
-                        .get(derivatives[i]) : -1;
-            final int relIndex = gvIndex.containsKey(gv) ? gvIndex.get(gv) : -1;
+            final int relIndex = relativeIndex(gvIndex, gv);
             final BlockVariable bv = new BlockVariable(gv.index, gv.der,
-                    relIndex, relativeDerivatives);
+                    relIndex);
             blockVars.put(gv, bv);
         }
 
         return blockVars;
+    }
+
+    private int relativeIndex(final Map<Integer, Integer> gvIndex,
+            GlobalVariable gv) {
+        if (gvIndex.containsKey(gv.index)) {
+            final int relative = gvIndex.get(gv.index);
+            if (variables[relative - 1].der <= gv.der) {
+                for (int i = relative - 1; i < variables.length
+                        && variables[i].index == gv.index; i++)
+                    if (variables[i].equals(gv))
+                        return relative + i;
+
+                return -(relative - 1);
+            } else {
+                return -(relative - 1);
+            }
+        } else {
+            return -variables.length; // totally independent
+        }
     }
 
     /* Jacobian */
@@ -186,7 +205,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     private void compute(double[] point) {
         if (!Arrays.equals(lastPoint, point)) {
             lastPoint = point.clone();
-            views[0].set(variables, point);
+            views[0].set(1, variables, point);
 
             for (int i = 0; i < equations.length; i++) {
                 residuals[i] = equations[i].eq.exec(views[i]);
@@ -199,11 +218,15 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         final double[] point = solver.solve(1000, this, jacobian, start);
 
-        views[0].set(variables, point);
+        views[0].set(1, variables, point);
     }
 
     @Override
     public Iterable<GlobalVariable> variables() {
-        return iteratees;
+        return new Iterable<GlobalVariable>() {
+            public Iterator<GlobalVariable> iterator() {
+                return Iterators.forArray(variables);
+            }
+        };
     }
 }

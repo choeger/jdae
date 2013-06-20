@@ -55,9 +55,17 @@ public final class InitializationCausalisation {
         final int n = matching.assignment.length;
         final List<DerivedEquation> eqns = matching.allEquations;
 
+        /* ensure derived equations are in same block as their originals */
+        for (int i = 1; i < n; i++) {
+            if (eqns.get(i).eqn == eqns.get(i - 1).eqn) {
+                depends.relate(i, i - 1);
+                depends.relate(i - 1, i);
+            }
+        }
+
         for (int i = 0; i < n; i++) {
             for (GlobalVariable v : eqns.get(i).need()) {
-                final int j = matching.numberOf(v);
+                final int j = matching.inverse[matching.numberOf(v)];
                 depends.relate(i, j);
             }
             sorted.add(i);
@@ -66,22 +74,19 @@ public final class InitializationCausalisation {
         final Comparator<Integer> depCompare = new Comparator<Integer>() {
             @Override
             public int compare(Integer a, Integer b) {
-                if (eqns.get(a).eqn == eqns.get(b).eqn)
-                    return 0;
-
                 final boolean a_dep_b = depends.areRelated(a, b);
                 final boolean b_dep_a = depends.areRelated(b, a);
                 if (a_dep_b && b_dep_a)
                     return 0;
                 else if (a_dep_b) {
-                    return -1;
-                } else {
                     return 1;
+                } else {
+                    return -1;
                 }
             }
         };
 
-        Collections.sort(sorted);
+        Collections.sort(sorted, depCompare);
 
         computations = Lists.newArrayList();
         iteratees = Lists.newArrayList();
@@ -119,5 +124,14 @@ public final class InitializationCausalisation {
             iteratees.add(blockVars);
         }
 
+    }
+
+    private void addIterationVariables(final Causalisation causalisation,
+            final Matching matching, final Set<GlobalVariable> blockVars,
+            final int i, final int j, final int c) {
+        int d = 0;
+        while (d <= c)
+            blockVars.add(new GlobalVariable(causalisation.layout[j].name,
+                    j + 1, matching.sigma(i, j) + (d++)));
     }
 }

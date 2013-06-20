@@ -49,6 +49,10 @@ public final class InitializationMatching {
 
         allEquations = Lists.newArrayList();
 
+        /*
+         * Keep derived equations together. This ordering is important, since
+         * InitializationCausalisation depends on it!
+         */
         for (int i = 0; i < reduction.reduced.size(); i++) {
             for (int d = 0; d <= causalisation.eqn_derivatives[i]; d++) {
                 allEquations.add(new DerivedEquation(reduction.reduced.get(i),

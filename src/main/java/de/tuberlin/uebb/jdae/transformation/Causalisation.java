@@ -28,9 +28,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.math3.optim.linear.LinearConstraint;
-import org.apache.commons.math3.optim.linear.SimplexSolver;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -57,7 +54,6 @@ public final class Causalisation {
 
     public final VariableRow[] layout;
 
-    private SimplexSolver solver = new SimplexSolver();
     public final List<GlobalVariable> states;
     public final GlobalEquation[] equations;
 
@@ -66,7 +62,6 @@ public final class Causalisation {
 
     public Causalisation(final Reduction reduction, final Matching matching) {
 
-        final List<LinearConstraint> constraints = Lists.newArrayList();
         final Map<Integer, String> names = reduction.names;
         this.matching = matching;
 
@@ -181,9 +176,9 @@ public final class Causalisation {
                 if (a_dep_b && b_dep_a)
                     return 0;
                 else if (a_dep_b) {
-                    return -1;
-                } else {
                     return 1;
+                } else {
+                    return -1;
                 }
             }
 
