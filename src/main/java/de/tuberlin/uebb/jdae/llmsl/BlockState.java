@@ -30,7 +30,7 @@ public class BlockState implements BlockVariable {
         final double[] number = ctxt.allocate();
         final int diff = ctxt.params[firstDerivative].der - var.der;
 
-        for (int i = 0; i < ctxt.order; i++) {
+        for (int i = 0; i <= ctxt.order; i++) {
             assert ctxt.data[var.index].length > var.der + i : String.format(
                     "%d-th derivative of %s is not allocated!", i, var);
 
