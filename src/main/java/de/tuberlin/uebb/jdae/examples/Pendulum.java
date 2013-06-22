@@ -236,10 +236,10 @@ public final class Pendulum implements LoadableModel {
 
         public DerivativeStructure exec(final ExecutionContext m) {
             final DerivativeStructure ddy = y.der(m, 2).load(m);
-            final DerivativeStructure subtract = ddy.subtract(y.load(m)
-                    .multiply(F.load(m)).subtract(g));
-            System.out.println(String.format("d2y: %f: %f",
-                    m.time().getValue(), m.loadD(y.global().der(2))));
+            final DerivativeStructure load = y.load(m);
+            final DerivativeStructure load2 = F.load(m);
+            final DerivativeStructure subtract = ddy.subtract(load.multiply(
+                    load2).subtract(g));
 
             return subtract;
         }
