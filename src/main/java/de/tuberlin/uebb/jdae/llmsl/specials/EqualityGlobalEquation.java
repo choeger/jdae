@@ -55,7 +55,7 @@ public final class EqualityGlobalEquation extends GlobalEquation {
 
             @Override
             public DerivativeStructure exec(ExecutionContext m) {
-                return m.load(l).subtract(m.load(r));
+                return l.load(m).subtract(r.load(m));
             }
         };
     }

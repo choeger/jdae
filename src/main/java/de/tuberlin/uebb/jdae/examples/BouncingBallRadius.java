@@ -106,7 +106,7 @@ public final class BouncingBallRadius {
 
                             @Override
                             public DerivativeStructure exec(ExecutionContext m) {
-                                return m.load(be).subtract(evaluations);
+                                return be.load(m).subtract(evaluations);
                             }
                         };
                     }
@@ -142,7 +142,7 @@ public final class BouncingBallRadius {
                             @Override
                             public DerivativeStructure exec(ExecutionContext m) {
                                 evaluations++;
-                                return m.load(bb).subtract(m.load(bh)).add(0.5);
+                                return bb.load(m).subtract(bh.load(m)).add(0.5);
                             }
                         };
                     }

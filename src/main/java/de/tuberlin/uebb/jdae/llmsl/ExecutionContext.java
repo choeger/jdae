@@ -41,7 +41,7 @@ public final class ExecutionContext {
         this.compiler = DSCompiler.getCompiler(params.length + 1, sumOrder());
 
         this.dtOrders = new int[sumOrder()][];
-        for (int i = 1; i <= order; i++) {
+        for (int i = 0; i <= order; i++) {
             dtOrders[i] = new int[params.length + 1];
             dtOrders[i][0] = i;
         }
@@ -66,63 +66,6 @@ public final class ExecutionContext {
         return data[v.index][v.der];
     }
 
-    public DerivativeStructure load(BlockVariable v) {
-        if (v.relativeIndex <= 0) {
-            /* return a constant */
-            return loadConstant(v.absoluteIndex, v.derivationOrder,
-                    v.relativeIndex);
-        } else {
-            return loadVariable(v.absoluteIndex, v.derivationOrder,
-                    v.relativeIndex);
-        }
-    }
-
-    public DerivativeStructure load(final BlockVariable v, int der) {
-        final int next = v.relativeIndex + der;
-        final int dnext = v.derivationOrder + der;
-        if (next < params.length && params[next].index == v.absoluteIndex
-                && params[next].der == dnext)
-            return loadVariable(v.absoluteIndex, dnext, next);
-        else
-            return loadConstant(v.absoluteIndex, dnext, v.relativeIndex);
-    }
-
-    private final double[] loadValAndDer(final int index, final int der,
-            final int relative) {
-        double[] pd = new double[compiler.getSize()];
-
-        pd[0] = data[index][der];
-        for (int i = der + 1; i <= order; i++)
-            setDt(i - der, data[index][i], pd);
-
-        int j = relative - 1;
-        while (++j < params.length && params[j].index == index) {
-            setDer(params[j].der - der, j, pd);
-        }
-
-        return pd;
-    }
-
-    private final DerivativeStructure loadVariable(final int index,
-            final int der, final int relative) {
-        final double[] pd = loadValAndDer(index, der, relative);
-
-        final int[] orders = new int[compiler.getFreeParameters()];
-        orders[relative] = 1;
-        pd[compiler.getPartialDerivativeIndex(orders)] = 1;
-
-        return new DerivativeStructure(compiler.getFreeParameters(),
-                sumOrder(), pd);
-    }
-
-    private final DerivativeStructure loadConstant(final int index,
-            final int der, final int relative) {
-        final double[] pd = loadValAndDer(index, der, -relative);
-
-        return new DerivativeStructure(compiler.getFreeParameters(),
-                sumOrder(), pd);
-    }
-
     /**
      * Set the d^nx/dt^n value for an abitrary n
      * 
@@ -130,7 +73,7 @@ public final class ExecutionContext {
      * @param value
      * @param pd
      */
-    private void setDt(int order, double value, double[] pd) {
+    public void setDt(int order, double value, double[] pd) {
         pd[compiler.getPartialDerivativeIndex(dtOrders[order])] = value;
     }
 
@@ -140,15 +83,13 @@ public final class ExecutionContext {
      * @param dt
      * @param derIndex
      */
-    private void setDer(int n, int j, double[] pd) {
-        if (j > 0 && n <= order) {
-            final int[] order = new int[compiler.getFreeParameters()];
-            order[0] = n;
-            order[j + 1] = 1;
-            final int partialDerivativeIndex = compiler
-                    .getPartialDerivativeIndex(order);
-            pd[partialDerivativeIndex] = 1.0;
-        }
+    public final void setDer(int dt, int j, double[] pd) {
+        final int[] order = new int[compiler.getFreeParameters()];
+        order[0] = dt;
+        order[j + 1] = 1;
+        final int partialDerivativeIndex = compiler
+                .getPartialDerivativeIndex(order);
+        pd[partialDerivativeIndex] = 1.0;
     }
 
     public final DerivativeStructure constant(final double value) {
@@ -161,8 +102,7 @@ public final class ExecutionContext {
         if (order > 0)
             setDt(1, 1.0, pd);
         pd[0] = data[0][0];
-        return new DerivativeStructure(compiler.getFreeParameters(),
-                sumOrder(), pd);
+        return build(pd);
     }
 
     /**
@@ -178,13 +118,12 @@ public final class ExecutionContext {
         return new ExecutionContext(order + derOrder, params, data);
     }
 
-    public BlockVariable der(final BlockVariable v) {
-        final int next = v.relativeIndex + 1;
-        final int dnext = v.derivationOrder + 1;
-        if (next < params.length && params[next].index == v.absoluteIndex
-                && params[next].der == dnext)
-            return new BlockVariable(v.absoluteIndex, dnext, next);
-        else
-            return new BlockVariable(v.absoluteIndex, dnext, -1);
+    public double[] allocate() {
+        return new double[compiler.getSize()];
+    }
+
+    public DerivativeStructure build(double[] number) {
+        return new DerivativeStructure(compiler.getFreeParameters(),
+                sumOrder(), number);
     }
 }

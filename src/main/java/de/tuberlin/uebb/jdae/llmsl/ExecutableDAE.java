@@ -45,7 +45,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public final IBlock[] blocks;
     public final List<GlobalVariable> states;
     private final Logger logger;
-    private IBlock[] initials;
+    public final IBlock[] initials;
     public int evaluations;
 
     public ExecutableDAE(final DataLayout layout, Causalisation causalisation,
@@ -90,8 +90,8 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                     iCausalisation.iteratees.get(i++), block);
     }
 
-    public ExecutableDAE(final DataLayout layout, final IBlock[] blocks, 
-			 final IBlock[] initials, final List<GlobalVariable> states) {
+    public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
+            final IBlock[] initials, final List<GlobalVariable> states) {
 
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
@@ -99,7 +99,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         data = layout.alloc();
 
         this.blocks = blocks;
-	this.initials = initials;
+        this.initials = initials;
     }
 
     public void initialize() {

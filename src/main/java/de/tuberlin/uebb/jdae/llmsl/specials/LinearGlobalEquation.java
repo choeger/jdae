@@ -28,12 +28,11 @@ import com.google.common.collect.Lists;
 
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
-
 
 /**
  * @author choeger
@@ -77,24 +76,24 @@ public final class LinearGlobalEquation extends GlobalEquation {
 
     public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
 
-	return new IBlock() {	     
-	    final int j = need().indexOf(v);
+        return new IBlock() {
+            final int j = need().indexOf(v);
 
-	    @Override 
-	    public Iterable<GlobalVariable> variables() {
-		return need();
-	    }
+            @Override
+            public Iterable<GlobalVariable> variables() {
+                return need();
+            }
 
-	    @Override
-	    public void exec() {
+            @Override
+            public void exec() {
                 double ret = dae.time() * time;
                 for (int i = 0; i < coefficients.length; i++)
-		    if (i != j)
-			ret += dae.load(need().get(i)) * coefficients[i];
-		
-		dae.set(v, (ret-constant) / -coefficients[j]);
-	    }
-	};
+                    if (i != j)
+                        ret += dae.load(need().get(i)) * coefficients[i];
+
+                dae.set(v, (ret - constant) / -coefficients[j]);
+            }
+        };
     }
 
     @Override
@@ -108,7 +107,7 @@ public final class LinearGlobalEquation extends GlobalEquation {
             public DerivativeStructure exec(ExecutionContext m) {
                 DerivativeStructure ret = m.time().multiply(time);
                 for (int i = 0; i < bvars.size(); i++)
-                    ret = ret.add(m.load(bvars.get(i))
+                    ret = ret.add(bvars.get(i).load(m)
                             .multiply(coefficients[i]));
 
                 return ret.subtract(constant);

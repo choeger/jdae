@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.analysis.differentiation.DSCompiler;
 import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.collect.Iterators;
@@ -80,7 +81,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         for (int i = 0; i < this.variables.length; i++) {
             if (!gvIndex.containsKey(this.variables[i].index))
-                gvIndex.put(this.variables[i].index, i + 1);
+                gvIndex.put(this.variables[i].index, i);
         }
         final Map<GlobalVariable, BlockVariable> blockVars = makeBlockVars(
                 layout, equations, gvIndex);
@@ -102,7 +103,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
             Set<DerivedEquation> equations, final Map<Integer, Integer> gvIndex) {
         final Map<GlobalVariable, BlockVariable> blockVars = Maps.newHashMap();
 
-        final Set<GlobalVariable> needed = Sets.newHashSet();
+        final Set<GlobalVariable> needed = Sets.newTreeSet();
         for (DerivedEquation eq : equations) {
             final int order = eq.derOrder;
             for (int i = 0; i <= order; i++)
@@ -110,32 +111,22 @@ public class Block implements MultivariateVectorFunction, IBlock {
                     needed.add(gv.der(i));
         }
         for (GlobalVariable gv : needed) {
-            final int relIndex = relativeIndex(gvIndex, gv);
-            final BlockVariable bv = new BlockVariable(gv.index, gv.der,
-                    relIndex);
-            blockVars.put(gv, bv);
+            if (gvIndex.containsKey(gv.index)) {
+                final int relIndex = gvIndex.get(gv.index);
+                final BlockVariable bv;
+                if (variables[relIndex].der > gv.der) {
+                    bv = new BlockState(gv, relIndex);
+                } else {
+                    final int derDiff = gv.der - variables[relIndex].der;
+                    bv = new BlockIteratee(gv, relIndex + derDiff);
+                }
+                blockVars.put(gv, bv);
+            } else {
+                blockVars.put(gv, new BlockConstant(gv));
+            }
         }
 
         return blockVars;
-    }
-
-    private int relativeIndex(final Map<Integer, Integer> gvIndex,
-            GlobalVariable gv) {
-        if (gvIndex.containsKey(gv.index)) {
-            final int relative = gvIndex.get(gv.index);
-            if (variables[relative - 1].der <= gv.der) {
-                for (int i = relative - 1; i < variables.length
-                        && variables[i].index == gv.index; i++)
-                    if (variables[i].equals(gv))
-                        return i + 1;
-
-                return -(relative - 1);
-            } else {
-                return -(relative - 1);
-            }
-        } else {
-            return -variables.length; // totally independent
-        }
     }
 
     /* Jacobian */
@@ -149,6 +140,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
             ret[0][0] = 1.0;
 
             int index = 1;
+
             for (int i = 0; i < equations.length; i++)
                 for (int di = 0; di <= equations[i].derOrder; di++) {
                     for (int j = 1; j <= variables.length; j++) {
@@ -171,6 +163,11 @@ public class Block implements MultivariateVectorFunction, IBlock {
         final int[] orders = new int[variables.length + 1];
         orders[0] = dt;
         orders[index] = 1;
+
+        final DSCompiler comp = DSCompiler.getCompiler(ds.getFreeParameters(),
+                ds.getOrder());
+        final int i = comp.getPartialDerivativeIndex(orders);
+
         return ds.getPartialDerivative(orders);
     }
 
@@ -209,6 +206,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     }
 
     public void exec() {
+        System.out.println(Arrays.toString(variables));
         double[] start = views[0].loadD(variables);
 
         final double[] point = solver.solve(1000, this, jacobian, start);

@@ -113,7 +113,7 @@ public final class StiffHybrid implements LoadableModel {
 
                         @Override
                         public DerivativeStructure exec(ExecutionContext m) {
-                            return m.load(bdx1).subtract(
+                            return bdx1.load(m).subtract(
                                     m.time().multiply(10).sin());
                         }
                     };
@@ -191,7 +191,7 @@ public final class StiffHybrid implements LoadableModel {
 
                         @Override
                         public DerivativeStructure exec(ExecutionContext m) {
-                            return m.load(bx2).subtract(m.load(bx1).add(delta));
+                            return bx2.load(m).subtract(bx1.load(m).add(delta));
                         }
                     };
                 }

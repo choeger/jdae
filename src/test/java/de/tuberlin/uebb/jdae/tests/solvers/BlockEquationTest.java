@@ -58,8 +58,8 @@ public final class BlockEquationTest {
             return new BlockEquation() {
                 @Override
                 public DerivativeStructure exec(ExecutionContext m) {
-                    return m.load(blockCtxt.get(x)).pow(2)
-                            .add(m.load(blockCtxt.get(y)).pow(2)).subtract(1.0);
+                    return blockCtxt.get(x).load(m).pow(2)
+                            .add(blockCtxt.get(y).load(m).pow(2)).subtract(1.0);
                 }
             };
         }

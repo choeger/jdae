@@ -85,8 +85,8 @@ public final class SimpleHigherIndexExample implements LoadableModel {
 
                             @Override
                             public DerivativeStructure exec(ExecutionContext m) {
-                                final DerivativeStructure load1 = m.load(bx);
-                                final DerivativeStructure load2 = m.load(by);
+                                final DerivativeStructure load1 = bx.load(m);
+                                final DerivativeStructure load2 = by.load(m);
                                 final DerivativeStructure time = m.time();
                                 return load1.add(load2).subtract(time);
                             }

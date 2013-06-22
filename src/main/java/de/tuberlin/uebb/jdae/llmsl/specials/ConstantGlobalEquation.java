@@ -26,7 +26,13 @@ import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.collect.ImmutableList;
 
-import de.tuberlin.uebb.jdae.llmsl.*;
+import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
+import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.IBlock;
 
 public final class ConstantGlobalEquation extends GlobalEquation {
 
@@ -52,7 +58,8 @@ public final class ConstantGlobalEquation extends GlobalEquation {
 
             @Override
             public DerivativeStructure exec(ExecutionContext m) {
-                return m.load(bvar).subtract(c);
+                final DerivativeStructure load = bvar.load(m);
+                return load.subtract(c);
             }
         };
     }
@@ -67,18 +74,18 @@ public final class ConstantGlobalEquation extends GlobalEquation {
 
     public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
 
-	return new IBlock() {	     
-	    
-	    @Override 
-	    public Iterable<GlobalVariable> variables() {
-		return ImmutableList.of(var);
-	    }
+        return new IBlock() {
 
-	    @Override
-	    public void exec() {
-		dae.set(var, c);
-	    }
-	};
+            @Override
+            public Iterable<GlobalVariable> variables() {
+                return ImmutableList.of(var);
+            }
+
+            @Override
+            public void exec() {
+                dae.set(var, c);
+            }
+        };
     }
 
 }
