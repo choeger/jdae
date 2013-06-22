@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
-import org.apache.commons.math3.analysis.differentiation.DSCompiler;
 import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.collect.Iterators;
@@ -164,10 +163,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
         orders[0] = dt;
         orders[index] = 1;
 
-        final DSCompiler comp = DSCompiler.getCompiler(ds.getFreeParameters(),
-                ds.getOrder());
-        final int i = comp.getPartialDerivativeIndex(orders);
-
         return ds.getPartialDerivative(orders);
     }
 
@@ -206,7 +201,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
     }
 
     public void exec() {
-        System.out.println(Arrays.toString(variables));
         double[] start = views[0].loadD(variables);
 
         final double[] point = solver.solve(1000, this, jacobian, start);
