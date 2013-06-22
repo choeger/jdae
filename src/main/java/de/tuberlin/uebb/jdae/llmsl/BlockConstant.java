@@ -25,7 +25,7 @@ public final class BlockConstant implements BlockVariable {
     @Override
     public DerivativeStructure load(ExecutionContext ctxt) {
         final double[] number = ctxt.allocate();
-        for (int i = 0; i < ctxt.order; i++)
+        for (int i = 0; i <= ctxt.order; i++)
             ctxt.setDt(i, ctxt.data[var.index][var.der + i], number);
         return ctxt.build(number);
     }
