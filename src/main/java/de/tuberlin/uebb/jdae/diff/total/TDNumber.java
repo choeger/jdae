@@ -25,10 +25,18 @@ public final class TDNumber {
     public final PDNumber[] values;
     public final TDOperations ops;
 
+    public TDNumber(int order, int params) {
+        this.values = new PDNumber[order + 1];
+        this.ops = new TDOperations(order, params);
+        for (int i = 0; i <= order; i++)
+            values[i] = new PDNumber(params);
+    }
+
     public TDNumber(PDNumber[] values) {
         super();
         this.values = values;
-        this.ops = new TDOperations(values.length - 1, values[0].values.length);
+        this.ops = new TDOperations(values.length - 1,
+                values[0].values.length - 1);
     }
 
     public TDNumber add(final TDNumber other) {

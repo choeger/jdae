@@ -31,8 +31,13 @@ public final class PDNumber {
 
     public PDNumber(double[] values) {
         super();
-        this.ops = new PDOperations(values.length);
+        this.ops = new PDOperations(values.length - 1);
         this.values = values;
+    }
+
+    public PDNumber(int params) {
+        this.ops = new PDOperations(params);
+        this.values = new double[params + 1];
     }
 
     @Override
@@ -69,16 +74,14 @@ public final class PDNumber {
     }
 
     public PDNumber add(final double value) {
-        final double[] target = new double[values.length];
-        for (int i = 0; i < target.length; i++)
-            target[i] = values[i] + value;
+        final double[] target = values.clone();
+        target[0] += value;
         return new PDNumber(target);
     }
 
     public PDNumber add(final int value) {
-        final double[] target = new double[values.length];
-        for (int i = 0; i < target.length; i++)
-            target[i] = values[i] + value;
+        final double[] target = values.clone();
+        target[0] += value;
         return new PDNumber(target);
     }
 
@@ -127,5 +130,9 @@ public final class PDNumber {
         final double[] target = new double[values.length];
         ops.pow(d, values, target);
         return new PDNumber(target);
+    }
+
+    public double der(int i) {
+        return values[i + 1];
     }
 }

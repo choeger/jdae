@@ -37,14 +37,14 @@ public final class PDOperations {
             final double[] target) {
         target[0] = a[0] * b[0];
 
-        for (int i = 1; i < params; i++) {
+        for (int i = 1; i <= params; i++) {
             target[i] = a[i] * b[0] + b[i] * a[0];
         }
     }
 
     public final void add(final double[] a, final double[] b,
             final double[] target) {
-        for (int i = 0; i < params; i++) {
+        for (int i = 0; i <= params; i++) {
             target[i] = a[i] + b[i];
         }
     }
@@ -52,7 +52,7 @@ public final class PDOperations {
     public final void compose(final double f, final double df,
             final double[] values, final double[] target) {
         target[0] = f;
-        for (int i = 1; i < params; i++) {
+        for (int i = 1; i <= params; i++) {
             target[i] = values[i] * df;
         }
     }
@@ -67,14 +67,31 @@ public final class PDOperations {
 
     public final void pow(int n, final double[] values, final double[] target) {
         final double f = FastMath.pow(values[0], n);
-        final double df = (n - 1) * FastMath.pow(values[0], n - 1);
-        compose(f, df, target, values);
+        final double df = n * FastMath.pow(values[0], n - 1);
+        compose(f, df, values, target);
     }
 
     public final void pow(double n, final double[] values, final double[] target) {
         final double f = FastMath.pow(values[0], n);
-        final double df = (n - 1) * FastMath.pow(values[0], n - 1);
-        compose(f, df, target, values);
+        final double df = n * FastMath.pow(values[0], n - 1);
+        compose(f, df, values, target);
+    }
+
+    public PDNumber constant(double d) {
+        final double[] values = new double[params + 1];
+        values[0] = d;
+        return new PDNumber(values);
+    }
+
+    public static PDOperations get(int params) {
+        return new PDOperations(params);
+    }
+
+    public PDNumber variable(int i, double d) {
+        final double[] values = new double[params + 1];
+        values[0] = d;
+        values[i + 1] = 1.0;
+        return new PDNumber(values);
     }
 
 }
