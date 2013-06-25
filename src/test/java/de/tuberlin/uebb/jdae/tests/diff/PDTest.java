@@ -162,28 +162,62 @@ public class PDTest {
 
     }
 
+    final PDNumber[] zeroParamsExamples = new PDNumber[] {
+            zeroParams.constant(0.0), zeroParams.constant(1.0),
+            zeroParams.constant(2.0), zeroParams.constant(4.0) };
+
+    final PDNumber[] twoParamsExamples = new PDNumber[] {
+            twoParams.constant(0.0), twoParams.constant(1.0),
+            twoParams.constant(2.0), twoParams.constant(4.0),
+            twoParams.variable(0, 5), twoParams.variable(1, 7) };
+
     @Test
-    public void testAlgebraicIdentities() {
-        final PDNumber[] examples = new PDNumber[] { zeroParams.constant(0.0),
-                zeroParams.constant(1.0), zeroParams.constant(2.0),
-                zeroParams.constant(4.0) };
+    public void testZeroParamsAdditionAlgebraicIdentities() {
+        testAdditionProperties(zeroParamsExamples);
+    }
 
+    @Test
+    public void testTwoParamsAdditionAlgebraicIdentities() {
+        testAdditionProperties(twoParamsExamples);
+    }
+
+    @Test
+    public void testZeroParamsMultiplicationAlgebraicIdentities() {
+        testMultiplicationProperties(zeroParamsExamples);
+    }
+
+    @Test
+    public void testTwoParamsMultiplicationAlgebraicIdentities() {
+        testMultiplicationProperties(twoParamsExamples);
+    }
+
+    private void testMultiplicationProperties(PDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
+            final PDNumber x = examples[i];
 
+            assertThat(x.mult(x.one()), is(x));
+            assertThat(x.mult(x.zero()), is(x.zero()));
+            assertThat(x.mult(x), is(x.pow(2)));
+            assertThat(x.mult(x), is(x.pow(2)));
+            assertThat(x.mult(x).mult(x), is(x.pow(3)));
+            final PDNumber y = examples[(i + 1) % examples.length];
+
+            assertThat(x.mult(y), is(y.mult(x)));
+            assertThat(x.mult(x).mult(y), is(y.mult(x).mult(x)));
+        }
+    }
+
+    private void testAdditionProperties(final PDNumber[] examples) {
+        for (int i = 0; i < examples.length; i++) {
             final PDNumber x = examples[i];
             assertThat(x, is(x));
-            assertThat(x.mult(x.one()), is(x));
-
-            // assertThat(x.sub(x), is(x.zero()));
-            // assertThat(x.div(x), is(x.one()));
-
+            assertThat(x.add(x.zero()), is(x));
             assertThat(x.add(x), is(x.mult(2)));
-            assertThat(x.pow(2), is(x.mult(x)));
-            assertThat(x.pow(1), is(x));
-            assertThat(x.pow(0), is(x.one()));
+            assertThat(x.add(x).add(x), is(x.mult(3)));
 
-            assertThat(x.pow(2), is(x.pow(2.0)));
-            assertThat(x.pow(2).pow(0.5), is(x));
+            final PDNumber y = examples[(i + 1) % examples.length];
+            assertThat(x.add(y), is(y.add(x)));
+            assertThat(x.add(y).add(x), is(y.add(x).add(x)));
         }
     }
 }
