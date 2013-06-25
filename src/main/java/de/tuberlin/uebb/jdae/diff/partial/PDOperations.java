@@ -35,10 +35,13 @@ public final class PDOperations {
 
     public final void mult(final double[] a, final double[] b,
             final double[] target) {
-        target[0] = a[0] * b[0];
+        final double a0 = a[0];
+        final double b0 = b[0];
+
+        target[0] = a0 * b0;
 
         for (int i = 1; i <= params; i++) {
-            target[i] = a[i] * b[0] + b[i] * a[0];
+            target[i] = a[i] * b0 + b[i] * a0;
         }
     }
 
