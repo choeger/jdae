@@ -41,16 +41,6 @@ pomExtra :=
           <target>1.7</target>
        </configuration>
     </plugin>
-	<plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-pmd-plugin</artifactId>
-      <version>3.0.1</version>
-    </plugin>
-    <plugin>
-      <groupId>org.codehaus.mojo</groupId>
-      <artifactId>findbugs-maven-plugin</artifactId>
-      <version>2.5.2</version>
-    </plugin>
   </plugins>
 </build>
 <licenses>
