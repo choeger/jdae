@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
  * @author choeger
  * 
  */
-public class PDTests {
+public class PDTest {
 
     public static final PDOperations zeroParams = PDOperations.get(0);
 
