@@ -19,6 +19,7 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -83,7 +84,7 @@ public final class DataLayout implements Iterable<GlobalVariable> {
     }
 
     public DataLayout(final VariableRow[] rows) {
-        this.rows = rows;
+        this.rows = Arrays.copyOf(rows, rows.length);
     }
 
     public DataLayout(int size, final Collection<GlobalVariable> vars) {
