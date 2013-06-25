@@ -18,8 +18,8 @@ libraryDependencies ++= Seq(
 		    "org.hamcrest" % "hamcrest-all" % "1.3",
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
 		    "junit" % "junit" % "4.10",
-		  	"com.google.code.gson" % "gson" % "2.2.2",
-		     "com.novocode" % "junit-interface" % "0.10-M4" % "test"
+		    "com.google.code.gson" % "gson" % "2.2.2",
+		    "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 		    )
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
@@ -40,6 +40,25 @@ pomExtra :=
           <source>1.7</source>
           <target>1.7</target>
        </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.jacoco</groupId>
+      <artifactId>jacoco-maven-plugin</artifactId>
+      <version>0.6.3.201306030806</version>
+      <executions>		
+        <execution>	
+          <goals>
+            <goal>prepare-agent</goal>
+          </goals>
+        </execution>
+        <execution>
+          <id>report</id>
+          <phase>prepare-package</phase>
+          <goals>
+            <goal>report</goal>
+          </goals>
+        </execution>
+      </executions>
     </plugin>
   </plugins>
 </build>
