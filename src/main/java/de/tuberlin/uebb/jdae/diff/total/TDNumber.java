@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
+import java.util.Arrays;
+
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 
 public final class TDNumber {
@@ -37,6 +39,28 @@ public final class TDNumber {
         this.values = values.clone();
         this.ops = new TDOperations(values.length - 1,
                 values[0].values.length - 1);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(values);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TDNumber other = (TDNumber) obj;
+        if (!Arrays.equals(values, other.values))
+            return false;
+        return true;
     }
 
     public TDNumber add(final TDNumber other) {
@@ -153,6 +177,22 @@ public final class TDNumber {
 
     public void m_pow(double d) {
         ops.pow(d, values, values);
+    }
+
+    public TDNumber one() {
+        return ops.constant(1.0);
+    }
+
+    public TDNumber zero() {
+        return ops.constant(0.0);
+    }
+
+    public String toString() {
+        return Arrays.deepToString(values);
+    }
+
+    public TDNumber constant(double d) {
+        return ops.constant(d);
     }
 
 }
