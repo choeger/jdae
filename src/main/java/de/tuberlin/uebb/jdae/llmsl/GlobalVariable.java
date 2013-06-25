@@ -121,7 +121,7 @@ public final class GlobalVariable implements Comparable<GlobalVariable> {
         if (der == 0)
             return name;
         else
-            return String.format("d^%d%s", der, name, der);
+            return String.format("der^%d(%s)", der, name);
     }
 
     /**
