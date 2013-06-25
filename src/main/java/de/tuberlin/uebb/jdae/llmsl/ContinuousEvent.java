@@ -58,6 +58,8 @@ public abstract class ContinuousEvent {
             final ExecutableDAE dae) {
         return new Function<ContinuousEvent, EventHandler>() {
             public EventHandler apply(ContinuousEvent ev) {
+                if (ev == null)
+                    return null;
                 return ev.instantiate(dae);
             }
         };
