@@ -192,4 +192,8 @@ public final class PDNumber {
         return new PDNumber(values);
     }
 
+    public int getParams() {
+        return values.length - 1;
+    }
+
 }
