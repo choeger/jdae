@@ -65,8 +65,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
     final OptimalitySolver solver = new OptimalitySolver();
     final ExecutionContext view;
 
-    final double test = 1.0 / 0.0;
-
     public Block(double[][] data, DataLayout layout,
             Set<GlobalVariable> variables, Set<DerivedEquation> equations) {
 
