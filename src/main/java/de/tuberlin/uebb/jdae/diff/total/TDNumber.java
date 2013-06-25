@@ -34,7 +34,7 @@ public final class TDNumber {
 
     public TDNumber(PDNumber[] values) {
         super();
-        this.values = values;
+        this.values = values.clone();
         this.ops = new TDOperations(values.length - 1,
                 values[0].values.length - 1);
     }
@@ -107,6 +107,52 @@ public final class TDNumber {
         final PDNumber[] target = new PDNumber[values.length];
         ops.pow(n, values, target);
         return new TDNumber(target);
+    }
+
+    public void m_add(final PDNumber[] other) {
+        assert other.length == values.length : "Cannot add two numbers of different dimensions!";
+        ops.add(values, other, values);
+    }
+
+    public void m_add(final double value) {
+        for (int i = 0; i < values.length; i++)
+            values[i].m_add(value);
+    }
+
+    public void m_add(final int value) {
+        for (int i = 0; i < values.length; i++)
+            values[i].m_add(value);
+    }
+
+    public void m_mult(final PDNumber[] other) {
+        assert other.length == values.length : "Cannot multiply two numbers of different dimensions!";
+        ops.mult(values, other, values);
+    }
+
+    public void m_mult(final double value) {
+        for (int i = 0; i < values.length; i++)
+            values[i].m_mult(value);
+    }
+
+    public void m_mult(final int value) {
+        for (int i = 0; i < values.length; i++)
+            values[i].m_mult(value);
+    }
+
+    public void m_sin() {
+        ops.sin(values, values);
+    }
+
+    public void m_cos() {
+        ops.cos(values, values);
+    }
+
+    public void m_pow(int n) {
+        ops.pow(n, values, values);
+    }
+
+    public void m_pow(double d) {
+        ops.pow(d, values, values);
     }
 
 }

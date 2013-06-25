@@ -18,11 +18,12 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.math.IntMath;
 
-import de.tuberlin.uebb.jdae.diff.partial.MutablePDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
@@ -63,18 +64,20 @@ public final class TDOperations {
     public final void mult(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
         /* implement leibniz rule */
+        final PDNumber tmp = new PDNumber(a[0].values.length - 1);
 
         for (int n = order; n >= 0; n--) {
-            final MutablePDNumber ret = new MutablePDNumber(a[0].values.length);
-            final MutablePDNumber tmp = new MutablePDNumber(a[0].values.length);
+            if (target[n] == null)
+                target[n] = new PDNumber(a[0].values.length - 1);
+            else
+                Arrays.fill(target[n].values, 0.0);
             for (int k = 0; k <= n; k++) {
-                tmp.zero();
-                tmp.add(a[k].values);
-                tmp.mult(b[n - k].values);
-                tmp.mult(coefficients[n][k]);
-                ret.add(tmp.values);
+                Arrays.fill(tmp.values, 0.0);
+                tmp.m_add(a[k].values);
+                tmp.m_mult(b[n - k].values);
+                tmp.m_mult(coefficients[n][k]);
+                target[n].m_add(tmp.values);
             }
-            target[n] = ret.asNumber();
         }
     }
 
