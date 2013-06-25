@@ -114,14 +114,14 @@ public final class TDOperations {
     public final void pow(int n, final PDNumber[] a, final PDNumber[] target) {
         final double[] f = new double[order + 2];
         f[0] = FastMath.pow(a[0].values[0], n);
-        f[1] = (n - 1) * FastMath.pow(a[0].values[0], n - 1);
+        f[1] = n * FastMath.pow(a[0].values[0], n - 1);
         compose(f, a, target);
     }
 
     public final void pow(double n, final PDNumber[] a, final PDNumber[] target) {
         final double[] f = new double[order + 2];
         f[0] = FastMath.pow(a[0].values[0], n);
-        f[1] = (n - 1) * FastMath.pow(a[0].values[0], n - 1);
+        f[1] = n * FastMath.pow(a[0].values[0], n - 1);
         compose(f, a, target);
     }
 
