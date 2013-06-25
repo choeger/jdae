@@ -182,8 +182,14 @@ public final class PDNumber {
         ops.pow(d, values, values);
     }
 
-    public void zero() {
-        Arrays.fill(values, 0.0);
+    public PDNumber zero() {
+        return new PDNumber(new double[values.length]);
+    }
+
+    public PDNumber one() {
+        final double[] values = new double[this.values.length];
+        values[0] = 1.0;
+        return new PDNumber(values);
     }
 
 }

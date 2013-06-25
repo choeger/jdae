@@ -22,8 +22,12 @@ import org.junit.Test;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
+
+import static org.hamcrest.CoreMatchers.is;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author choeger
@@ -156,5 +160,30 @@ public class PDTest {
                 radius(twoParams.variable(0, 1), twoParams.variable(1, 3)).der(
                         1), 1e-8);
 
+    }
+
+    @Test
+    public void testAlgebraicIdentities() {
+        final PDNumber[] examples = new PDNumber[] { zeroParams.constant(0.0),
+                zeroParams.constant(1.0), zeroParams.constant(2.0),
+                zeroParams.constant(4.0) };
+
+        for (int i = 0; i < examples.length; i++) {
+
+            final PDNumber x = examples[i];
+            assertThat(x, is(x));
+            assertThat(x.mult(x.one()), is(x));
+
+            // assertThat(x.sub(x), is(x.zero()));
+            // assertThat(x.div(x), is(x.one()));
+
+            assertThat(x.add(x), is(x.mult(2)));
+            assertThat(x.pow(2), is(x.mult(x)));
+            assertThat(x.pow(1), is(x));
+            assertThat(x.pow(0), is(x.one()));
+
+            assertThat(x.pow(2), is(x.pow(2.0)));
+            assertThat(x.pow(2).pow(0.5), is(x));
+        }
     }
 }
