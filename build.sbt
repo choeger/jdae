@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
 		    "junit" % "junit" % "4.10",
 		  	"com.google.code.gson" % "gson" % "2.2.2",
-		     "com.novocode" % "junit-interface" % "0.10-M2" % "test"
+		     "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 		    )
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
@@ -40,6 +40,16 @@ pomExtra :=
           <source>1.7</source>
           <target>1.7</target>
        </configuration>
+    </plugin>
+	<plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-pmd-plugin</artifactId>
+      <version>3.0.1</version>
+    </plugin>
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>findbugs-maven-plugin</artifactId>
+      <version>2.5.2</version>
     </plugin>
   </plugins>
 </build>
