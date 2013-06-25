@@ -83,8 +83,12 @@ public final class TDOperations {
 
     public final void compose(final double[] f, final PDNumber[] a,
             final PDNumber[] target) {
-        for (int n = 0; n <= order; n++)
+        for (int n = 0; n <= order; n++) {
+            if (target[n] == null)
+                target[n] = new PDNumber(a[0].getParams());
+
             subOps.compose(f[n], f[n + 1], a[n].values, target[n].values);
+        }
     }
 
     public final void sin(final PDNumber[] a, final PDNumber[] target) {
@@ -119,6 +123,22 @@ public final class TDOperations {
         f[0] = FastMath.pow(a[0].values[0], n);
         f[1] = (n - 1) * FastMath.pow(a[0].values[0], n - 1);
         compose(f, a, target);
+    }
+
+    public TDNumber constant(double d) {
+        final PDNumber c = subOps.constant(d);
+        final PDNumber[] c_values = new PDNumber[order + 1];
+        c_values[0] = c;
+        return new TDNumber(c_values);
+    }
+
+    public TDNumber variable(int idx, double val, double... der) {
+        final PDNumber[] vals = new PDNumber[order + 1];
+        vals[0] = subOps.variable(idx, val);
+        for (int i = 0; i < der.length; i++)
+            vals[i + 1] = subOps.constant(der[i]);
+
+        return new TDNumber(vals);
     }
 
 }
