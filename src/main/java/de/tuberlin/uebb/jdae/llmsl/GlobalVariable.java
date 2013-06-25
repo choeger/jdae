@@ -19,18 +19,9 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ComparisonChain;
 
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
-
 public final class GlobalVariable implements Comparable<GlobalVariable> {
-
-    public static final Function<Unknown, GlobalVariable> FROM_UNKNOWN = new Function<Unknown, GlobalVariable>() {
-        public GlobalVariable apply(final Unknown u) {
-            return new GlobalVariable(u.name, u.nr, u.der);
-        }
-    };
 
     public final String name;
     public final int index;
