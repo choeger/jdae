@@ -67,7 +67,7 @@ public final class Unknown implements Comparable<Unknown> {
         if (der == 0)
             return name;
         else
-            return String.format("d^%d%s", der, name, der);
+            return String.format("der^%d(%s)", der, name);
     }
 
     public Unknown der() {

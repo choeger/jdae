@@ -176,7 +176,7 @@ public final class Pendulum implements LoadableModel {
 
     public static final class YAccelGlobalEquation extends GlobalEquation {
         public final GlobalVariable y, F;
-        private final double g = 9.81;
+        private final static double g = 9.81;
 
         public YAccelGlobalEquation(GlobalVariable y, GlobalVariable F) {
             this.y = y;
@@ -227,7 +227,7 @@ public final class Pendulum implements LoadableModel {
 
     public final static class YAccelBlockEquation implements BlockEquation {
         public final BlockVariable y, F;
-        private final double g = 9.81;
+        private final static double g = 9.81;
 
         public YAccelBlockEquation(BlockVariable y, BlockVariable F) {
             this.y = y;

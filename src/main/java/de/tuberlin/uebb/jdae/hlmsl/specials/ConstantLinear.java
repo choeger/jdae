@@ -49,7 +49,7 @@ public class ConstantLinear implements Equation {
         super();
         this.timeCoefficient = timeCoefficient;
         this.constant = constant;
-        this.coefficients = coefficients;
+        this.coefficients = coefficients.clone();
         this.variables = variables;
     }
 

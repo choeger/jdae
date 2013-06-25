@@ -98,8 +98,8 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         this.states = states;
         data = layout.alloc();
 
-        this.blocks = blocks;
-        this.initials = initials;
+        this.blocks = blocks.clone();
+        this.initials = initials.clone();
     }
 
     public void initialize() {

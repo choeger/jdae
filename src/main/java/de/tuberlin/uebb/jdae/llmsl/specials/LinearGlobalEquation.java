@@ -49,7 +49,7 @@ public final class LinearGlobalEquation extends GlobalEquation {
             List<GlobalVariable> variables) {
         this.time = time;
         this.constant = rhs;
-        this.coefficients = coefficients;
+        this.coefficients = coefficients.clone();
         this.variables = variables;
     }
 

@@ -54,19 +54,15 @@ public final class BouncingBallRadius {
 
     final SimulationRuntime runtime;
 
-    final double radius = 0.5;
     final int index;
 
     public final Unknown e, h, v, b, dh, dv;
 
     final Equation evals, freeFall, accel, bottom;
-    private final BouncingBallArray parent;
 
-    public BouncingBallRadius(int idx, SimulationRuntime runtime,
-            final BouncingBallArray parent) {
+    public BouncingBallRadius(int idx, SimulationRuntime runtime) {
         super();
         this.index = idx;
-        this.parent = parent;
 
         this.e = runtime.newUnknown(MessageFormat
                 .format("ball[{0}].evals", idx));

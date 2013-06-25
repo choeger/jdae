@@ -39,7 +39,7 @@ public class BouncingBallArray implements LoadableModel {
 
     public BouncingBallArray(SimulationRuntime runtime) {
         for (int i = 1; i <= 3; ++i)
-            balls[i - 1] = new BouncingBallRadius(i, runtime, this);
+            balls[i - 1] = new BouncingBallRadius(i, runtime);
     }
 
     @Override

@@ -35,8 +35,8 @@ public final class ExecutionContext {
         super();
 
         this.order = order;
-        this.params = vars;
-        this.data = data;
+        this.params = vars.clone();
+        this.data = data.clone();
 
         this.compiler = DSCompiler.getCompiler(params.length + 1, sumOrder());
 

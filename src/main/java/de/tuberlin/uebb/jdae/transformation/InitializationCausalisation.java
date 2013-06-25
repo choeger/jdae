@@ -39,13 +39,11 @@ import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
 
 public final class InitializationCausalisation {
 
-    private final Logger logger;
     public final List<Set<DerivedEquation>> computations;
     public final List<Set<GlobalVariable>> iteratees;
 
     public InitializationCausalisation(final InitializationMatching matching,
             final Logger logger) {
-        this.logger = logger;
         logger.log(Level.INFO, "Starting initial dependency analysis.");
 
         final TransitiveRelation<Integer> depends = Relations
@@ -124,14 +122,5 @@ public final class InitializationCausalisation {
             iteratees.add(blockVars);
         }
 
-    }
-
-    private void addIterationVariables(final Causalisation causalisation,
-            final Matching matching, final Set<GlobalVariable> blockVars,
-            final int i, final int j, final int c) {
-        int d = 0;
-        while (d <= c)
-            blockVars.add(new GlobalVariable(causalisation.layout[j].name,
-                    j + 1, matching.sigma(i, j) + (d++)));
     }
 }

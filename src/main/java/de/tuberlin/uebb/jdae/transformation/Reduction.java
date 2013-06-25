@@ -82,11 +82,13 @@ public final class Reduction {
         final Navigator<Unknown> direct = equivalent.direct();
         final Map<Unknown, Unknown> repres = Maps.newTreeMap();
 
-        for (Unknown base : layout.keySet()) {
+        for (Map.Entry<Unknown, Integer> entry : layout.entrySet()) {
+            final Unknown base = entry.getKey();
+            final int max = entry.getValue();
             final Unknown repr = Collections.max(
                     Navigators.closure(direct, base), Ordering.natural());
 
-            for (int i = 0; i <= layout.get(base); i++) {
+            for (int i = 0; i <= max; i++) {
                 repres.put(base.der(i), repr.der(i));
             }
         }
