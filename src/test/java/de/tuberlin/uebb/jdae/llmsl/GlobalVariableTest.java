@@ -21,9 +21,10 @@ package de.tuberlin.uebb.jdae.llmsl;
 
 import org.junit.Test;
 
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import com.google.common.testing.EqualsTester;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.lessThan;
 
 import static org.junit.Assert.assertThat;
 
@@ -33,6 +34,10 @@ public class GlobalVariableTest {
     final GlobalVariable dx = new GlobalVariable("x", 1, 1);
     final GlobalVariable d2x = new GlobalVariable("x", 1, 2);
     final GlobalVariable d3x = new GlobalVariable("x", 1, 3);
+
+    final GlobalVariable y = new GlobalVariable("y", 2, 0);
+
+    final GlobalVariable z = new GlobalVariable("z", 3, 0);
 
     @Test
     public void testDerivation() {
@@ -46,8 +51,33 @@ public class GlobalVariableTest {
     }
 
     @Test
+    public void testEquals() {
+        final GlobalVariable x_renamed = new GlobalVariable("X", 1, 0);
+
+        new EqualsTester().addEqualityGroup(x, x_renamed, x.der().integrate())
+                .addEqualityGroup(x.der(), x.der(1), x_renamed.der())
+                .testEquals();
+    }
+
+    @Test
+    public void testIsOneOf() {
+        assertThat(x.isOneOf(x, y, z), is(true));
+        assertThat(x.isOneOf(y, z), is(false));
+        assertThat(x.isOneOf(x, y, x, z), is(false));
+    }
+
+    @Test
     public void testBase() {
         assertThat(dx.base(), is(x));
     }
 
+    @Test
+    public void testSorting() {
+        assertThat(x, is(lessThan(dx)));
+        assertThat(dx, is(lessThan(d2x)));
+        assertThat(x, is(lessThan(d2x)));
+
+        assertThat(d2x, is(lessThan(y)));
+        assertThat(y, is(lessThan(z)));
+    }
 }
