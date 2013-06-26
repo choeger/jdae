@@ -98,15 +98,6 @@ public final class GlobalVariable implements Comparable<GlobalVariable> {
         return true;
     }
 
-    public GlobalVariable[] derivatives(DataLayout layout) {
-        final GlobalVariable[] derivatives = new GlobalVariable[Math.max(0,
-                layout.rows[index - 1].derOrder - der)];
-        for (int i = 0; i < derivatives.length; i++)
-            derivatives[i] = new GlobalVariable(name, index, der + i + 1);
-
-        return derivatives;
-    }
-
     @Override
     public int compareTo(GlobalVariable that) {
         return ComparisonChain.start().compare(index, that.index)
@@ -122,21 +113,6 @@ public final class GlobalVariable implements Comparable<GlobalVariable> {
             return name;
         else
             return String.format("der^%d(%s)", der, name);
-    }
-
-    /**
-     * Compute the block representation of in a block iterating over the given
-     * data layout.
-     * 
-     * @param layout
-     * @return
-     */
-    public BlockVariable block(DataLayout layout) {
-        int offset = der;
-        for (int i = 0; i < index; offset += layout.rows[i++].derOrder)
-            ;
-
-        return new BlockIteratee(this, offset);
     }
 
     public GlobalVariable base() {
