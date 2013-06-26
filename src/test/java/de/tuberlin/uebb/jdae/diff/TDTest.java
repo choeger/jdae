@@ -1,4 +1,4 @@
-package de.tuberlin.uebb.jdae.tests.diff;
+package de.tuberlin.uebb.jdae.diff;
 
 import org.junit.Test;
 

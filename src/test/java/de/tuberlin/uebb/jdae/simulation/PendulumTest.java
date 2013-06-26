@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.tests.simulation;
+package de.tuberlin.uebb.jdae.simulation;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.ode.events.EventHandler;

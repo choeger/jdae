@@ -17,7 +17,7 @@
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.tuberlin.uebb.jdae.tests.hlmsl;
+package de.tuberlin.uebb.jdae.hlmsl;
 
 import org.junit.Test;
 
