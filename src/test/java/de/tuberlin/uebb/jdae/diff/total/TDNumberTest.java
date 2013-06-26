@@ -6,6 +6,8 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
+import com.google.common.testing.EqualsTester;
+
 import de.tuberlin.uebb.jdae.diff.partial.PDNumberTest;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -58,6 +60,17 @@ public class TDNumberTest {
             twoParams0.constant(0.0), twoParams0.constant(1.0),
             twoParams0.constant(2.0), twoParams0.constant(4.0),
             twoParams0.variable(0, 5.0), twoParams0.variable(1, 3.0) };
+
+    @Test
+    public void testEqualsContract() {
+        new EqualsTester()
+                .addEqualityGroup(zeroParams0.constant(1.0),
+                        zeroParams0.constant(1.0))
+                .addEqualityGroup(zeroParams0.constant(0.0),
+                        zeroParams0.constant(0.0))
+                .addEqualityGroup(twoParams0.constant(1.0),
+                        twoParams0.constant(1.0)).testEquals();
+    }
 
     private void testAdditionProperties(final TDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
