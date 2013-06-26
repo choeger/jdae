@@ -24,6 +24,8 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
+import com.google.common.testing.EqualsTester;
+
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
@@ -72,6 +74,17 @@ public class PDTest {
                 return false;
 
         return true;
+    }
+
+    @Test
+    public void testEqualsContract() {
+        new EqualsTester()
+                .addEqualityGroup(zeroParams.constant(1.0),
+                        zeroParams.constant(1.0))
+                .addEqualityGroup(zeroParams.constant(0.0),
+                        zeroParams.constant(0.0))
+                .addEqualityGroup(twoParams.constant(1.0),
+                        twoParams.constant(1.0)).testEquals();
     }
 
     @Test

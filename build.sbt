@@ -14,7 +14,8 @@ resolvers += "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repositor
 resolvers += "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
 
 libraryDependencies ++= Seq(
-		    "com.google.guava" % "guava" % "14.0-rc1",
+		    "com.google.guava" % "guava" % "14.0.1",
+		    "com.google.guava" % "guava-testlib" % "14.0.1",		    
 		    "org.hamcrest" % "hamcrest-all" % "1.3",
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
 		    "junit" % "junit" % "4.10",
