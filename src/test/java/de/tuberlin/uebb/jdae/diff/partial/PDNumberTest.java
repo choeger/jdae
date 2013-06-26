@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.diff;
+package de.tuberlin.uebb.jdae.diff.partial;
 
 import org.apache.commons.math3.util.FastMath;
 import org.hamcrest.BaseMatcher;
@@ -41,7 +41,7 @@ import static org.junit.Assert.assertThat;
  * @author choeger
  * 
  */
-public class PDTest {
+public class PDNumberTest {
 
     public static final double TOLERANCE = 10e-12;
 

@@ -1,4 +1,4 @@
-package de.tuberlin.uebb.jdae.diff;
+package de.tuberlin.uebb.jdae.diff.total;
 
 import org.junit.Test;
 
@@ -9,7 +9,7 @@ import static org.hamcrest.CoreMatchers.is;
 
 import static org.junit.Assert.assertThat;
 
-public class TDTest {
+public class TDNumberTest {
 
     final TDOperations zeroParams0 = new TDOperations(0, 0);
 
