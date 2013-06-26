@@ -20,7 +20,7 @@ class DefaultTransitiveBiRelation<E> implements TransitiveBiRelation<E>,
 
     private static final long serialVersionUID = 3392427271698826042L;
 
-    private final TransitiveBiRelation<E> inverse = new TransitiveBiRelation<E>() {
+    private transient final TransitiveBiRelation<E> inverse = new TransitiveBiRelation<E>() {
         public Navigator<E> direct() {
             return inverseRelation;
         }
@@ -68,6 +68,8 @@ class DefaultTransitiveBiRelation<E> implements TransitiveBiRelation<E>,
     }
 
     private static class SerializationProxy<E> implements Serializable {
+
+        private static final long serialVersionUID = -113597320821123369L;
         private final SetMultimap<E, E> inverseEdges;
 
         SerializationProxy(SetMultimap<E, E> inverseEdges) {

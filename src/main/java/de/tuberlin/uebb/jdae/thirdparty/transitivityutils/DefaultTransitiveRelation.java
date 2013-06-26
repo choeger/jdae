@@ -31,7 +31,7 @@ class DefaultTransitiveRelation<E> implements TransitiveRelation<E>,
     private final Map<E, Node<E>> nodeMap = Maps.newHashMap();
     private final SetMultimap<Node<E>, Node<E>> directRelationships = HashMultimap
             .create();
-    private final Navigator<E> navigator = new DirectNavigator();
+    private transient final Navigator<E> navigator = new DirectNavigator();
 
     private static final long serialVersionUID = -4031451040065579682L;
 
@@ -131,7 +131,11 @@ class DefaultTransitiveRelation<E> implements TransitiveRelation<E>,
          * Stored as a value in post to represent that another node may enclose
          * this node. This can happen at most once per node.
          */
-        static final Object ENCLOSABLE_MARKER = "<enclosable>";
+        static final Object ENCLOSABLE_MARKER = new Object() {
+            public String toString() {
+                return "<enclosable>";
+            }
+        };
 
         final MergingIntervalSet intervalSet = new MergingIntervalSet();
 
@@ -243,9 +247,6 @@ class DefaultTransitiveRelation<E> implements TransitiveRelation<E>,
 
         private static final long serialVersionUID = 711361401943593391L;
 
-        SerializationProxy() {
-        }
-
         SerializationProxy(Navigator<E> navigator) {
             this.navigator = navigator;
         }
@@ -284,7 +285,7 @@ class DefaultTransitiveRelation<E> implements TransitiveRelation<E>,
                     objects.add(object);
                 }
             }
-            navigator = (Navigator) Navigators.forMultimap(mm);
+            navigator = (Navigator<E>) Navigators.forMultimap(mm);
         }
 
         private Object readResolve() {
