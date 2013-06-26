@@ -67,14 +67,21 @@ public final class TDOperations {
         final PDNumber tmp = new PDNumber(a[0].values.length - 1);
 
         for (int n = order; n >= 0; n--) {
+            tmp.m_add(a[n].values);
+            tmp.m_mult(b[0].values);
+            tmp.m_mult(coefficients[n][0]);
+
             if (target[n] == null)
-                target[n] = new PDNumber(a[0].values.length - 1);
-            else
-                Arrays.fill(target[n].values, 0.0);
-            for (int k = 0; k <= n; k++) {
+                target[n] = new PDNumber(tmp.values);
+            else {
+                for (int i = 0; i < target[n].values.length; i++)
+                    target[n].values[i] = tmp.values[i];
+            }
+
+            for (int k = 1; k <= n; k++) {
                 Arrays.fill(tmp.values, 0.0);
-                tmp.m_add(a[k].values);
-                tmp.m_mult(b[n - k].values);
+                tmp.m_add(a[n - k].values);
+                tmp.m_mult(b[k].values);
                 tmp.m_mult(coefficients[n][k]);
                 target[n].m_add(tmp.values);
             }

@@ -36,7 +36,10 @@ public final class TDNumber {
 
     public TDNumber(PDNumber[] values) {
         super();
-        this.values = values.clone();
+        this.values = new PDNumber[values.length];
+        for (int i = 0; i < values.length; i++)
+            this.values[i] = new PDNumber(values[i].values);
+
         this.ops = new TDOperations(values.length - 1,
                 values[0].values.length - 1);
     }
@@ -139,13 +142,11 @@ public final class TDNumber {
     }
 
     public void m_add(final double value) {
-        for (int i = 0; i < values.length; i++)
-            values[i].m_add(value);
+        values[0].m_add(value);
     }
 
     public void m_add(final int value) {
-        for (int i = 0; i < values.length; i++)
-            values[i].m_add(value);
+        values[0].m_add(value);
     }
 
     public void m_mult(final PDNumber[] other) {
