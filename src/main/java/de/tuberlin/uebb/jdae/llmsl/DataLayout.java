@@ -21,9 +21,8 @@ package de.tuberlin.uebb.jdae.llmsl;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
-public final class DataLayout implements Iterable<GlobalVariable> {
+public final class DataLayout {
 
     public static final class VariableRow {
         public final int number;
@@ -36,38 +35,6 @@ public final class DataLayout implements Iterable<GlobalVariable> {
             this.derOrder = derOrder;
             this.name = name;
         }
-    }
-
-    private final class VariableIterator implements Iterator<GlobalVariable> {
-
-        private int index = 0;
-        private int der = 0;
-
-        @Override
-        public boolean hasNext() {
-            return (index < rows.length - 1) || (der < rows[index].derOrder);
-        }
-
-        @Override
-        public GlobalVariable next() {
-            final GlobalVariable v = new GlobalVariable(rows[index].name,
-                    index + 1, der);
-
-            if (der < rows[index].derOrder)
-                der++;
-            else {
-                index++;
-                der = 0;
-            }
-
-            return v;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
     }
 
     public final VariableRow[] rows;
@@ -101,10 +68,5 @@ public final class DataLayout implements Iterable<GlobalVariable> {
             rows[i] = new VariableRow(i + 1, der[i], names[i]);
         }
 
-    }
-
-    @Override
-    public Iterator<GlobalVariable> iterator() {
-        return new VariableIterator();
     }
 }
