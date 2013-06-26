@@ -30,6 +30,8 @@ import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.Matchers.not;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -272,6 +274,84 @@ public class PDTest {
     @Test
     public void testTwoParamTrigonometricIdentities() {
         testTrigonometicIdentities(twoParamsExamples);
+    }
+
+    @Test
+    public void testZeroParamsMutableAddition() {
+        testMutableAdditionOperations(zeroParamsExamples);
+    }
+
+    @Test
+    public void testTwoParamsMutableAddition() {
+        testMutableAdditionOperations(twoParamsExamples);
+    }
+
+    @Test
+    public void testZeroParamsMutableMultiplication() {
+        testMutableMultOperations(zeroParamsExamples);
+    }
+
+    @Test
+    public void testTwoParamsMutableMultiplication() {
+        testMutableMultOperations(twoParamsExamples);
+    }
+
+    private void testMutableAdditionOperations(PDNumber[] examples) {
+        for (int i = 0; i < examples.length; i++) {
+            final PDNumber x = examples[i];
+            final PDNumber y = examples[(i + 1) % examples.length];
+
+            final PDNumber m = new PDNumber(x.values);
+            assertThat(m.values, is(not(sameInstance(x.values))));
+
+            m.m_add(y.values);
+            assertThat(m, is(x.add(y)));
+            m.m_add(y.values);
+            assertThat(m, is(x.add(y.mult(2))));
+
+            final PDNumber m2 = new PDNumber(x.values);
+            m2.m_add(0);
+            assertThat(m2, is(x));
+            m2.m_add(1.0);
+            assertThat(m2, is(x.add(1.0)));
+            m2.m_add(1.0);
+            assertThat(m2, is(x.add(2.0)));
+
+            final PDNumber m3 = new PDNumber(x.values);
+            m3.m_add(1);
+            assertThat(m2, is(x.add(1)));
+            m3.m_add(1);
+            assertThat(m2, is(x.add(2)));
+        }
+    }
+
+    private void testMutableMultOperations(PDNumber[] examples) {
+        for (int i = 0; i < examples.length; i++) {
+            final PDNumber x = examples[i];
+            final PDNumber y = examples[(i + 1) % examples.length];
+
+            final PDNumber m = new PDNumber(x.values);
+            assertThat(m.values, is(not(sameInstance(x.values))));
+
+            m.m_mult(y.values);
+            assertThat(m, is(x.mult(y)));
+            m.m_mult(y.values);
+            assertThat(m, is(x.mult(y.pow(2))));
+
+            final PDNumber m2 = new PDNumber(x.values);
+            m2.m_mult(1);
+            assertThat(m2, is(x));
+            m2.m_mult(x.values);
+            assertThat(m2, is(x.pow(2)));
+            m2.m_mult(0);
+            assertThat(m2, is(x.zero()));
+
+            final PDNumber m3 = new PDNumber(x.values);
+            m3.m_add(1);
+            assertThat(m2, is(x.add(1)));
+            m3.m_add(1);
+            assertThat(m2, is(x.add(2)));
+        }
     }
 
     private void testMultiplicationProperties(PDNumber[] examples) {
