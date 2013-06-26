@@ -18,6 +18,10 @@
  */
 package de.tuberlin.uebb.jdae.tests.diff;
 
+import org.apache.commons.math3.util.FastMath;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
@@ -35,9 +39,49 @@ import static org.junit.Assert.assertThat;
  */
 public class PDTest {
 
-    public static final PDOperations zeroParams = PDOperations.get(0);
+    public static final double TOLERANCE = 10e-12;
 
+    public static final PDOperations zeroParams = PDOperations.get(0);
     public static final PDOperations twoParams = PDOperations.get(2);
+
+    public static Matcher<PDNumber> closeTo(final PDNumber number) {
+        return new BaseMatcher<PDNumber>() {
+
+            @Override
+            public boolean matches(Object item) {
+                final PDNumber testee = (PDNumber) item;
+
+                return approximate(number, testee);
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("value should be close to: " + number);
+            }
+
+        };
+    }
+
+    public static boolean approximate(final PDNumber number,
+            final PDNumber testee) {
+        if (testee.values.length != number.values.length)
+            return false;
+
+        for (int i = 0; i < testee.values.length; i++)
+            if (Math.abs(testee.values[i] - number.values[i]) > TOLERANCE)
+                return false;
+
+        return true;
+    }
+
+    @Test
+    public void testCreation() {
+        assertThat(new PDNumber(0).values.length, is(1));
+        assertThat(new PDNumber(1).values.length, is(2));
+        assertThat(new PDNumber(10).values.length, is(11));
+
+        assertThat(new PDNumber(new double[] { 0.0 }), is(new PDNumber(0)));
+    }
 
     @Test
     public void testConstantLoading() {
@@ -191,6 +235,32 @@ public class PDTest {
         testMultiplicationProperties(twoParamsExamples);
     }
 
+    @Test
+    public void testTrigonometicBasics() {
+        assertThat(zeroParams.constant(0.0).sin(), is(zeroParams.constant(0.0)));
+
+        assertThat(zeroParams.constant(0.0).sin(), is(closeTo(zeroParams
+                .constant(pihalf).cos())));
+        assertThat(twoParams.constant(0.0).sin(), is(closeTo(twoParams
+                .constant(pihalf).cos())));
+
+        assertThat(zeroParams.constant(0.0).cos(), is(closeTo(zeroParams
+                .constant(pihalf).sin())));
+        assertThat(twoParams.constant(0.0).cos(), is(closeTo(twoParams
+                .constant(pihalf).sin())));
+
+    }
+
+    @Test
+    public void testZeroParamTrigonometricIdentities() {
+        testTrigonometicIdentities(zeroParamsExamples);
+    }
+
+    @Test
+    public void testTwoParamTrigonometricIdentities() {
+        testTrigonometicIdentities(twoParamsExamples);
+    }
+
     private void testMultiplicationProperties(PDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
             final PDNumber x = examples[i];
@@ -210,14 +280,41 @@ public class PDTest {
     private void testAdditionProperties(final PDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
             final PDNumber x = examples[i];
+            final PDNumber y = examples[(i + 1) % examples.length];
+
             assertThat(x, is(x));
             assertThat(x.add(x.zero()), is(x));
             assertThat(x.add(x), is(x.mult(2)));
             assertThat(x.add(x).add(x), is(x.mult(3)));
 
-            final PDNumber y = examples[(i + 1) % examples.length];
             assertThat(x.add(y), is(y.add(x)));
             assertThat(x.add(y).add(x), is(y.add(x).add(x)));
         }
     }
+
+    final static double pihalf = FastMath.PI / 2;
+    final static double twopi = FastMath.PI * 2;
+
+    private void testTrigonometicIdentities(final PDNumber[] examples) {
+        for (int i = 0; i < examples.length; i++) {
+            final PDNumber x = examples[i];
+            final PDNumber y = examples[(i + 1) % examples.length];
+
+            assertThat(x.sin().mult(-1), is(x.mult(-1).sin()));
+            assertThat(x.mult(-1).add(FastMath.PI).sin(), is(closeTo(x.sin())));
+            assertThat(x.mult(-1).add(pihalf).sin(), is(closeTo(x.cos())));
+            assertThat(x.add(twopi).sin(), is(closeTo(x.sin())));
+
+            assertThat(x.mult(-1).cos(), is(x.cos()));
+            assertThat(x.mult(-1).add(FastMath.PI).cos(), is(closeTo(x.cos()
+                    .mult(-1))));
+            assertThat(x.mult(-1).add(pihalf).cos(), is(closeTo(x.sin())));
+            assertThat(x.add(twopi).cos(), is(closeTo(x.cos())));
+
+            assertThat(x.sin().mult(y.cos()).add(y.sin().mult(x.cos())),
+                    is(closeTo(x.add(y).sin())));
+
+        }
+    }
+
 }

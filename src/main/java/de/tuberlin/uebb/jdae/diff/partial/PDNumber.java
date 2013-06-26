@@ -21,6 +21,9 @@ package de.tuberlin.uebb.jdae.diff.partial;
 import java.util.Arrays;
 
 /**
+ * A number holding not just the result of a computation, but also its partial
+ * derivatives.
+ * 
  * @author choeger
  * 
  */
