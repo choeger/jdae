@@ -31,7 +31,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class UnknownTests {
+public class UnknownTest {
 
     final Unknown x = new Unknown("x", 1, 0);
     final Unknown y = new Unknown("y", 2, 0);
