@@ -296,6 +296,16 @@ public class PDTest {
         testMutableMultOperations(twoParamsExamples);
     }
 
+    @Test
+    public void testZeroParamsMutableTrigonometric() {
+        testMutableTrigOperations(zeroParamsExamples);
+    }
+
+    @Test
+    public void testTwoParamsMutableTrigonometric() {
+        testMutableTrigOperations(twoParamsExamples);
+    }
+
     private void testMutableAdditionOperations(PDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
             final PDNumber x = examples[i];
@@ -351,6 +361,26 @@ public class PDTest {
             assertThat(m3, is(x.add(1)));
             m3.m_add(1);
             assertThat(m3, is(x.add(2)));
+        }
+    }
+
+    private void testMutableTrigOperations(PDNumber[] examples) {
+        for (int i = 0; i < examples.length; i++) {
+            final PDNumber x = examples[i];
+
+            final PDNumber m = new PDNumber(x.values);
+            assertThat(m.values, is(not(sameInstance(x.values))));
+            m.m_cos();
+            assertThat(m, is(x.cos()));
+            m.m_sin();
+            assertThat(m, is(x.cos().sin()));
+
+            final PDNumber m2 = new PDNumber(x.values);
+            m2.m_sin();
+            assertThat(m2, is(x.sin()));
+            m2.m_cos();
+            assertThat(m2, is(x.sin().cos()));
+
         }
     }
 
