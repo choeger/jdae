@@ -319,9 +319,9 @@ public class PDTest {
 
             final PDNumber m3 = new PDNumber(x.values);
             m3.m_add(1);
-            assertThat(m2, is(x.add(1)));
+            assertThat(m3, is(x.add(1)));
             m3.m_add(1);
-            assertThat(m2, is(x.add(2)));
+            assertThat(m3, is(x.add(2)));
         }
     }
 
@@ -348,9 +348,9 @@ public class PDTest {
 
             final PDNumber m3 = new PDNumber(x.values);
             m3.m_add(1);
-            assertThat(m2, is(x.add(1)));
+            assertThat(m3, is(x.add(1)));
             m3.m_add(1);
-            assertThat(m2, is(x.add(2)));
+            assertThat(m3, is(x.add(2)));
         }
     }
 

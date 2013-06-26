@@ -145,13 +145,11 @@ public final class PDNumber {
     }
 
     public void m_add(final double value) {
-        for (int i = 0; i < values.length; i++)
-            values[i] += values[i] + value;
+        values[0] += value;
     }
 
     public void m_add(final int value) {
-        for (int i = 0; i < values.length; i++)
-            values[i] += values[i] + value;
+        values[0] += value;
     }
 
     public void m_mult(final double[] other) {
