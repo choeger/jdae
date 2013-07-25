@@ -20,6 +20,8 @@ package de.tuberlin.uebb.jdae.diff.partial;
 
 import java.util.Arrays;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
+
 /**
  * A number holding not just the result of a computation, but also its partial
  * derivatives.
@@ -63,6 +65,20 @@ public final class PDNumber {
         if (!Arrays.equals(values, other.values))
             return false;
         return true;
+    }
+
+    public TDNumber cons(final TDNumber other) {
+        final PDNumber[] vals = new PDNumber[other.values.length + 1];
+        vals[0] = this;
+        for (int i = 1; i < vals.length; i++)
+            vals[i] = other.values[i - 1];
+        return new TDNumber(vals);
+    }
+
+    public PDNumber compose(double[] f, int order) {
+        final PDNumber ret = new PDNumber(getParams());
+        ops.compose(f[order], f[order + 1], values, ret.values);
+        return ret;
     }
 
     public String toString() {

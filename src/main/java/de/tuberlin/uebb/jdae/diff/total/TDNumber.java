@@ -66,6 +66,14 @@ public final class TDNumber {
         return true;
     }
 
+    public TDNumber diff() {
+        return new TDNumber(Arrays.copyOfRange(values, 1, values.length));
+    }
+
+    public TDNumber antiDiff() {
+        return new TDNumber(Arrays.copyOfRange(values, 0, values.length - 1));
+    }
+
     public TDNumber add(final TDNumber other) {
         assert other.values.length == values.length : "Cannot add two numbers of different dimensions!";
         final PDNumber[] newVal = new PDNumber[values.length];
@@ -90,12 +98,9 @@ public final class TDNumber {
     }
 
     public TDNumber mult(final TDNumber other) {
-        final PDNumber[] otherVal = other.values;
-        assert otherVal.length == values.length : "Cannot multiply two numbers of different dimensions!";
-        final PDNumber[] newVal = new PDNumber[values.length];
-
-        ops.mult(values, otherVal, newVal);
-        return new TDNumber(newVal);
+        final PDNumber[] target = new PDNumber[values.length];
+        ops.mult(values, other.values, target);
+        return new TDNumber(target);
     }
 
     public TDNumber mult(final double value) {
@@ -194,6 +199,10 @@ public final class TDNumber {
 
     public TDNumber constant(double d) {
         return ops.constant(d);
+    }
+
+    public double der(int dt, int idx) {
+        return values[dt].values[idx + 1];
     }
 
 }
