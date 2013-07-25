@@ -156,6 +156,18 @@ public class TDNumberDifferentialTest {
                 * Math.pow((dx + y * dy), 2) * Math.sin(2 * x + Math.pow(y, 2));
     }
 
+    final private double df() {
+        return 2 * Math.cos(2 * x + Math.pow(y, 2)) * (dx + y * dy);
+    }
+
+    final private double dfdx() {
+        return -4 * Math.sin(2 * x + Math.pow(y, 2)) * (dx + y * dy);
+    }
+
+    final private double dfddx() {
+        return 2 * Math.cos(2 * x + Math.pow(y, 2));
+    }
+
     final double x;
     final double y;
     final double dx;
@@ -189,16 +201,32 @@ public class TDNumberDifferentialTest {
     }
 
     @Test
+    public void test1stTotalDerivative() {
+        final TDNumber result = f(tx, ty);
+        assertEquals(df(), result.values[1].values[0], 10e-6);
+    }
+
+    @Test
+    public void test1stPartialDerivativeX() {
+        final TDNumber result = f(tx, ty);
+        assertEquals(dfdx(), result.values[1].values[1], 10e-6);
+    }
+
+    @Test
+    public void test1stPartialDerivativeDx() {
+        final TDNumber result = f(tx, ty);
+        assertEquals(dfddx(), result.values[1].values[3], 10e-6);
+    }
+
+    @Test
     public void test2ndTotalDerivative() {
         final TDNumber result = f(tx, ty);
-
         assertEquals(df2(), result.values[2].values[0], 10e-6);
     }
 
     @Test
     public void testInner2ndTotalDerivative() {
         final TDNumber result = inner(tx, ty);
-
         assertEquals(2 * ddx + 2 * dy * dy + 2 * y * ddy,
                 result.values[2].values[0], 10e-6);
     }
