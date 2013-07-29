@@ -29,7 +29,7 @@ public final class TDNumber {
 
     public TDNumber(int order, int params) {
         this.values = new PDNumber[order + 1];
-        this.ops = new TDOperations(order, params);
+        this.ops = TDOperations.getInstance(order, params);
         for (int i = 0; i <= order; i++)
             values[i] = new PDNumber(params);
     }
@@ -40,7 +40,7 @@ public final class TDNumber {
         for (int i = 0; i < values.length; i++)
             this.values[i] = new PDNumber(values[i].values);
 
-        this.ops = new TDOperations(values.length - 1,
+        this.ops = TDOperations.getInstance(values.length - 1,
                 values[0].values.length - 1);
     }
 

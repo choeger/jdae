@@ -19,9 +19,15 @@
 package de.tuberlin.uebb.jdae.diff.total;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.math3.util.FastMath;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
@@ -37,11 +43,67 @@ public final class TDOperations {
     public final int order;
     private final Product[][][] multOps;
 
-    public TDOperations(int order, int params) {
+    private TDOperations(int order, int params) {
         super();
         this.order = order;
         this.subOps = new PDOperations(params);
         multOps = compileMultIndirection();
+    }
+
+    public static final class TDOperationsKey {
+        public final int order;
+        public final int params;
+
+        public TDOperationsKey(int order, int params) {
+            super();
+            this.order = order;
+            this.params = params;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + order;
+            result = prime * result + params;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TDOperationsKey other = (TDOperationsKey) obj;
+            if (order != other.order)
+                return false;
+            if (params != other.params)
+                return false;
+            return true;
+        }
+
+    }
+
+    private static final LoadingCache<TDOperationsKey, TDOperations> cache = CacheBuilder
+            .newBuilder().maximumSize(100)
+            .build(new CacheLoader<TDOperationsKey, TDOperations>() {
+
+                @Override
+                public TDOperations load(TDOperationsKey key) throws Exception {
+                    return new TDOperations(key.order, key.params);
+                }
+            });
+
+    public static TDOperations getInstance(int order, int params) {
+        try {
+            return cache.get(new TDOperationsKey(order, params));
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
@@ -50,29 +112,101 @@ public final class TDOperations {
             target[i] = a[i].add(b[i]);
     }
 
-    private final static class Product {
+    private static final class ProductElements {
         public final int lhs_row;
         public final int lhs_column;
         public final int rhs_row;
         public final int rhs_column;
-        public final int factor;
 
-        public Product(int lhs_row, int lhs_column, int rhs_row,
-                int rhs_column, int factor) {
+        public ProductElements(int lhs_row, int lhs_column, int rhs_row,
+                int rhs_column) {
             super();
             this.lhs_row = lhs_row;
             this.lhs_column = lhs_column;
             this.rhs_row = rhs_row;
             this.rhs_column = rhs_column;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + lhs_column;
+            result = prime * result + lhs_row;
+            result = prime * result + rhs_column;
+            result = prime * result + rhs_row;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ProductElements other = (ProductElements) obj;
+            if (lhs_column != other.lhs_column)
+                return false;
+            if (lhs_row != other.lhs_row)
+                return false;
+            if (rhs_column != other.rhs_column)
+                return false;
+            if (rhs_row != other.rhs_row)
+                return false;
+            return true;
+        }
+
+    }
+
+    private final static class Product {
+        public final ProductElements elements;
+        public final int factor;
+
+        public Product(int lhs_row, int lhs_column, int rhs_row,
+                int rhs_column, int factor) {
+            super();
+            this.elements = new ProductElements(lhs_row, lhs_column, rhs_row,
+                    rhs_column);
             this.factor = factor;
+        }
+
+        public Product(int factor, ProductElements elements) {
+            this.factor = factor;
+            this.elements = elements;
+        }
+
+        public Product plusOne() {
+            return new Product(factor + 1, elements);
         }
     }
 
-    public final Product[][][] compileMultIndirection() {
+    private final Product[][][] compileMultIndirection() {
         final Product[][][] multOps = new Product[order + 1][][];
         addMultOps(0, 0, 0, multOps);
 
+        for (int i = 0; i < multOps.length; ++i) {
+            for (int j = 0; j < multOps[i].length; ++j) {
+                multOps[i][j] = merge(multOps[i][j]);
+            }
+        }
+
         return multOps;
+    }
+
+    private Product[] merge(Product[] products) {
+        final Map<ProductElements, Product> map = Maps.newHashMap();
+
+        for (Product product : products) {
+            if (map.containsKey(product.elements))
+                map.put(product.elements, map.get(product.elements).plusOne());
+            else
+                map.put(product.elements, product);
+        }
+
+        final Product[] array = map.values().toArray(new Product[map.size()]);
+        return array;
     }
 
     private final void addMultOps(int row, int a, int b, Product[][][] ops) {
@@ -115,8 +249,8 @@ public final class TDOperations {
                     if (target[i] == null)
                         target[i] = new PDNumber(subOps.params);
 
-                    target[i].values[j] += a[product.lhs_row].values[product.lhs_column]
-                            * b[product.rhs_row].values[product.rhs_column]
+                    target[i].values[j] += a[product.elements.lhs_row].values[product.elements.lhs_column]
+                            * b[product.elements.rhs_row].values[product.elements.rhs_column]
                             * product.factor;
                 }
             }

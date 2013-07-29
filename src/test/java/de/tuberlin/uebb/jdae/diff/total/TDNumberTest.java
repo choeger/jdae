@@ -78,8 +78,8 @@ public class TDNumberTest {
     }
 
     final static TDOperations[] exampleOps = new TDOperations[] {
-            new TDOperations(0, 0), new TDOperations(2, 0),
-            new TDOperations(2, 2), new TDOperations(5, 10) };
+            TDOperations.getInstance(0, 0), TDOperations.getInstance(2, 0),
+            TDOperations.getInstance(2, 2), TDOperations.getInstance(5, 10) };
 
     @Parameters(name = "TD Test on: {0}")
     public static Collection<Object[]> data() {
