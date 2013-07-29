@@ -19,12 +19,10 @@
 package de.tuberlin.uebb.jdae.diff.total;
 
 import java.util.Arrays;
-import java.util.Map;
 
 import org.apache.commons.math3.util.FastMath;
 
-import com.google.common.collect.Maps;
-import com.google.common.math.IntMath;
+import com.google.common.collect.ObjectArrays;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
@@ -35,41 +33,15 @@ import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
  */
 public final class TDOperations {
 
-    public static final class Binom {
-        public final int[][] coefficients;
-
-        private Binom(int order) {
-            coefficients = new int[order + 1][];
-            /**
-             * prepare binomial coeff array TODO: make faster (and static?)
-             */
-            for (int n = 0; n <= order; n++) {
-                coefficients[n] = new int[n + 1];
-
-                for (int k = 0; k <= n; k++)
-                    coefficients[n][k] = IntMath.binomial(n, k);
-            }
-        }
-
-        final static Map<Integer, Binom> tables = Maps.newTreeMap();
-
-        public static Binom getBinomTable(int order) {
-            if (!tables.containsKey(order)) {
-                tables.put(order, new Binom(order));
-            }
-            return tables.get(order);
-        }
-    }
-
     public final PDOperations subOps;
     public final int order;
-    public final Binom binom;
+    private final Product[][][] multOps;
 
     public TDOperations(int order, int params) {
         super();
         this.order = order;
         this.subOps = new PDOperations(params);
-        this.binom = Binom.getBinomTable(order);
+        multOps = compileMultIndirection();
     }
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
@@ -78,56 +50,115 @@ public final class TDOperations {
             target[i] = a[i].add(b[i]);
     }
 
-    // public final void mult(final PDNumber[] a, final PDNumber[] b,
-    // final PDNumber[] target) {
-    // /* implement leibniz rule */
-    // final PDNumber tmp = new PDNumber(a[0].values.length - 1);
-    //
-    // for (int n = (order); n >= 0; n--) {
-    // tmp.m_add(a[n].values);
-    // tmp.m_mult(b[0].values);
-    // tmp.m_mult(binom.coefficients[n][0]);
-    //
-    // if (target[n] == null)
-    // target[n] = new PDNumber(tmp.values);
-    // else {
-    // for (int i = 0; i < target[n].values.length; i++)
-    // target[n].values[i] = tmp.values[i];
-    // }
-    //
-    // for (int k = 1; k <= n; k++) {
-    // Arrays.fill(tmp.values, 0.0);
-    // tmp.m_add(a[n - k].values);
-    // tmp.m_mult(b[k].values);
-    // tmp.m_mult(binom.coefficients[n][k]);
-    // target[n].m_add(tmp.values);
-    // }
-    // }
-    // }
+    private final static class Product {
+        public final int lhs_row;
+        public final int lhs_column;
+        public final int rhs_row;
+        public final int rhs_column;
+        public final int factor;
+
+        public Product(int lhs_row, int lhs_column, int rhs_row,
+                int rhs_column, int factor) {
+            super();
+            this.lhs_row = lhs_row;
+            this.lhs_column = lhs_column;
+            this.rhs_row = rhs_row;
+            this.rhs_column = rhs_column;
+            this.factor = factor;
+        }
+    }
+
+    public final Product[][][] compileMultIndirection() {
+        final Product[][][] multOps = new Product[order + 1][][];
+        addMultOps(0, 0, 0, multOps);
+
+        return multOps;
+    }
+
+    private final void addMultOps(int row, int a, int b, Product[][][] ops) {
+        if (ops[row] == null) {
+            ops[row] = new Product[subOps.params + 1][];
+        }
+
+        // (a*b)[0] == a[0] * b[0]
+        final Product[] sum = new Product[] { new Product(a, 0, b, 0, 1) };
+        if (ops[row][0] == null) {
+            ops[row][0] = sum;
+        } else {
+            ops[row][0] = ObjectArrays.concat(sum, ops[row][0], Product.class);
+        }
+
+        // (a*b)[i] == a[0] * der(b)[i] + der(a)[i] * b[0]
+        for (int i = 1; i <= subOps.params; ++i) {
+            final Product[] sum2 = new Product[] { new Product(a, 0, b, i, 1),
+                    new Product(a, i, b, 0, 1) };
+            if (ops[row][i] == null) {
+                ops[row][i] = sum2;
+            } else {
+                ops[row][i] = ObjectArrays.concat(sum2, ops[row][i],
+                        Product.class);
+            }
+        }
+
+        if (row < order) {
+            addMultOps(row + 1, a + 1, b, ops);
+            addMultOps(row + 1, a, b + 1, ops);
+        }
+    }
+
+    public final void multInd(final PDNumber[] a, final PDNumber[] b,
+            final PDNumber[] target) {
+
+        for (int i = 0; i < multOps.length; ++i) {
+            for (int j = 0; j < multOps[i].length; ++j) {
+                for (Product product : multOps[i][j]) {
+                    if (target[i] == null)
+                        target[i] = new PDNumber(subOps.params);
+
+                    target[i].values[j] += a[product.lhs_row].values[product.lhs_column]
+                            * b[product.rhs_row].values[product.rhs_column]
+                            * product.factor;
+                }
+            }
+        }
+
+    }
 
     public final void mult(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
-        if (target[0] == null)
-            target[0] = new PDNumber(a[0].getParams());
-
-        subOps.mult(a[0].values, b[0].values, target[0].values);
-
-        if (target.length > 1) {
-            final TDOperations sm = smaller();
-
-            final PDNumber[] tmp1 = new PDNumber[target.length - 1];
-            sm.mult(diff(a), antiDiff(b), tmp1);
-
-            final PDNumber[] tmp2 = new PDNumber[target.length - 1];
-            sm.mult(antiDiff(a), diff(b), tmp2);
-
-            for (int i = 1; i < target.length; i++) {
-                target[i] = new PDNumber(a[0].getParams());
-                target[i].m_add(tmp1[i - 1].values);
-                target[i].m_add(tmp2[i - 1].values);
-            }
-        }
+        multInd(a, b, target);
     }
+
+    // public final void mult(final PDNumber[] a, final PDNumber[] b,
+    // final PDNumber[] target) {
+    // if (target[0] == null)
+    // target[0] = new PDNumber(a[0].getParams());
+    //
+    // final double a0 = a[0].values[0];
+    // final double b0 = b[0].values[0];
+    //
+    // target[0].values[0] = a0 * b0;
+    //
+    // for (int i1 = 1; i1 <= subOps.params; i1++) {
+    // target[0].values[i1] = a[0].values[i1] * b0 + b[0].values[i1] * a0;
+    // }
+    //
+    // if (target.length > 1) {
+    // final TDOperations sm = smaller();
+    //
+    // final PDNumber[] tmp1 = new PDNumber[target.length - 1];
+    // sm.mult(diff(a), antiDiff(b), tmp1);
+    //
+    // final PDNumber[] tmp2 = new PDNumber[target.length - 1];
+    // sm.mult(antiDiff(a), diff(b), tmp2);
+    //
+    // for (int i = 1; i < target.length; i++) {
+    // target[i] = new PDNumber(a[0].getParams());
+    // target[i].m_add(tmp1[i - 1].values);
+    // target[i].m_add(tmp2[i - 1].values);
+    // }
+    // }
+    // }
 
     public void compose(double f[], final PDNumber[] a, final PDNumber[] target) {
         compose(f, 0, a, target);
@@ -138,7 +169,10 @@ public final class TDOperations {
         if (target[0] == null)
             target[0] = new PDNumber(a[0].getParams());
 
-        subOps.compose(f[order], f[order + 1], a[0].values, target[0].values);
+        target[0].values[0] = f[order];
+        for (int i1 = 1; i1 <= subOps.params; i1++) {
+            target[0].values[i1] = a[0].values[i1] * f[order + 1];
+        }
 
         if (target.length > 1) {
             final TDOperations sm = smaller();
@@ -229,6 +263,9 @@ public final class TDOperations {
         final PDNumber c = subOps.constant(d);
         final PDNumber[] c_values = new PDNumber[order + 1];
         c_values[0] = c;
+        for (int i = 1; i < order + 1; ++i)
+            c_values[i] = subOps.constant(0.0);
+
         return new TDNumber(c_values);
     }
 
