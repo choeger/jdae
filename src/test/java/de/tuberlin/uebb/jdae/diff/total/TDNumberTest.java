@@ -29,8 +29,6 @@ import com.google.common.testing.EqualsTester;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumberTest;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.hamcrest.Matchers.not;
 
 import static org.junit.Assert.assertThat;
 
@@ -74,6 +72,8 @@ public class TDNumberTest {
 
     final TDOperations twoParams0 = new TDOperations(0, 2);
 
+    final TDOperations twoParams2 = new TDOperations(2, 2);
+
     final TDNumber[] zeroTwoExamples = new TDNumber[] {
             twoParams0.constant(0.0), twoParams0.constant(1.0),
             twoParams0.constant(2.0), twoParams0.constant(4.0),
@@ -115,6 +115,16 @@ public class TDNumberTest {
     }
 
     @Test
+    public void testManyMultiplications() {
+        TDNumber result = twoParams2.constant(1.0);
+
+        for (int i = 0; i < 1000000; ++i)
+            result = result.mult(result);
+
+        assertThat(result, is(twoParams2.constant(1.0)));
+    }
+
+    @Test
     public void testMultAlgebraicIdentitiesZeroParamsZeroOrder() {
         testMultiplicationProperties(zeroZeroExamples);
     }
@@ -151,36 +161,6 @@ public class TDNumberTest {
         testTrigonometicIdentities(zeroTwoExamples);
     }
 
-    @Test
-    public void testZeroParamsMutableAddition() {
-        testMutableAdditionOperations(zeroZeroExamples);
-    }
-
-    @Test
-    public void testTwoParamsMutableAddition() {
-        testMutableAdditionOperations(zeroTwoExamples);
-    }
-
-    @Test
-    public void testZeroParamsMutableMultiplication() {
-        testMutableMultOperations(zeroZeroExamples);
-    }
-
-    @Test
-    public void testTwoParamsMutableMultiplication() {
-        testMutableMultOperations(zeroTwoExamples);
-    }
-
-    @Test
-    public void testZeroParamsMutableTrigonometric() {
-        testMutableTrigOperations(zeroZeroExamples);
-    }
-
-    @Test
-    public void testTwoParamsMutableTrigonometric() {
-        testMutableTrigOperations(zeroTwoExamples);
-    }
-
     private void testMultiplicationProperties(TDNumber[] examples) {
         for (int i = 0; i < examples.length; i++) {
             final TDNumber x = examples[i];
@@ -194,95 +174,6 @@ public class TDNumberTest {
 
             assertThat(x.mult(y), is(y.mult(x)));
             assertThat(x.mult(x).mult(y), is(y.mult(x).mult(x)));
-        }
-    }
-
-    private void testMutableAdditionOperations(TDNumber[] examples) {
-        for (int i = 0; i < examples.length; i++) {
-            final TDNumber x = examples[i];
-            final TDNumber y = examples[(i + 1) % examples.length];
-
-            final TDNumber m = new TDNumber(x.values);
-            assertThat(m.values, is(not(sameInstance(x.values))));
-            for (int k = 0; k < m.values.length; k++)
-                assertThat(m.values[k].values,
-                        is(not(sameInstance(x.values[k].values))));
-
-            m.m_add(y.values);
-            assertThat(m, is(x.add(y)));
-            m.m_add(y.values);
-            assertThat(m, is(x.add(y.mult(2))));
-
-            final TDNumber m2 = new TDNumber(x.values);
-            m2.m_add(0);
-            assertThat(m2, is(x));
-            m2.m_add(1.0);
-            assertThat(m2, is(x.add(1.0)));
-            m2.m_add(1.0);
-            assertThat(m2, is(x.add(2.0)));
-
-            final TDNumber m3 = new TDNumber(x.values);
-            m3.m_add(1);
-            assertThat(m3, is(x.add(1)));
-            m3.m_add(1);
-            assertThat(m3, is(x.add(2)));
-        }
-    }
-
-    private void testMutableMultOperations(TDNumber[] examples) {
-        for (int i = 0; i < examples.length; i++) {
-            final TDNumber x = examples[i];
-            final TDNumber y = examples[(i + 1) % examples.length];
-
-            final TDNumber m = new TDNumber(x.values);
-            assertThat(m.values, is(not(sameInstance(x.values))));
-            for (int k = 0; k < m.values.length; k++)
-                assertThat(m.values[k].values,
-                        is(not(sameInstance(x.values[k].values))));
-            assertThat(m, is(x));
-
-            m.m_mult(y.values);
-            assertThat(m, is(x.mult(y)));
-            m.m_mult(y.values);
-            assertThat(m, is(x.mult(y.pow(2))));
-
-            final TDNumber m2 = new TDNumber(x.values);
-            m2.m_mult(1);
-            assertThat(m2, is(x));
-            m2.m_mult(x.values);
-            assertThat(m2, is(x.pow(2)));
-            m2.m_mult(0);
-            assertThat(m2, is(x.zero()));
-
-            final TDNumber m3 = new TDNumber(x.values);
-            m3.m_add(1);
-            assertThat(m3, is(x.add(1)));
-            m3.m_add(1);
-            assertThat(m3, is(x.add(2)));
-        }
-    }
-
-    private void testMutableTrigOperations(TDNumber[] examples) {
-        for (int i = 0; i < examples.length; i++) {
-            final TDNumber x = examples[i];
-
-            final TDNumber m = new TDNumber(x.values);
-            assertThat(m.values, is(not(sameInstance(x.values))));
-            for (int k = 0; k < m.values.length; k++)
-                assertThat(m.values[k].values,
-                        is(not(sameInstance(x.values[k].values))));
-
-            m.m_cos();
-            assertThat(m, is(x.cos()));
-            m.m_sin();
-            assertThat(m, is(x.cos().sin()));
-
-            final TDNumber m2 = new TDNumber(x.values);
-            m2.m_sin();
-            assertThat(m2, is(x.sin()));
-            m2.m_cos();
-            assertThat(m2, is(x.sin().cos()));
-
         }
     }
 
