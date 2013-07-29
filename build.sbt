@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
 		    "com.google.guava" % "guava-testlib" % "14.0.1",		    
 		    "org.hamcrest" % "hamcrest-all" % "1.3",
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
-		    "junit" % "junit" % "4.10",
+		    "junit" % "junit" % "4.11",
 		    "com.google.code.gson" % "gson" % "2.2.2",
 		    "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 		    )

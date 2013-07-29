@@ -278,10 +278,16 @@ public final class TDOperations {
         for (int i = 0; i < order + 1; i++)
             vals[i] = subOps.constant(der[i]);
 
-        for (int i = 0; i <= derivatives; i++)
-            vals[i].values[1 + idx + i] = 1;
+        if (subOps.params > 0)
+            for (int i = 0; i <= derivatives; i++)
+                vals[i].values[1 + idx + i] = 1;
 
         return new TDNumber(vals);
+    }
+
+    public String toString() {
+        return String.format("TD with %d parameters, %d-times derived",
+                subOps.params, order);
     }
 
 }

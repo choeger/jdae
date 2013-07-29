@@ -18,12 +18,19 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.math3.util.FastMath;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+import com.google.common.collect.Lists;
 import com.google.common.testing.EqualsTester;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumberTest;
@@ -32,6 +39,7 @@ import static org.hamcrest.CoreMatchers.is;
 
 import static org.junit.Assert.assertThat;
 
+@RunWith(Parameterized.class)
 public class TDNumberTest {
 
     public static Matcher<TDNumber> closeTo(final TDNumber number) {
@@ -64,33 +72,54 @@ public class TDNumberTest {
         return true;
     }
 
-    final TDOperations zeroParams0 = new TDOperations(0, 0);
+    final static TDNumber[] examples(TDOperations ops) {
+        return new TDNumber[] { ops.constant(0.0), ops.constant(1.0),
+                ops.constant(2.0), ops.constant(4.0) };
+    }
 
-    final TDNumber[] zeroZeroExamples = new TDNumber[] {
-            zeroParams0.constant(0.0), zeroParams0.constant(1.0),
-            zeroParams0.constant(2.0), zeroParams0.constant(4.0) };
+    final static TDOperations[] exampleOps = new TDOperations[] {
+            new TDOperations(0, 0), new TDOperations(2, 0),
+            new TDOperations(2, 2), new TDOperations(5, 10) };
 
-    final TDOperations twoParams0 = new TDOperations(0, 2);
+    @Parameters(name = "TD Test on: {0}")
+    public static Collection<Object[]> data() {
+        final List<Object[]> p = Lists.newArrayList();
+        for (TDOperations op : exampleOps)
+            p.add(new Object[] { op });
 
-    final TDOperations twoParams2 = new TDOperations(2, 2);
+        return p;
+    }
 
-    final TDNumber[] zeroTwoExamples = new TDNumber[] {
-            twoParams0.constant(0.0), twoParams0.constant(1.0),
-            twoParams0.constant(2.0), twoParams0.constant(4.0),
-            twoParams0.variable(0, 5.0), twoParams0.variable(1, 3.0) };
+    public final TDOperations ops;
+    public final TDNumber[] examples;
+
+    public TDNumberTest(TDOperations testOps) {
+        this.ops = testOps;
+        this.examples = examples(ops);
+    }
 
     @Test
     public void testEqualsContract() {
-        new EqualsTester()
-                .addEqualityGroup(zeroParams0.constant(1.0),
-                        zeroParams0.constant(1.0))
-                .addEqualityGroup(zeroParams0.constant(0.0),
-                        zeroParams0.constant(0.0))
-                .addEqualityGroup(twoParams0.constant(1.0),
-                        twoParams0.constant(1.0)).testEquals();
+        if (ops.subOps.params > 0) {
+            final double[] der = new double[ops.order + 1];
+            for (int i = 0; i < der.length; ++i)
+                der[i] = 1.0 + i;
+
+            new EqualsTester()
+                    .addEqualityGroup(ops.constant(1.0), ops.constant(1.0))
+                    .addEqualityGroup(ops.constant(0.0), ops.constant(0.0))
+                    .addEqualityGroup(ops.variable(1, 0, der),
+                            ops.variable(1, 0, der)).testEquals();
+        } else {
+            new EqualsTester()
+                    .addEqualityGroup(ops.constant(1.0), ops.constant(1.0))
+                    .addEqualityGroup(ops.constant(0.0), ops.constant(0.0))
+                    .testEquals();
+        }
     }
 
-    private void testAdditionProperties(final TDNumber[] examples) {
+    @Test
+    public void testAdditionProperties() {
         for (int i = 0; i < examples.length; i++) {
             final TDNumber x = examples[i];
             assertThat(x, is(x));
@@ -105,63 +134,28 @@ public class TDNumberTest {
     }
 
     @Test
-    public void testAddAlgebraicIdentitiesZeroParamsZeroOrder() {
-        testAdditionProperties(zeroZeroExamples);
-    }
-
-    @Test
-    public void testAddAlgebraicIdentitiesTwoParamsZeroOrder() {
-        testAdditionProperties(zeroTwoExamples);
-    }
-
-    @Test
     public void testManyMultiplications() {
-        TDNumber result = twoParams2.constant(1.0);
+        TDNumber result = ops.constant(1.0);
 
         for (int i = 0; i < 1000000; ++i)
             result = result.mult(result);
 
-        assertThat(result, is(twoParams2.constant(1.0)));
-    }
-
-    @Test
-    public void testMultAlgebraicIdentitiesZeroParamsZeroOrder() {
-        testMultiplicationProperties(zeroZeroExamples);
-    }
-
-    @Test
-    public void testMultAlgebraicIdentitiesTwoParamsZeroOrder() {
-        testMultiplicationProperties(zeroTwoExamples);
+        assertThat(result, is(ops.constant(1.0)));
     }
 
     @Test
     public void testTrigonometicBasics() {
-        assertThat(zeroParams0.constant(0.0).sin(),
-                is(zeroParams0.constant(0.0)));
+        assertThat(ops.constant(0.0).sin(), is(ops.constant(0.0)));
 
-        assertThat(zeroParams0.constant(0.0).sin(), is(closeTo(zeroParams0
-                .constant(pihalf).cos())));
-        assertThat(twoParams0.constant(0.0).sin(), is(closeTo(twoParams0
-                .constant(pihalf).cos())));
+        assertThat(ops.constant(0.0).sin(), is(closeTo(ops.constant(pihalf)
+                .cos())));
 
-        assertThat(zeroParams0.constant(0.0).cos(), is(closeTo(zeroParams0
-                .constant(pihalf).sin())));
-        assertThat(twoParams0.constant(0.0).cos(), is(closeTo(twoParams0
-                .constant(pihalf).sin())));
-
+        assertThat(ops.constant(0.0).cos(), is(closeTo(ops.constant(pihalf)
+                .sin())));
     }
 
     @Test
-    public void testZeroParamTrigonometricIdentities() {
-        testTrigonometicIdentities(zeroZeroExamples);
-    }
-
-    @Test
-    public void testTwoParamTrigonometricIdentities() {
-        testTrigonometicIdentities(zeroTwoExamples);
-    }
-
-    private void testMultiplicationProperties(TDNumber[] examples) {
+    public void testMultiplicationProperties() {
         for (int i = 0; i < examples.length; i++) {
             final TDNumber x = examples[i];
 
@@ -180,12 +174,13 @@ public class TDNumberTest {
     final static double pihalf = FastMath.PI / 2;
     final static double twopi = FastMath.PI * 2;
 
-    private void testTrigonometicIdentities(final TDNumber[] examples) {
+    @Test
+    public void testTrigonometicIdentities() {
         for (int i = 0; i < examples.length; i++) {
             final TDNumber x = examples[i];
             final TDNumber y = examples[(i + 1) % examples.length];
 
-            assertThat(x.sin().mult(-1), is(x.mult(-1).sin()));
+            assertThat(x.sin().mult(-1), is(closeTo(x.mult(-1).sin())));
             assertThat(x.mult(-1).add(FastMath.PI).sin(), is(closeTo(x.sin())));
             assertThat(x.mult(-1).add(pihalf).sin(), is(closeTo(x.cos())));
             assertThat(x.add(twopi).sin(), is(closeTo(x.sin())));
