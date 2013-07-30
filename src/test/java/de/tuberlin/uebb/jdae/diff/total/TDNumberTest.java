@@ -42,6 +42,8 @@ import static org.junit.Assert.assertThat;
 @RunWith(Parameterized.class)
 public class TDNumberTest {
 
+    private static final int MANY_ITERATIONS = 1000000;
+
     public static Matcher<TDNumber> closeTo(final TDNumber number) {
         return new BaseMatcher<TDNumber>() {
 
@@ -137,8 +139,18 @@ public class TDNumberTest {
     public void testManyMultiplications() {
         TDNumber result = ops.constant(1.0);
 
-        for (int i = 0; i < 1000000; ++i)
+        for (int i = 0; i < MANY_ITERATIONS; ++i)
             result = result.mult(result);
+
+        assertThat(result, is(ops.constant(1.0)));
+    }
+
+    @Test
+    public void testManySquares() {
+        TDNumber result = ops.constant(1.0);
+
+        for (int i = 0; i < MANY_ITERATIONS; ++i)
+            result = result.pow(2);
 
         assertThat(result, is(ops.constant(1.0)));
     }
