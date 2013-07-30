@@ -195,20 +195,6 @@ public final class TDOperations {
         return multOps;
     }
 
-    private Product[] merge(Product[] products) {
-        final Map<ProductElements, Product> map = Maps.newHashMap();
-
-        for (Product product : products) {
-            if (map.containsKey(product.elements))
-                map.put(product.elements, map.get(product.elements).plusOne());
-            else
-                map.put(product.elements, product);
-        }
-
-        final Product[] array = map.values().toArray(new Product[map.size()]);
-        return array;
-    }
-
     private final void addMultOps(int row, int a, int b, Product[][][] ops) {
         if (ops[row] == null) {
             ops[row] = new Product[subOps.params + 1][];
@@ -239,6 +225,48 @@ public final class TDOperations {
             addMultOps(row + 1, a, b + 1, ops);
         }
     }
+
+    private Product[] merge(Product[] products) {
+        final Map<ProductElements, Product> map = Maps.newHashMap();
+
+        for (Product product : products) {
+            if (map.containsKey(product.elements))
+                map.put(product.elements, map.get(product.elements).plusOne());
+            else
+                map.put(product.elements, product);
+        }
+
+        final Product[] array = map.values().toArray(new Product[map.size()]);
+        return array;
+    }
+
+    private final static class CompositionProduct {
+        public final int f_order;
+        public final int f_factor;
+        public final TDOperationsKey[] keys;
+
+        public CompositionProduct(int f_order, int f_factor,
+                TDOperationsKey[] keys) {
+            super();
+            this.f_order = f_order;
+            this.f_factor = f_factor;
+            this.keys = keys;
+        }
+    }
+
+    // private final CompositionProduct[][][] compileCompIndirection() {
+    // final CompositionProduct[][][] ops = new CompositionProduct[order +
+    // 1][][];
+    //
+    // ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
+    // new TDOperationsKey[0]) };
+    //
+    // for (int i = 1; i < subOps.params; ++i) {
+    // ops[0][i] = new CompositionProduct[] { new CompositionProduct(1, 1,
+    // new TDOperationsKey[] { new TDOperationsKey(0, i) }) };
+    // }
+    //
+    // }
 
     public final void multInd(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
@@ -322,7 +350,7 @@ public final class TDOperations {
     }
 
     public TDOperations smaller() {
-        return new TDOperations(order - 1, subOps.params);
+        return getInstance(order - 1, subOps.params);
     }
 
     private PDNumber[] antiDiff(PDNumber[] a) {
