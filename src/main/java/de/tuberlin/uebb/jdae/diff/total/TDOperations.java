@@ -19,16 +19,21 @@
 package de.tuberlin.uebb.jdae.diff.total;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.math3.util.FastMath;
 
+import com.google.common.base.Joiner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
+import com.google.common.collect.Ordering;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
@@ -42,30 +47,47 @@ public final class TDOperations {
     public final PDOperations subOps;
     public final int order;
     private final Product[][][] multOps;
+    public final CompositionProduct[][][] compOps;
 
     private TDOperations(int order, int params) {
         super();
         this.order = order;
         this.subOps = new PDOperations(params);
         multOps = compileMultIndirection();
+        compOps = compileCompIndirection();
+        System.out.println(stats(compOps));
     }
 
-    public static final class TDOperationsKey {
-        public final int order;
-        public final int params;
+    private String stats(CompositionProduct[][][] compositionProducts) {
 
-        public TDOperationsKey(int order, int params) {
+        int keys = 0;
+        int terms = 0;
+        for (CompositionProduct[][] row : compositionProducts)
+            for (CompositionProduct[] column : row)
+                for (CompositionProduct prod : column) {
+                    terms++;
+                    keys += prod.key.keys.length;
+                }
+        return String.format("%d terms with %d keys in total.", terms, keys);
+
+    }
+
+    public static final class IntPair implements Comparable<IntPair> {
+        public final int x;
+        public final int y;
+
+        public IntPair(int x, int y) {
             super();
-            this.order = order;
-            this.params = params;
+            this.x = x;
+            this.y = y;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + order;
-            result = prime * result + params;
+            result = prime * result + x;
+            result = prime * result + y;
             return result;
         }
 
@@ -77,29 +99,39 @@ public final class TDOperations {
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            TDOperationsKey other = (TDOperationsKey) obj;
-            if (order != other.order)
+            IntPair other = (IntPair) obj;
+            if (x != other.x)
                 return false;
-            if (params != other.params)
+            if (y != other.y)
                 return false;
             return true;
         }
 
+        @Override
+        public int compareTo(IntPair o) {
+            return ComparisonChain.start().compare(x, o.x).compare(y, o.y)
+                    .result();
+        }
+
+        public String toString() {
+            return "(" + x + ", " + y + ")";
+        }
+
     }
 
-    private static final LoadingCache<TDOperationsKey, TDOperations> cache = CacheBuilder
+    private static final LoadingCache<IntPair, TDOperations> cache = CacheBuilder
             .newBuilder().maximumSize(100)
-            .build(new CacheLoader<TDOperationsKey, TDOperations>() {
+            .build(new CacheLoader<IntPair, TDOperations>() {
 
                 @Override
-                public TDOperations load(TDOperationsKey key) throws Exception {
-                    return new TDOperations(key.order, key.params);
+                public TDOperations load(IntPair key) throws Exception {
+                    return new TDOperations(key.x, key.y);
                 }
             });
 
     public static TDOperations getInstance(int order, int params) {
         try {
-            return cache.get(new TDOperationsKey(order, params));
+            return cache.get(new IntPair(order, params));
         } catch (ExecutionException e) {
             e.printStackTrace();
             return null;
@@ -240,33 +272,173 @@ public final class TDOperations {
         return array;
     }
 
-    private final static class CompositionProduct {
+    private static final class CompositionKey {
         public final int f_order;
-        public final int f_factor;
-        public final TDOperationsKey[] keys;
+        public final IntPair[] keys;
 
-        public CompositionProduct(int f_order, int f_factor,
-                TDOperationsKey[] keys) {
+        public CompositionKey(int f_order, IntPair[] keys) {
             super();
             this.f_order = f_order;
-            this.f_factor = f_factor;
-            this.keys = keys;
+            this.keys = Arrays.copyOf(keys, keys.length);
+            Arrays.sort(this.keys, Ordering.natural());
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + f_order;
+            result = prime * result + Arrays.hashCode(keys);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CompositionKey other = (CompositionKey) obj;
+            if (f_order != other.f_order)
+                return false;
+            if (!Arrays.equals(keys, other.keys))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder b = new StringBuilder();
+            b.append("f^(" + f_order + ") * P[");
+            for (IntPair k : keys) {
+                b.append("a_");
+                b.append(k);
+                b.append(" ");
+            }
+            b.append("]");
+            return b.toString();
         }
     }
 
-    // private final CompositionProduct[][][] compileCompIndirection() {
-    // final CompositionProduct[][][] ops = new CompositionProduct[order +
-    // 1][][];
-    //
-    // ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
-    // new TDOperationsKey[0]) };
-    //
-    // for (int i = 1; i < subOps.params; ++i) {
-    // ops[0][i] = new CompositionProduct[] { new CompositionProduct(1, 1,
-    // new TDOperationsKey[] { new TDOperationsKey(0, i) }) };
-    // }
-    //
-    // }
+    private final static class CompositionProduct {
+        public final int f_factor;
+        public final CompositionKey key;
+
+        public CompositionProduct(int f_factor, CompositionKey key) {
+            this.key = key;
+            this.f_factor = f_factor;
+        }
+
+        public CompositionProduct(int f_order, int f_factor, IntPair[] keys) {
+            super();
+            this.key = new CompositionKey(f_order, keys);
+            this.f_factor = f_factor;
+        }
+
+        public CompositionProduct plus(CompositionProduct o) {
+            return new CompositionProduct(f_factor + o.f_factor, key);
+        }
+
+        public String toString() {
+            return "( " + f_factor + " * " + key + ")";
+        }
+    }
+
+    private final CompositionProduct[][][] compileCompIndirection() {
+        final CompositionProduct[][][] ops = new CompositionProduct[order + 1][][];
+        addCompOps(ops);
+
+        for (int i = 0; i < ops.length; ++i) {
+            for (int j = 0; j < ops[i].length; ++j) {
+                ops[i][j] = merge(ops[i][j]);
+            }
+        }
+
+        return ops;
+    }
+
+    private CompositionProduct[] merge(CompositionProduct[] products) {
+        final Map<CompositionKey, CompositionProduct> map = Maps.newHashMap();
+
+        for (CompositionProduct product : products) {
+            if (map.containsKey(product.key)) {
+                map.put(product.key, map.get(product.key).plus(product));
+            } else
+                map.put(product.key, product);
+        }
+
+        final CompositionProduct[] array = map.values().toArray(
+                new CompositionProduct[map.size()]);
+        return array;
+    }
+
+    private final void addCompOps(CompositionProduct[][][] ops) {
+        ops[0] = new CompositionProduct[subOps.params + 1][];
+        ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
+                new IntPair[0]) };
+
+        for (int i = 1; i <= subOps.params; ++i) {
+            ops[0][i] = new CompositionProduct[] { new CompositionProduct(1, 1,
+                    new IntPair[] { new IntPair(0, i) }) };
+        }
+
+        if (order > 0) {
+            final TDOperations smaller = getInstance(order - 1, subOps.params);
+
+            final CompositionProduct[][][] subCompOps = smaller.compOps;
+            final Product[][][] multOps = smaller.multOps;
+
+            for (int i = 0; i < subCompOps.length; ++i) {
+                ops[i + 1] = new CompositionProduct[subOps.params + 1][];
+
+                for (int j = 0; j < subCompOps[i].length; ++j) {
+                    final Product[] sum = multOps[i][j];
+                    final List<CompositionProduct> newComp = Lists
+                            .newArrayList();
+                    for (Product product : sum) {
+                        final CompositionProduct[] lhs = subCompOps[product.elements.lhs_row][product.elements.lhs_column];
+                        final int a_i = product.elements.rhs_row + 1;
+                        final int a_j = product.elements.rhs_column;
+
+                        for (CompositionProduct p : lhs) {
+                            newComp.add(new CompositionProduct(
+                                    p.key.f_order + 1, p.f_factor
+                                            * product.factor, ObjectArrays
+                                            .concat(new IntPair(a_i, a_j),
+                                                    p.key.keys)));
+                        }
+                    }
+
+                    ops[i + 1][j] = newComp
+                            .toArray(new CompositionProduct[newComp.size()]);
+                }
+            }
+        }
+    }
+
+    public final void compInd(final double[] f, final PDNumber[] a,
+            final PDNumber[] target) {
+        for (int i = 0; i < compOps.length; ++i) {
+            target[i] = new PDNumber(subOps.params);
+            for (int j = 0; j < compOps[i].length; ++j) {
+                double r = 0;
+                int[] keys = new int[f.length];
+                for (CompositionProduct p : compOps[i][j]) {
+                    double d = p.f_factor * f[p.key.f_order];
+                    keys[p.key.f_order]++;
+                    for (IntPair k : p.key.keys) {
+                        d *= a[k.x].values[k.y];
+                    }
+                    r += d;
+                }
+                target[i].values[j] = r;
+                // System.err.println("Did composition term. Used: "
+                // + Arrays.toString(keys));
+            }
+        }
+    }
 
     public final void multInd(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
@@ -323,7 +495,8 @@ public final class TDOperations {
     // }
 
     public void compose(double f[], final PDNumber[] a, final PDNumber[] target) {
-        compose(f, 0, a, target);
+        // compose(f, 0, a, target);
+        compInd(f, a, target);
     }
 
     public void compose(double f[], int order, final PDNumber[] a,
@@ -450,6 +623,10 @@ public final class TDOperations {
     public String toString() {
         return String.format("TD with %d parameters, %d-times derived",
                 subOps.params, order);
+    }
+
+    public static String compStr(CompositionProduct[] compositionProducts) {
+        return Joiner.on(" + ").join(compositionProducts).toString();
     }
 
 }
