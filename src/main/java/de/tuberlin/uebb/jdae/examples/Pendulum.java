@@ -22,12 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
@@ -148,9 +147,9 @@ public final class Pendulum implements LoadableModel {
             this.F = F;
         }
 
-        public DerivativeStructure exec(final ExecutionContext m) {
-            final DerivativeStructure ddx = x.der(m, 2).load(m);
-            return ddx.subtract(x.load(m).multiply(F.load(m)));
+        public TDNumber exec(final ExecutionContext m) {
+            final TDNumber ddx = x.der(m, 2).load(m);
+            return ddx.subtract(x.load(m).mult(F.load(m)));
         }
     }
 
@@ -234,12 +233,12 @@ public final class Pendulum implements LoadableModel {
             this.F = F;
         }
 
-        public DerivativeStructure exec(final ExecutionContext m) {
-            final DerivativeStructure ddy = y.der(m, 2).load(m);
-            final DerivativeStructure load = y.load(m);
-            final DerivativeStructure load2 = F.load(m);
-            final DerivativeStructure subtract = ddy.subtract(load.multiply(
-                    load2).subtract(g));
+        public TDNumber exec(final ExecutionContext m) {
+            final TDNumber ddy = y.der(m, 2).load(m);
+            final TDNumber load = y.load(m);
+            final TDNumber load2 = F.load(m);
+            final TDNumber subtract = ddy
+                    .subtract(load.mult(load2).subtract(g));
 
             return subtract;
         }
@@ -326,9 +325,9 @@ public final class Pendulum implements LoadableModel {
             this.y = y;
         }
 
-        public DerivativeStructure exec(final ExecutionContext m) {
-            final DerivativeStructure ds_x = x.load(m);
-            final DerivativeStructure ds_y = y.load(m);
+        public TDNumber exec(final ExecutionContext m) {
+            final TDNumber ds_x = x.load(m);
+            final TDNumber ds_y = y.load(m);
 
             return ds_x.pow(2).add(ds_y.pow(2)).subtract(1);
         }

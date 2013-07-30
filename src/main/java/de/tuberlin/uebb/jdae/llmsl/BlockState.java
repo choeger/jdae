@@ -18,7 +18,7 @@
  */
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 /**
  * @author choeger
@@ -41,26 +41,19 @@ public class BlockState implements BlockVariable {
     }
 
     @Override
-    public DerivativeStructure load(ExecutionContext ctxt) {
-        final double[] number = ctxt.allocate();
+    public TDNumber load(ExecutionContext ctxt) {
+        final TDNumber number = ctxt.constant(var);
         final int diff = ctxt.params[firstDerivative].der - var.der;
 
-        for (int i = 0; i <= ctxt.order; i++) {
-            assert ctxt.data[var.index].length > var.der + i : String.format(
-                    "%d-th derivative of %s is not allocated!", i, var);
-
-            ctxt.setDt(i, ctxt.data[var.index][var.der + i], number);
-
-            if (i >= diff) {
-                final int relativeDerivative = firstDerivative + i - diff;
-                assert ctxt.params[relativeDerivative].index == var.index : String
-                        .format("%d-th derivative of %s is not iteratee of this block!",
-                                i, var);
-                ctxt.setDer(i, relativeDerivative, number);
-            }
+        for (int i = diff; i <= ctxt.order; i++) {
+            final int relativeDerivative = firstDerivative + i - diff;
+            assert ctxt.params[relativeDerivative].index == var.index : String
+                    .format("%d-th derivative of %s is not iteratee of this block!",
+                            i, var);
+            number.values[i].values[relativeDerivative + 1] = 1.0;
         }
 
-        return ctxt.build(number);
+        return number;
     }
 
     @Override

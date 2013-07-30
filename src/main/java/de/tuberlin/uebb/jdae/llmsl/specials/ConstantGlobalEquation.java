@@ -22,10 +22,9 @@ package de.tuberlin.uebb.jdae.llmsl.specials;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
-
 import com.google.common.collect.ImmutableList;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
@@ -57,8 +56,8 @@ public final class ConstantGlobalEquation extends GlobalEquation {
             final BlockVariable bvar = blockCtxt.get(var);
 
             @Override
-            public DerivativeStructure exec(ExecutionContext m) {
-                final DerivativeStructure load = bvar.load(m);
+            public TDNumber exec(ExecutionContext m) {
+                final TDNumber load = bvar.load(m);
                 return load.subtract(c);
             }
         };

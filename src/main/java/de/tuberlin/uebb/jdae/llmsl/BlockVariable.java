@@ -18,13 +18,13 @@
  */
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 public interface BlockVariable {
 
     public double value(ExecutionContext ctxt);
 
-    public DerivativeStructure load(ExecutionContext ctxt);
+    public TDNumber load(ExecutionContext ctxt);
 
     public BlockVariable der(ExecutionContext ctxt);
 

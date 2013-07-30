@@ -594,12 +594,27 @@ public final class TDOperations {
         compose(f, a, target);
     }
 
-    public TDNumber constant(double d) {
+    public TDNumber constantVar(int offset, double... dt) {
+        final PDNumber c = subOps.constant(dt[offset]);
+        final PDNumber[] c_values = new PDNumber[order + 1];
+        c_values[0] = c;
+
+        for (int i = 1; i < Math.min(dt.length - offset, order + 1); ++i)
+            c_values[i] = subOps.constant(dt[i + offset]);
+
+        return new TDNumber(c_values);
+    }
+
+    public TDNumber constant(double d, double... dt) {
         final PDNumber c = subOps.constant(d);
         final PDNumber[] c_values = new PDNumber[order + 1];
         c_values[0] = c;
-        for (int i = 1; i < order + 1; ++i)
-            c_values[i] = subOps.constant(0.0);
+
+        for (int i = 0; i < Math.min(dt.length, order); ++i)
+            c_values[i + 1] = subOps.constant(dt[i]);
+
+        for (int i = dt.length; i < order; ++i)
+            c_values[i + 1] = subOps.constant(0.0);
 
         return new TDNumber(c_values);
     }

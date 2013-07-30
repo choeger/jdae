@@ -21,11 +21,10 @@ package de.tuberlin.uebb.jdae.llmsl.specials;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
-
 import com.google.common.base.Functions;
 import com.google.common.collect.Lists;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
@@ -104,11 +103,10 @@ public final class LinearGlobalEquation extends GlobalEquation {
         return new BlockEquation() {
 
             @Override
-            public DerivativeStructure exec(ExecutionContext m) {
-                DerivativeStructure ret = m.time().multiply(time);
+            public TDNumber exec(ExecutionContext m) {
+                TDNumber ret = m.time().mult(time);
                 for (int i = 0; i < bvars.size(); i++)
-                    ret = ret.add(bvars.get(i).load(m)
-                            .multiply(coefficients[i]));
+                    ret = ret.add(bvars.get(i).load(m).mult(coefficients[i]));
 
                 return ret.subtract(constant);
             }

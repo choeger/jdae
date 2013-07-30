@@ -19,16 +19,15 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DSCompiler;
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
+import de.tuberlin.uebb.jdae.diff.total.TDOperations;
 
 public final class ExecutionContext {
 
     final int order;
 
     final GlobalVariable[] params;
-    final DSCompiler compiler;
-    public final int[][] dtOrders;
+    public final TDOperations compiler;
     final double[][] data;
 
     public ExecutionContext(int order, GlobalVariable[] vars, double[][] data) {
@@ -38,13 +37,7 @@ public final class ExecutionContext {
         this.params = vars.clone();
         this.data = data.clone();
 
-        this.compiler = DSCompiler.getCompiler(params.length + 1, sumOrder());
-
-        this.dtOrders = new int[sumOrder()][];
-        for (int i = 0; i <= order; i++) {
-            dtOrders[i] = new int[params.length + 1];
-            dtOrders[i][0] = i;
-        }
+        this.compiler = TDOperations.getInstance(order, params.length);
     }
 
     public final void set(int start, GlobalVariable[] vars, double[] point) {
@@ -66,64 +59,19 @@ public final class ExecutionContext {
         return data[v.index][v.der];
     }
 
-    /**
-     * Set the d^nx/dt^n value for an abitrary n
-     * 
-     * @param order
-     * @param value
-     * @param pd
-     */
-    public void setDt(int order, double value, double[] pd) {
-        pd[compiler.getPartialDerivativeIndex(dtOrders[order])] = value;
+    public final TDNumber constant(final GlobalVariable var) {
+        return compiler.constantVar(var.der, data[var.index]);
     }
 
-    /**
-     * Mark the n-th derivative of x as x_j (a variable in our block).
-     * 
-     * @param dt
-     * @param derIndex
-     */
-    public final void setDer(int dt, int j, double[] pd) {
-        final int[] order = new int[compiler.getFreeParameters()];
-        order[0] = dt;
-        order[j + 1] = 1;
-        final int partialDerivativeIndex = compiler
-                .getPartialDerivativeIndex(order);
-        pd[partialDerivativeIndex] = 1.0;
+    public final TDNumber constant(final double value) {
+        return compiler.constant(value);
     }
 
-    public final DerivativeStructure constant(final double value) {
-        return new DerivativeStructure(compiler.getFreeParameters(),
-                sumOrder(), value);
-    }
-
-    public final DerivativeStructure time() {
-        final double[] pd = new double[compiler.getSize()];
-        if (order > 0)
-            setDt(1, 1.0, pd);
-        pd[0] = data[0][0];
-        return build(pd);
-    }
-
-    /**
-     * Calculate the Rall number order of this model view.
-     * 
-     * @return the total derivation order + 1
-     */
-    private int sumOrder() {
-        return order + 1;
+    public final TDNumber time() {
+        return compiler.constant(data[0][0], 1.0);
     }
 
     public ExecutionContext derived(int derOrder) {
         return new ExecutionContext(order + derOrder, params, data);
-    }
-
-    public double[] allocate() {
-        return new double[compiler.getSize()];
-    }
-
-    public DerivativeStructure build(double[] number) {
-        return new DerivativeStructure(compiler.getFreeParameters(),
-                sumOrder(), number);
     }
 }

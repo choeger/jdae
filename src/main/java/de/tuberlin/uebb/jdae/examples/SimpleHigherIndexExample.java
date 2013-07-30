@@ -23,12 +23,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
@@ -84,10 +83,10 @@ public final class SimpleHigherIndexExample implements LoadableModel {
                                     by = blockCtxt.get(gy);
 
                             @Override
-                            public DerivativeStructure exec(ExecutionContext m) {
-                                final DerivativeStructure load1 = bx.load(m);
-                                final DerivativeStructure load2 = by.load(m);
-                                final DerivativeStructure time = m.time();
+                            public TDNumber exec(ExecutionContext m) {
+                                final TDNumber load1 = bx.load(m);
+                                final TDNumber load2 = by.load(m);
+                                final TDNumber time = m.time();
                                 return load1.add(load2).subtract(time);
                             }
                         };

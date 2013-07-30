@@ -22,13 +22,13 @@ package de.tuberlin.uebb.jdae.solvers;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.commons.math3.exception.ConvergenceException;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.llmsl.Block;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
@@ -57,7 +57,7 @@ public final class BlockEquationTest {
                 final Map<GlobalVariable, BlockVariable> blockCtxt) {
             return new BlockEquation() {
                 @Override
-                public DerivativeStructure exec(ExecutionContext m) {
+                public TDNumber exec(ExecutionContext m) {
                     return blockCtxt.get(x).load(m).pow(2)
                             .add(blockCtxt.get(y).load(m).pow(2)).subtract(1.0);
                 }

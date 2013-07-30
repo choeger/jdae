@@ -19,10 +19,10 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 public interface BlockEquation {
 
-    DerivativeStructure exec(final ExecutionContext m);
+    TDNumber exec(final ExecutionContext m);
 
 }

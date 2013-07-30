@@ -157,8 +157,24 @@ public final class TDNumber {
         return ops.constant(d);
     }
 
+    public double der(int dt) {
+        return values[dt].values[0];
+    }
+
     public double der(int dt, int idx) {
         return values[dt].values[idx + 1];
+    }
+
+    public double getValue() {
+        return values[0].values[0];
+    }
+
+    public TDNumber subtract(double c) {
+        return add(-c);
+    }
+
+    public TDNumber subtract(TDNumber o) {
+        return add(o.mult(-1));
     }
 
 }

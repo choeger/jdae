@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.commons.math3.ode.events.EventHandler.Action;
 import org.apache.commons.math3.util.FastMath;
 
@@ -30,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
@@ -112,9 +112,9 @@ public final class StiffHybrid implements LoadableModel {
                     return new BlockEquation() {
 
                         @Override
-                        public DerivativeStructure exec(ExecutionContext m) {
+                        public TDNumber exec(ExecutionContext m) {
                             return bdx1.load(m).subtract(
-                                    m.time().multiply(10).sin());
+                                    m.time().mult(10).sin());
                         }
                     };
                 }
@@ -190,7 +190,7 @@ public final class StiffHybrid implements LoadableModel {
                     return new BlockEquation() {
 
                         @Override
-                        public DerivativeStructure exec(ExecutionContext m) {
+                        public TDNumber exec(ExecutionContext m) {
                             return bx2.load(m).subtract(bx1.load(m).add(delta));
                         }
                     };

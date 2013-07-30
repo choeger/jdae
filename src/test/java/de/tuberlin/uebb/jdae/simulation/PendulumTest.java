@@ -34,8 +34,6 @@ import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
-import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
-import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -117,7 +115,7 @@ public class PendulumTest {
             assertEquals(0.0, M[length_eq][4], 1e-6);
             assertEquals(0.0, M[length_eq][5], 1e-6);
 
-            // 2x * dx + 2y * dy - 1
+            // 2x * dx + 2y * dy
             assertEquals(2 * data[2], M[length_eq + 1][1], 1e-6);
             assertEquals(2 * data[1], M[length_eq + 1][2], 1e-6);
             assertEquals(0.0, M[length_eq + 1][3], 1e-6);

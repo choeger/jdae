@@ -26,13 +26,13 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.solvers.OptimalitySolver;
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
 
@@ -58,7 +58,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     public final ExecutionContext[] views;
 
     /* memoization */
-    private final DerivativeStructure[] residuals;
+    private final TDNumber[] residuals;
     private double[] lastPoint = null;
 
     /* equation solver */
@@ -85,7 +85,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         this.views = new ExecutionContext[equations.size()];
         this.equations = new Residual[equations.size()];
-        this.residuals = new DerivativeStructure[equations.size()];
+        this.residuals = new TDNumber[equations.size()];
 
         int index = 0;
         for (DerivedEquation e : equations) {
@@ -140,9 +140,9 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
             for (int i = 0; i < equations.length; i++)
                 for (int di = 0; di <= equations[i].derOrder; di++) {
-                    for (int j = 1; j <= variables.length; j++) {
-                        ret[index][j] = getPartialDerivative(residuals[i], di,
-                                j);
+                    for (int j = 0; j < variables.length; j++) {
+                        ret[index][j + 1] = getPartialDerivative(residuals[i],
+                                di, j);
                     }
                     index++;
                 }
@@ -155,13 +155,8 @@ public class Block implements MultivariateVectorFunction, IBlock {
         return jacobian;
     }
 
-    private double getPartialDerivative(DerivativeStructure ds, int dt,
-            int index) {
-        final int[] orders = new int[variables.length + 1];
-        orders[0] = dt;
-        orders[index] = 1;
-
-        return ds.getPartialDerivative(orders);
+    private double getPartialDerivative(TDNumber ds, int dt, int index) {
+        return ds.der(dt, index);
     }
 
     @Override
@@ -174,13 +169,11 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         int index = 1;
         for (int i = 0; i < residuals.length; i++) {
-            final DerivativeStructure r = residuals[i];
+            final TDNumber r = residuals[i];
             final Residual eq = equations[i];
             ret[index++] = r.getValue();
             for (int di = 1; di <= eq.derOrder; di++) {
-                final int[] orders = views[i].dtOrders[di];
-                final double partialDerivative = r.getPartialDerivative(orders);
-                ret[index++] = partialDerivative;
+                ret[index++] = r.der(di);
             }
         }
 

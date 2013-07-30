@@ -18,7 +18,7 @@
  */
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 public final class BlockIteratee implements BlockVariable {
 
@@ -37,22 +37,18 @@ public final class BlockIteratee implements BlockVariable {
     }
 
     @Override
-    public DerivativeStructure load(ExecutionContext ctxt) {
-        final double[] number = ctxt.allocate();
+    public TDNumber load(ExecutionContext ctxt) {
+        final TDNumber number = ctxt.constant(var);
+
         for (int i = 0; i <= ctxt.order; i++) {
-            assert ctxt.data[var.index].length > var.der + i : String.format(
-                    "%d-th derivative of %s is not allocated!", i, var);
-
-            ctxt.setDt(i, ctxt.data[var.index][var.der + i], number);
-
             assert ctxt.params[blockIndex + i].index == var.index : String
                     .format("%d-th derivative of %s is not iteratee of this block!",
                             i, var);
 
-            ctxt.setDer(i, blockIndex + i, number);
+            number.values[i].values[blockIndex + i + 1] = 1;
         }
 
-        return ctxt.build(number);
+        return number;
     }
 
     @Override

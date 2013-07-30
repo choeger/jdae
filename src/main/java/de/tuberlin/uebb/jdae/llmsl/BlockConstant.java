@@ -18,7 +18,7 @@
  */
 package de.tuberlin.uebb.jdae.llmsl;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 /**
  * @author choeger
@@ -38,11 +38,8 @@ public final class BlockConstant implements BlockVariable {
     }
 
     @Override
-    public DerivativeStructure load(ExecutionContext ctxt) {
-        final double[] number = ctxt.allocate();
-        for (int i = 0; i <= ctxt.order; i++)
-            ctxt.setDt(i, ctxt.data[var.index][var.der + i], number);
-        return ctxt.build(number);
+    public TDNumber load(ExecutionContext ctxt) {
+        return ctxt.constant(var);
     }
 
     @Override

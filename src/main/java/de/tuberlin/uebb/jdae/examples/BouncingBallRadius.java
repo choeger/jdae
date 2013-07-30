@@ -23,11 +23,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.commons.math3.ode.events.EventHandler.Action;
 
 import com.google.common.collect.ImmutableList;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
@@ -101,7 +101,7 @@ public final class BouncingBallRadius {
                             final BlockVariable be = blockCtxt.get(ge);
 
                             @Override
-                            public DerivativeStructure exec(ExecutionContext m) {
+                            public TDNumber exec(ExecutionContext m) {
                                 return be.load(m).subtract(evaluations);
                             }
                         };
@@ -136,7 +136,7 @@ public final class BouncingBallRadius {
                                     bh = blockCtxt.get(gh);
 
                             @Override
-                            public DerivativeStructure exec(ExecutionContext m) {
+                            public TDNumber exec(ExecutionContext m) {
                                 evaluations++;
                                 return bb.load(m).subtract(bh.load(m)).add(0.5);
                             }

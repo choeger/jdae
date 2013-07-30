@@ -22,10 +22,9 @@ package de.tuberlin.uebb.jdae.llmsl.specials;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
-
 import com.google.common.collect.ImmutableList;
 
+import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
@@ -54,7 +53,7 @@ public final class EqualityGlobalEquation extends GlobalEquation {
             final BlockVariable l = blockCtxt.get(lhs), r = blockCtxt.get(rhs);
 
             @Override
-            public DerivativeStructure exec(ExecutionContext m) {
+            public TDNumber exec(ExecutionContext m) {
                 return l.load(m).subtract(r.load(m));
             }
         };
