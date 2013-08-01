@@ -146,13 +146,43 @@ public class TDNumberTest {
     }
 
     @Test
-    public void testManySquares() {
+    public void testManySquaresByPow() {
         TDNumber result = ops.constant(1.0);
 
         for (int i = 0; i < MANY_ITERATIONS; ++i)
             result = result.pow(2);
 
         assertThat(result, is(ops.constant(1.0)));
+    }
+
+    @Test
+    public void testManySquaresByMult() {
+        TDNumber result = ops.constant(1.0);
+
+        for (int i = 0; i < MANY_ITERATIONS; ++i)
+            result = result.mult(result);
+
+        assertThat(result, is(ops.constant(1.0)));
+    }
+
+    @Test
+    public void testManyRegisterSquaresByPow() {
+        TDRegister reg = new TDRegister(ops.constant(1.0));
+
+        for (int i = 0; i < MANY_ITERATIONS; ++i)
+            reg.pow(2);
+
+        assertThat(reg.unsafe(), is(ops.constant(1.0)));
+    }
+
+    @Test
+    public void testManyRegisterSquaresbySquare() {
+        TDRegister reg = new TDRegister(ops.constant(1.0));
+
+        for (int i = 0; i < MANY_ITERATIONS; ++i)
+            reg.square();
+
+        assertThat(reg.unsafe(), is(ops.constant(1.0)));
     }
 
     @Test

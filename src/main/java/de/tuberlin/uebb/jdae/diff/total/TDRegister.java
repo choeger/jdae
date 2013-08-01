@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
+import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
+
 public final class TDRegister {
 
     private final TDOperations ops;
@@ -27,7 +29,9 @@ public final class TDRegister {
     public TDRegister(final TDNumber initial) {
         this.numbers[0] = initial;
         this.current = 0;
-        this.numbers[1] = new TDNumber(initial.ops);
+        this.numbers[1] = new TDNumber(initial.ops,
+                new PDNumber[initial.values.length]);
+
         this.ops = initial.ops;
     }
 

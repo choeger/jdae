@@ -41,9 +41,9 @@ public final class TDNumber {
                 values[0].values.length - 1);
     }
 
-    public TDNumber(TDOperations ops) {
+    public TDNumber(TDOperations ops, PDNumber[] values) {
         this.ops = ops;
-        this.values = ops.constant(0.0).values;
+        this.values = values;
     }
 
     @Override

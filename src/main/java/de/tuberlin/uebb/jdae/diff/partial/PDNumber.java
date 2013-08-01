@@ -40,6 +40,12 @@ public final class PDNumber {
         this.values = values;
     }
 
+    public PDNumber(PDOperations ops, double[] values) {
+        super();
+        this.ops = ops;
+        this.values = values;
+    }
+
     public PDNumber(int params) {
         this.ops = new PDOperations(params);
         this.values = new double[params + 1];
@@ -89,19 +95,19 @@ public final class PDNumber {
         assert other.values.length == values.length : "Cannot add two numbers of different dimensions!";
         final double[] newVal = new double[values.length];
         ops.add(values, other.values, newVal);
-        return new PDNumber(newVal);
+        return new PDNumber(ops, newVal);
     }
 
     public PDNumber add(final double value) {
         final double[] target = values.clone();
         target[0] += value;
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber add(final int value) {
         final double[] target = values.clone();
         target[0] += value;
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber mult(final PDNumber other) {
@@ -110,45 +116,45 @@ public final class PDNumber {
         final double[] newVal = new double[values.length];
 
         ops.mult(values, otherVal, newVal);
-        return new PDNumber(newVal);
+        return new PDNumber(ops, newVal);
     }
 
     public PDNumber mult(final double value) {
         final double[] target = new double[values.length];
         for (int i = 0; i < target.length; i++)
             target[i] = values[i] * value;
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber mult(final int value) {
         final double[] target = new double[values.length];
         for (int i = 0; i < target.length; i++)
             target[i] = values[i] * value;
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber sin() {
         final double[] target = new double[values.length];
         ops.sin(values, target);
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber cos() {
         final double[] target = new double[values.length];
         ops.cos(values, target);
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber pow(int n) {
         final double[] target = new double[values.length];
         ops.pow(n, values, target);
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public PDNumber pow(double d) {
         final double[] target = new double[values.length];
         ops.pow(d, values, target);
-        return new PDNumber(target);
+        return new PDNumber(ops, target);
     }
 
     public double der(int i) {
@@ -200,13 +206,13 @@ public final class PDNumber {
     }
 
     public PDNumber zero() {
-        return new PDNumber(new double[values.length]);
+        return new PDNumber(ops, new double[values.length]);
     }
 
     public PDNumber one() {
         final double[] values = new double[this.values.length];
         values[0] = 1.0;
-        return new PDNumber(values);
+        return new PDNumber(ops, values);
     }
 
     public int getParams() {

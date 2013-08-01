@@ -425,17 +425,17 @@ public final class TDOperations {
             final PDNumber[] target) {
         for (int i = 0; i < compOps.length; ++i) {
             if (target[i] == null)
-                target[i] = new PDNumber(subOps.params);
+                target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
+
             for (int j = 0; j < compOps[i].length; ++j) {
-                double r = 0;
-                for (CompositionProduct p : compOps[i][j]) {
+                target[i].values[j] = 0;
+                for (final CompositionProduct p : compOps[i][j]) {
                     double d = p.f_factor * f[p.key.f_order];
-                    for (IntPair k : p.key.keys) {
+                    for (final IntPair k : p.key.keys) {
                         d *= a[k.x].values[k.y];
                     }
-                    r += d;
+                    target[i].values[j] += d;
                 }
-                target[i].values[j] = r;
             }
         }
     }
@@ -445,9 +445,13 @@ public final class TDOperations {
 
         for (int i = 0; i < multOps.length; ++i) {
             if (target[i] == null)
-                target[i] = new PDNumber(subOps.params);
-            for (int j = 0; j < multOps[i].length; ++j) {
-                for (Product product : multOps[i][j]) {
+                target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
+
+            final Product[][] multOpsRow = multOps[i];
+
+            for (int j = 0; j < multOpsRow.length; ++j) {
+                target[i].values[j] = 0;
+                for (Product product : multOpsRow[j]) {
                     target[i].values[j] += a[product.elements.lhs_row].values[product.elements.lhs_column]
                             * b[product.elements.rhs_row].values[product.elements.rhs_column]
                             * product.factor;
