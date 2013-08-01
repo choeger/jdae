@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.apache.commons.math3.exception.ConvergenceException;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolver;
 import org.ejml.factory.LinearSolverFactory;
@@ -45,7 +46,7 @@ import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
  */
 public class Block implements MultivariateVectorFunction, IBlock {
 
-    public static int evals;
+    public static long evals;
 
     public static final class Residual {
         public final BlockEquation eq;
@@ -175,7 +176,8 @@ public class Block implements MultivariateVectorFunction, IBlock {
     }
 
     private void compute(double[] point) {
-        evals++;
+        final long s = System.currentTimeMillis();
+
         if (!Arrays.equals(lastPoint, point)) {
             lastPoint = point.clone();
             views[0].set(1, variables, point);
@@ -184,6 +186,19 @@ public class Block implements MultivariateVectorFunction, IBlock {
                 residuals[i] = equations[i].eq.exec(views[i]);
             }
         }
+        evals += (System.currentTimeMillis() - s);
+    }
+
+    private void forceCompute(double[] point) {
+        final long s = System.currentTimeMillis();
+
+        views[0].set(1, variables, point);
+
+        for (int i = 0; i < equations.length; i++) {
+            residuals[i] = equations[i].eq.exec(views[i]);
+        }
+
+        evals += (System.currentTimeMillis() - s);
     }
 
     private final void writeJacobian(DenseMatrix64F matrix) {
@@ -247,13 +262,13 @@ public class Block implements MultivariateVectorFunction, IBlock {
         while (!converged()) {
             writeJacobian(jacobian);
             if (!solver.setA(jacobian))
-                throw new RuntimeException("Singular Jacobian: " + jacobian);
+                throw new ConvergenceException();
             solver.solve(residual, x);
 
             for (int i = 0; i < point.length; ++i)
                 point[i] += x.data[i];
 
-            compute(point);
+            forceCompute(point);
             writeNegResidual(residual.data);
         }
 
@@ -263,8 +278,8 @@ public class Block implements MultivariateVectorFunction, IBlock {
     public boolean converged() {
         boolean converged = true;
         for (int i = 0; i < residuals.length && converged; ++i) {
-            converged &= residuals[i].values[0].values[0] <= 10e-6
-                    && residuals[i].values[0].values[0] >= -10e-6;
+            converged &= residuals[i].values[0].values[0] <= 1e-6
+                    && residuals[i].values[0].values[0] >= -1e-6;
         }
 
         return converged;
