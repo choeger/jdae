@@ -330,9 +330,9 @@ public final class Pendulum implements LoadableModel {
 
         public TDNumber exec(final ExecutionContext m) {
             final TDRegister reg1 = new TDRegister(x.load(m));
-            reg1.pow(2);
+            reg1.square();
             final TDRegister reg2 = new TDRegister(y.load(m));
-            reg2.pow(2);
+            reg2.square();
             reg1.add(reg2.unsafe());
             reg1.add(-1);
 

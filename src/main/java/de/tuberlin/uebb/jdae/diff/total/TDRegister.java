@@ -71,4 +71,8 @@ public final class TDRegister {
                 numbers[current].values[i].values[j] *= n;
 
     }
+
+    public void square() {
+        mult(numbers[current]);
+    }
 }

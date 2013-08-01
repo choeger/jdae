@@ -18,17 +18,16 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.base.Joiner;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -119,23 +118,20 @@ public final class TDOperations {
 
     }
 
-    private static final LoadingCache<IntPair, TDOperations> cache = CacheBuilder
-            .newBuilder().maximumSize(100)
-            .build(new CacheLoader<IntPair, TDOperations>() {
-
-                @Override
-                public TDOperations load(IntPair key) throws Exception {
-                    return new TDOperations(key.x, key.y);
-                }
-            });
+    private final static TIntObjectMap<TIntObjectMap<TDOperations>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDOperations>>();
 
     public static TDOperations getInstance(int order, int params) {
-        try {
-            return cache.get(new IntPair(order, params));
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            return null;
-        }
+        if (!instanceCache.containsKey(order))
+            instanceCache.put(order, new TIntObjectHashMap<TDOperations>());
+
+        final TIntObjectMap<TDOperations> map = instanceCache.get(order);
+
+        if (!map.containsKey(params)) {
+            final TDOperations ops = new TDOperations(order, params);
+            map.put(params, ops);
+            return ops;
+        } else
+            return map.get(params);
     }
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
@@ -432,18 +428,14 @@ public final class TDOperations {
                 target[i] = new PDNumber(subOps.params);
             for (int j = 0; j < compOps[i].length; ++j) {
                 double r = 0;
-                int[] keys = new int[f.length];
                 for (CompositionProduct p : compOps[i][j]) {
                     double d = p.f_factor * f[p.key.f_order];
-                    keys[p.key.f_order]++;
                     for (IntPair k : p.key.keys) {
                         d *= a[k.x].values[k.y];
                     }
                     r += d;
                 }
                 target[i].values[j] = r;
-                // System.err.println("Did composition term. Used: "
-                // + Arrays.toString(keys));
             }
         }
     }

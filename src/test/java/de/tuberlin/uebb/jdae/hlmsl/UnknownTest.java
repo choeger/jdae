@@ -23,8 +23,6 @@ import org.junit.Test;
 
 import com.google.common.collect.Ordering;
 
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
-
 import static org.hamcrest.CoreMatchers.is;
 
 import static org.junit.Assert.assertFalse;

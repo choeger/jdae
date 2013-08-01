@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import de.tuberlin.uebb.jdae.examples.FactorialEquation;
 import de.tuberlin.uebb.jdae.examples.SquareRootEquation;
-import de.tuberlin.uebb.jdae.solvers.OptimalitySolver;
 import static org.junit.Assert.assertEquals;
 
 public class OptimalitySolverTest {

@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
 		    "junit" % "junit" % "4.11",
 		    "com.google.code.gson" % "gson" % "2.2.2",
 		    "com.googlecode.efficient-java-matrix-library" % "ejml" % "0.23",
+		    "net.sf.trove4j" % "trove4j" % "3.0.3",
 		    "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 		    )
 

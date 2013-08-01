@@ -37,7 +37,7 @@ public final class PDNumber {
     public PDNumber(double[] values) {
         super();
         this.ops = new PDOperations(values.length - 1);
-        this.values = values.clone();
+        this.values = values;
     }
 
     public PDNumber(int params) {

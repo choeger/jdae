@@ -7,7 +7,6 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.OrderList;
 import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.OrderList.Node;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

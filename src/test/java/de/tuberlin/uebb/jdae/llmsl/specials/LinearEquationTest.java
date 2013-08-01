@@ -27,7 +27,6 @@ import de.tuberlin.uebb.jdae.llmsl.DataLayout;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
-import de.tuberlin.uebb.jdae.llmsl.specials.LinearGlobalEquation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

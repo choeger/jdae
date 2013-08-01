@@ -36,10 +36,7 @@ public final class TDNumber {
 
     public TDNumber(PDNumber[] values) {
         super();
-        this.values = new PDNumber[values.length];
-        for (int i = 0; i < values.length; i++)
-            this.values[i] = new PDNumber(values[i].values);
-
+        this.values = values;
         this.ops = TDOperations.getInstance(values.length - 1,
                 values[0].values.length - 1);
     }

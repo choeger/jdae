@@ -7,11 +7,6 @@ import java.util.Random;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Navigator;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Navigators;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Relations;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
-
 class Perf {
 
     public static long propagations = 0L;

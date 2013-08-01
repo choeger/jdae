@@ -7,8 +7,6 @@ import java.util.Set;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveBiRelation;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

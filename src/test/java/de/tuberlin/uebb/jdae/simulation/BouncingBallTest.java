@@ -29,8 +29,6 @@ import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
-import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
-import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;

@@ -10,10 +10,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Navigator;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Navigators;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Relations;
-import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
 import static org.junit.Assert.assertEquals;
 
 /**
