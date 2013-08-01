@@ -24,7 +24,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.sun.istack.internal.logging.Logger;
 
 import de.tuberlin.uebb.jdae.examples.Pendulum;
 import de.tuberlin.uebb.jdae.examples.Pendulum.LengthBlockEquation;
@@ -188,12 +187,8 @@ public class PendulumTest {
         dae.data[1][0] = 0.1;
         dae.initialize();
 
-        Block.evals = 0;
-
         runtime.simulateVariableStep(dae, SIM_TEST_STOP_TIME, Double.MIN_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);
-
-        Logger.getLogger(getClass()).info(Block.evals + " block evaluations");
 
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
 
@@ -206,11 +201,14 @@ public class PendulumTest {
         dae.initialize();
 
         Block.evals = 0;
-
+        dae.time = 0;
+        long start = System.currentTimeMillis();
         runtime.simulateFixedStep(dae, SIM_TEST_STOP_TIME,
                 SIM_TEST_STOP_TIME * 1000);
-
-        Logger.getLogger(getClass()).info(Block.evals + " block evaluations");
+        System.out.println("Overall simulation time: "
+                + (System.currentTimeMillis() - start));
+        System.out.println("Solver time: " + dae.time);
+        System.out.println("Block eval time: " + Block.evals);
 
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
 

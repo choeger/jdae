@@ -47,6 +47,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     private final Logger logger;
     public final IBlock[] initials;
     public int evaluations;
+    public long time;
 
     public ExecutableDAE(final DataLayout layout, Causalisation causalisation,
             InitializationCausalisation iCausalisation) {
@@ -146,6 +147,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public void computeDerivatives(double t, double[] y, double[] yDot)
             throws MaxCountExceededException, DimensionMismatchException {
 
+        final long s = System.currentTimeMillis();
         evaluations++;
 
         data[0][0] = t;
@@ -161,6 +163,8 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         for (int i = 0; i < states.size(); i++) {
             yDot[i] = load(states.get(i).der());
         }
+
+        time += (System.currentTimeMillis() - s);
     }
 
     public void computeDerivativesUpTo(int block, double t, double[] y) {
