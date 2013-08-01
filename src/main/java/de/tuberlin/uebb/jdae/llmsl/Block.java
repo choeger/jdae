@@ -26,6 +26,9 @@ import java.util.Set;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
 import org.apache.commons.math3.analysis.MultivariateVectorFunction;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.LinearSolver;
+import org.ejml.factory.LinearSolverFactory;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -41,6 +44,8 @@ import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
  * 
  */
 public class Block implements MultivariateVectorFunction, IBlock {
+
+    public static int evals;
 
     public static final class Residual {
         public final BlockEquation eq;
@@ -126,6 +131,76 @@ public class Block implements MultivariateVectorFunction, IBlock {
         return blockVars;
     }
 
+    private double getPartialDerivative(TDNumber ds, int dt, int index) {
+        return ds.der(dt, index);
+    }
+
+    @Override
+    public double[] value(double[] point) {
+        compute(point);
+
+        double[] ret = point.clone();
+
+        writeResidual(ret);
+
+        return ret;
+    }
+
+    private final void writeResidual(double[] ret) {
+        ret[0] = 0.0;
+
+        int index = 1;
+        for (int i = 0; i < residuals.length; i++) {
+            final TDNumber r = residuals[i];
+            final Residual eq = equations[i];
+            ret[index++] = r.getValue();
+            for (int di = 1; di <= eq.derOrder; di++) {
+                ret[index++] = r.der(di);
+            }
+        }
+    }
+
+    private final void writeNegResidual(double[] ret) {
+        ret[0] = 0.0;
+
+        int index = 1;
+        for (int i = 0; i < residuals.length; i++) {
+            final TDNumber r = residuals[i];
+            final Residual eq = equations[i];
+            ret[index++] = -r.getValue();
+            for (int di = 1; di <= eq.derOrder; di++) {
+                ret[index++] = -r.der(di);
+            }
+        }
+    }
+
+    private void compute(double[] point) {
+        evals++;
+        if (!Arrays.equals(lastPoint, point)) {
+            lastPoint = point.clone();
+            views[0].set(1, variables, point);
+
+            for (int i = 0; i < equations.length; i++) {
+                residuals[i] = equations[i].eq.exec(views[i]);
+            }
+        }
+    }
+
+    private final void writeJacobian(DenseMatrix64F matrix) {
+        matrix.set(0, 0, 1.0);
+
+        int index = 1;
+
+        for (int i = 0; i < equations.length; i++)
+            for (int di = 0; di <= equations[i].derOrder; di++) {
+                for (int j = 0; j < variables.length; j++) {
+                    matrix.set(index, j + 1,
+                            getPartialDerivative(residuals[i], di, j));
+                }
+                index++;
+            }
+    }
+
     /* Jacobian */
     private final MultivariateMatrixFunction jacobian = new MultivariateMatrixFunction() {
 
@@ -155,48 +230,44 @@ public class Block implements MultivariateVectorFunction, IBlock {
         return jacobian;
     }
 
-    private double getPartialDerivative(TDNumber ds, int dt, int index) {
-        return ds.der(dt, index);
-    }
-
-    @Override
-    public double[] value(double[] point) {
+    public void exec() {
+        final double[] point = views[0].loadD(variables);
         compute(point);
 
-        double[] ret = point.clone();
+        final DenseMatrix64F jacobian = new DenseMatrix64F(
+                variables.length + 1, variables.length + 1);
+        final DenseMatrix64F residual = new DenseMatrix64F(
+                variables.length + 1, 1);
+        final DenseMatrix64F x = new DenseMatrix64F(variables.length + 1);
 
-        ret[0] = 0.0;
+        final LinearSolver<DenseMatrix64F> solver = LinearSolverFactory
+                .linear(variables.length + 1);
 
-        int index = 1;
-        for (int i = 0; i < residuals.length; i++) {
-            final TDNumber r = residuals[i];
-            final Residual eq = equations[i];
-            ret[index++] = r.getValue();
-            for (int di = 1; di <= eq.derOrder; di++) {
-                ret[index++] = r.der(di);
-            }
+        writeNegResidual(residual.data);
+        while (!converged()) {
+            writeJacobian(jacobian);
+            if (!solver.setA(jacobian))
+                throw new RuntimeException("Singular Jacobian: " + jacobian);
+            solver.solve(residual, x);
+
+            for (int i = 0; i < point.length; ++i)
+                point[i] += x.data[i];
+
+            compute(point);
+            writeNegResidual(residual.data);
         }
-
-        return ret;
-    }
-
-    private void compute(double[] point) {
-        if (!Arrays.equals(lastPoint, point)) {
-            lastPoint = point.clone();
-            views[0].set(1, variables, point);
-
-            for (int i = 0; i < equations.length; i++) {
-                residuals[i] = equations[i].eq.exec(views[i]);
-            }
-        }
-    }
-
-    public void exec() {
-        double[] start = views[0].loadD(variables);
-
-        final double[] point = solver.solve(1000, this, jacobian, start);
 
         views[0].set(1, variables, point);
+    }
+
+    public boolean converged() {
+        boolean converged = true;
+        for (int i = 0; i < residuals.length && converged; ++i) {
+            converged &= residuals[i].values[0].values[0] <= 10e-6
+                    && residuals[i].values[0].values[0] >= -10e-6;
+        }
+
+        return converged;
     }
 
     @Override

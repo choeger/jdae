@@ -20,6 +20,7 @@ libraryDependencies ++= Seq(
 		    "org.apache.commons" % "commons-math3" % "3.1.1",
 		    "junit" % "junit" % "4.11",
 		    "com.google.code.gson" % "gson" % "2.2.2",
+		    "com.googlecode.efficient-java-matrix-library" % "ejml" % "0.23",
 		    "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 		    )
 

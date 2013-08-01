@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
+import de.tuberlin.uebb.jdae.diff.total.TDRegister;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
@@ -148,8 +149,11 @@ public final class Pendulum implements LoadableModel {
         }
 
         public TDNumber exec(final ExecutionContext m) {
-            final TDNumber ddx = x.der(m, 2).load(m);
-            return ddx.subtract(x.load(m).mult(F.load(m)));
+            final TDRegister reg1 = new TDRegister(x.load(m));
+            reg1.mult(F.load(m));
+            reg1.mult(-1);
+            reg1.add(x.der(m, 2).load(m));
+            return reg1.unsafe();
         }
     }
 
@@ -234,13 +238,12 @@ public final class Pendulum implements LoadableModel {
         }
 
         public TDNumber exec(final ExecutionContext m) {
-            final TDNumber ddy = y.der(m, 2).load(m);
-            final TDNumber load = y.load(m);
-            final TDNumber load2 = F.load(m);
-            final TDNumber subtract = ddy
-                    .subtract(load.mult(load2).subtract(g));
-
-            return subtract;
+            final TDRegister reg1 = new TDRegister(y.load(m));
+            reg1.mult(F.load(m));
+            reg1.add(-g);
+            reg1.mult(-1);
+            reg1.add(y.der(m, 2).load(m));
+            return reg1.unsafe();
         }
     }
 
@@ -326,10 +329,14 @@ public final class Pendulum implements LoadableModel {
         }
 
         public TDNumber exec(final ExecutionContext m) {
-            final TDNumber ds_x = x.load(m);
-            final TDNumber ds_y = y.load(m);
+            final TDRegister reg1 = new TDRegister(x.load(m));
+            reg1.pow(2);
+            final TDRegister reg2 = new TDRegister(y.load(m));
+            reg2.pow(2);
+            reg1.add(reg2.unsafe());
+            reg1.add(-1);
 
-            return ds_x.pow(2).add(ds_y.pow(2)).subtract(1);
+            return reg1.unsafe();
         }
     }
 

@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.sun.istack.internal.logging.Logger;
 
 import de.tuberlin.uebb.jdae.examples.Pendulum;
 import de.tuberlin.uebb.jdae.examples.Pendulum.LengthBlockEquation;
@@ -43,6 +44,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 public class PendulumTest {
+
+    private static final int SIM_TEST_STOP_TIME = 100;
 
     final SimulationRuntime runtime = new DefaultSimulationRuntime();
     final Pendulum model = new Pendulum();
@@ -158,12 +161,13 @@ public class PendulumTest {
 
         dae.initialize();
 
-        assertEquals(-0.9, dae.load(reduction, model.y), 1e-6);
+        final double delta = 1e-4;
+        assertEquals(-0.9, dae.load(reduction, model.y), delta);
         assertEquals(Math.sqrt(1 - 0.9 * 0.9), dae.load(reduction, model.x),
-                1e-6);
+                delta);
         final double force = (dae.load(reduction, model.x.der(2)))
                 / dae.load(reduction, model.x);
-        assertEquals(force, dae.load(reduction, model.F), 1e-6);
+        assertEquals(force, dae.load(reduction, model.F), delta);
 
         final double x = dae.load(reduction, model.x);
         final double dx = dae.load(reduction, model.x.der());
@@ -174,20 +178,41 @@ public class PendulumTest {
         final double ddy = dae.load(reduction, model.y.der(2));
 
         assertEquals(0.0,
-                2 * ddx * x + 2 * dx * dx + 2 * ddy * y + 2 * dy * dy, 1e-6);
+                2 * ddx * x + 2 * dx * dx + 2 * ddy * y + 2 * dy * dy, delta);
 
     }
 
     @Test
-    public void testSimulation() {
+    public void testSimulationVariableStep() {
 
         dae.data[1][0] = 0.1;
         dae.initialize();
 
-        runtime.simulateVariableStep(dae, events, 10, Double.MIN_VALUE,
+        Block.evals = 0;
+
+        runtime.simulateVariableStep(dae, SIM_TEST_STOP_TIME, Double.MIN_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
-        assertEquals(10, dae.data[0][0], 1e-8);
+        Logger.getLogger(getClass()).info(Block.evals + " block evaluations");
+
+        assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+
+    }
+
+    @Test
+    public void testSimulationFixedStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        Block.evals = 0;
+
+        runtime.simulateFixedStep(dae, SIM_TEST_STOP_TIME,
+                SIM_TEST_STOP_TIME * 1000);
+
+        Logger.getLogger(getClass()).info(Block.evals + " block evaluations");
+
+        assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
 
     }
 

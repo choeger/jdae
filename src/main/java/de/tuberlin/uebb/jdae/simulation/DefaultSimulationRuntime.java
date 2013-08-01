@@ -148,6 +148,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         final long start = System.currentTimeMillis();
 
+        dae.evaluations = 0;
         dae.integrate(options);
 
         logger.log(

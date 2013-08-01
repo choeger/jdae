@@ -147,6 +147,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             throws MaxCountExceededException, DimensionMismatchException {
 
         evaluations++;
+
         data[0][0] = t;
 
         for (int i = 0; i < states.size(); i++) {

@@ -42,7 +42,7 @@ public class OptimalitySolver implements
         MultivariateFunctionSolver<MultivariateDifferentiableVectorFunction> {
 
     final GaussNewtonOptimizer optim = new GaussNewtonOptimizer(
-            new SimpleVectorValueChecker(1e-8, 1e-8));
+            new SimpleVectorValueChecker(1e-6, 1e-6));
 
     @Override
     public double[] solve(int maxEval,

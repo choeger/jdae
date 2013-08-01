@@ -213,4 +213,8 @@ public final class PDNumber {
         return values.length - 1;
     }
 
+    public PDNumber copy() {
+        return new PDNumber(Arrays.copyOf(this.values, this.values.length));
+    }
+
 }

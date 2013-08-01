@@ -140,8 +140,15 @@ public final class TDOperations {
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
-        for (int i = 0; i <= order; i++)
-            target[i] = a[i].add(b[i]);
+        for (int i = 0; i <= order; i++) {
+            if (target[i] == null)
+                target[i] = a[i].add(b[i]);
+            else {
+                for (int j = 0; j < a[i].values.length; ++j)
+                    target[i].values[j] = a[i].values[j] + b[i].values[j];
+            }
+
+        }
     }
 
     private static final class ProductElements {
@@ -421,7 +428,8 @@ public final class TDOperations {
     public final void compInd(final double[] f, final PDNumber[] a,
             final PDNumber[] target) {
         for (int i = 0; i < compOps.length; ++i) {
-            target[i] = new PDNumber(subOps.params);
+            if (target[i] == null)
+                target[i] = new PDNumber(subOps.params);
             for (int j = 0; j < compOps[i].length; ++j) {
                 double r = 0;
                 int[] keys = new int[f.length];
@@ -444,11 +452,10 @@ public final class TDOperations {
             final PDNumber[] target) {
 
         for (int i = 0; i < multOps.length; ++i) {
+            if (target[i] == null)
+                target[i] = new PDNumber(subOps.params);
             for (int j = 0; j < multOps[i].length; ++j) {
                 for (Product product : multOps[i][j]) {
-                    if (target[i] == null)
-                        target[i] = new PDNumber(subOps.params);
-
                     target[i].values[j] += a[product.elements.lhs_row].values[product.elements.lhs_column]
                             * b[product.elements.rhs_row].values[product.elements.rhs_column]
                             * product.factor;

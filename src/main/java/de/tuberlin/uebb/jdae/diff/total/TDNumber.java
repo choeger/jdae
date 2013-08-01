@@ -44,6 +44,11 @@ public final class TDNumber {
                 values[0].values.length - 1);
     }
 
+    public TDNumber(TDOperations ops) {
+        this.ops = ops;
+        this.values = ops.constant(0.0).values;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -175,6 +180,13 @@ public final class TDNumber {
 
     public TDNumber subtract(TDNumber o) {
         return add(o.mult(-1));
+    }
+
+    public TDNumber copy() {
+        final PDNumber[] values = new PDNumber[this.values.length];
+        for (int i = 0; i < values.length; ++i)
+            values[i] = this.values[i].copy();
+        return new TDNumber(values);
     }
 
 }
