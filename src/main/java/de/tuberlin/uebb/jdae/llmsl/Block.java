@@ -161,18 +161,26 @@ public class Block implements MultivariateVectorFunction, IBlock {
         }
     }
 
-    private final void writeNegResidual(double[] ret) {
+    private final boolean writeNegResidual(double[] ret) {
+        boolean converged = true;
         ret[0] = 0.0;
 
         int index = 1;
         for (int i = 0; i < residuals.length; i++) {
             final TDNumber r = residuals[i];
             final Residual eq = equations[i];
-            ret[index++] = -r.getValue();
+            final double res = -r.getValue();
+            converged &= res <= 1e-6 && res >= -1e-6;
+            ret[index++] = res;
+
             for (int di = 1; di <= eq.derOrder; di++) {
-                ret[index++] = -r.der(di);
+                final double dres = -r.der(di);
+                converged &= dres <= 1e-6 && dres >= -1e-6;
+                ret[index++] = dres;
             }
         }
+
+        return converged;
     }
 
     private void compute(double[] point) {
@@ -258,8 +266,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
         final LinearSolver<DenseMatrix64F> solver = LinearSolverFactory
                 .linear(variables.length + 1);
 
-        writeNegResidual(residual.data);
-        while (!converged()) {
+        while (!writeNegResidual(residual.data)) {
             writeJacobian(jacobian);
             if (!solver.setA(jacobian))
                 throw new ConvergenceException();
@@ -269,7 +276,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
                 point[i] += x.data[i];
 
             forceCompute(point);
-            writeNegResidual(residual.data);
         }
 
         views[0].set(1, variables, point);
@@ -278,8 +284,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     public boolean converged() {
         boolean converged = true;
         for (int i = 0; i < residuals.length && converged; ++i) {
-            converged &= residuals[i].values[0].values[0] <= 1e-6
-                    && residuals[i].values[0].values[0] >= -1e-6;
+
         }
 
         return converged;
