@@ -104,7 +104,7 @@ public final class InitializationCausalisation {
 
                 final DerivedEquation derivedEquation = eqns.get(i);
                 if (blockEqns.containsKey(derivedEquation.eqn)
-                        && blockEqns.get(derivedEquation.eqn).derOrder > derivedEquation.derOrder) {
+                        && blockEqns.get(derivedEquation.eqn).maxOrder > derivedEquation.maxOrder) {
                     // Do nothing
                 } else {
                     blockEqns.put(derivedEquation.eqn, derivedEquation);

@@ -19,6 +19,9 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
+import gnu.trove.iterator.TIntObjectIterator;
+import gnu.trove.map.TIntObjectMap;
+
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -29,6 +32,7 @@ import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
@@ -59,13 +63,20 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
         this.blocks = new IBlock[causalisation.computations.size()];
         int i = 0;
-        for (Set<Integer> block : causalisation.computations) {
+        for (TIntObjectMap<Range<Integer>> block : causalisation.computations) {
+
             final Set<DerivedEquation> deriveds = Sets.newHashSet();
             int size = 0;
-            for (int k : block) {
-                deriveds.add(new DerivedEquation(causalisation.equations[k],
-                        causalisation.eqn_derivatives[k]));
-                size += causalisation.eqn_derivatives[k] + 1;
+            final TIntObjectIterator<Range<Integer>> blockIter = block
+                    .iterator();
+            while (blockIter.hasNext()) {
+                blockIter.advance();
+                final int eq = blockIter.key();
+                final Range<Integer> eqRange = blockIter.value();
+
+                deriveds.add(new DerivedEquation(causalisation.equations[eq],
+                        eqRange.lowerEndpoint(), eqRange.upperEndpoint()));
+                size += eqRange.upperEndpoint() - eqRange.lowerEndpoint();
             }
             if (size == 1) {
                 /* causalisation */

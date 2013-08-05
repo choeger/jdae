@@ -19,9 +19,13 @@
 
 package de.tuberlin.uebb.jdae.transformation;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +34,7 @@ import java.util.logging.Logger;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.llmsl.DataLayout.VariableRow;
@@ -37,6 +42,7 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.Relations;
 import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
+import de.tuberlin.uebb.jdae.utils.IntPair;
 
 /**
  * This class holds the causalisation algorithm. See {@link www.eoolt.org
@@ -48,7 +54,7 @@ import de.tuberlin.uebb.jdae.thirdparty.transitivityutils.TransitiveRelation;
  */
 public final class Causalisation {
 
-    public final List<Set<Integer>> computations;
+    public final List<TIntObjectMap<Range<Integer>>> computations;
     public final List<Set<GlobalVariable>> iteratees;
     public final int[] eqn_derivatives;
 
@@ -73,7 +79,7 @@ public final class Causalisation {
         logger.log(Level.INFO, "Result of Fixedpoint: {0}",
                 Arrays.toString(point));
 
-        final TransitiveRelation<Integer> depends = Relations
+        final TransitiveRelation<IntPair> depends = Relations
                 .newTransitiveRelation();
 
         this.layout = new VariableRow[n];
@@ -86,100 +92,117 @@ public final class Causalisation {
 
             for (GlobalVariable v : eqn.need()) {
                 final int j = v.index - 1;
-                /* maximal degree of derivation of v in eqn */
-                final int max = matching.sigma(i, j) + point[n + i];
 
-                /* equation computing v */
-                final int other = matching.inverse[j];
+                for (int d = 0; d <= point[n + i]; d++) {
+                    /* maximal degree of derivation of v in eqn */
+                    final int max = matching.sigma(i, j) + d;
 
-                /* maximal degree of derivation of v in other */
-                final int otherMax = matching.sigma(other, j)
-                        + point[n + other];
+                    /* equation computing v */
+                    final int other = matching.inverse[j];
 
-                /*
-                 * if eqn only uses a lower derivative, there is no dependency
-                 * (the lower derivative is integrated)
-                 */
+                    for (int od = 0; od <= point[n + other]; od++) {
+                        /* maximal degree of derivation of v in other */
+                        final int otherMax = matching.sigma(other, j) + od;
 
-                if (max >= otherMax) {
-                    depends.relate(i, other);
-                } else {
-                    System.out.println(max + " too small, no dependency for: "
-                            + v + " from " + equations[i] + " to "
-                            + equations[other]);
+                        /*
+                         * if eqn only uses a lower derivative, there is no
+                         * dependency (the lower derivative is integrated)
+                         */
+
+                        if (max >= otherMax) {
+                            depends.relate(new IntPair(i, d), new IntPair(
+                                    other, od));
+                        }
+                    }
                 }
             }
         }
 
         states = Lists.newArrayList();
-        final List<Integer> eqns = Lists.newArrayListWithCapacity(n);
+        final List<IntPair> eqns = Lists.newArrayList();
 
         setupStates(matching, n, states, eqns);
         logger.log(Level.INFO, "States: {0}", Joiner.on(", ").join(states));
-        final Comparator<Integer> comp = sortByDependency(depends, eqns);
+        final Comparator<IntPair> comp = sortByDependency(depends, eqns);
 
         computations = Lists.newArrayList();
         iteratees = Lists.newArrayList();
 
         logger.log(Level.INFO, "Starting dependency analysis.");
 
-        int k = 0;
-        while (k < n) {
-            final Set<GlobalVariable> blockVars = Sets.newTreeSet();
-            final Set<Integer> blockEqns = Sets.newTreeSet();
-
-            final Integer eq = eqns.get(k);
-            int l = 0;
-            while ((k + l) < n && comp.compare(eq, eqns.get(k + l)) == 0) {
-                final int i = eqns.get(k + l);
-                final int j = matching.assignment[i];
-
-                final int c = (int) point[n + i];
-
-                blockEqns.add(i);
-
-                addIterationVariables(matching, blockVars, i, j, c);
-
-                l++;
-            }
-            k += l;
-
-            logger.log(Level.INFO,
-                    "Simulation block of {0} equation(s) computing {1}",
-                    new Object[] { blockEqns.size(), blockVars });
-            computations.add(blockEqns);
-            iteratees.add(blockVars);
-        }
+        final Iterator<IntPair> k = eqns.iterator();
+        if (k.hasNext())
+            collectBlocks(matching, comp, k.next(), k);
     }
 
-    private void addIterationVariables(final Matching matching,
-            final Set<GlobalVariable> blockVars, final int i, final int j,
-            final int c) {
-        int d = 0;
-        while (d <= c)
-            blockVars.add(new GlobalVariable(layout[j].name, j + 1, matching
-                    .sigma(i, j) + (d++)));
+    private final void collectBlocks(final Matching matching,
+            final Comparator<IntPair> comp, final IntPair componentStart,
+            final Iterator<IntPair> k) {
+        final Set<GlobalVariable> blockVars = Sets.newTreeSet();
+        final TIntObjectMap<Range<Integer>> blockEqns = new TIntObjectHashMap<>();
+
+        collectEquation(matching, componentStart, blockVars, blockEqns);
+
+        IntPair eqNext = null;
+        while (k.hasNext()
+                && (comp.compare(componentStart, (eqNext = k.next())) == 0)) {
+            collectEquation(matching, eqNext, blockVars, blockEqns);
+        }
+
+        logger.log(Level.INFO,
+                "Simulation block of {0} equation(s) computing {1}",
+                new Object[] { blockEqns.size(), blockVars });
+
+        computations.add(blockEqns);
+        iteratees.add(blockVars);
+
+        if (eqNext != null)
+            collectBlocks(matching, comp, eqNext, k);
+    }
+
+    public void collectEquation(final Matching matching, IntPair eqNext,
+            final Set<GlobalVariable> blockVars,
+            final TIntObjectMap<Range<Integer>> blockEqns) {
+        final int i = eqNext.x;
+        final int j = matching.assignment[i];
+
+        final int c = eqNext.y;
+
+        if (!blockEqns.containsKey(i))
+            blockEqns.put(i, Range.closed(c, c));
+        else {
+            final Range<Integer> next = Range.closed(c, c);
+            final Range<Integer> last = blockEqns.get(i);
+
+            blockEqns.put(i, next.intersection(last));
+        }
+
+        blockVars.add(new GlobalVariable(layout[j].name, j + 1, matching.sigma(
+                i, j) + c));
     }
 
     private void setupStates(final Matching matching, final int n,
-            final List<GlobalVariable> states, final List<Integer> eqns) {
+            final List<GlobalVariable> states, final List<IntPair> eqns) {
         for (int j = 0; j < n; j++) {
             final int i = matching.inverse[j];
             final int sigma = matching.sigma(i, j);
             int d = 0;
             while (d < sigma) {
                 states.add(new GlobalVariable(layout[j].name, j + 1, d++));
+
             }
-            eqns.add(i);
+            for (int der = 0; der <= eqn_derivatives[i]; der++) {
+                eqns.add(new IntPair(i, der));
+            }
         }
     }
 
-    private Comparator<Integer> sortByDependency(
-            final TransitiveRelation<Integer> depends, final List<Integer> eqns) {
-        final Comparator<Integer> comp = new Comparator<Integer>() {
+    private Comparator<IntPair> sortByDependency(
+            final TransitiveRelation<IntPair> depends, final List<IntPair> eqns) {
+        final Comparator<IntPair> comp = new Comparator<IntPair>() {
 
             @Override
-            public int compare(Integer a, Integer b) {
+            public int compare(IntPair a, IntPair b) {
                 final boolean a_dep_b = depends.areRelated(a, b);
                 final boolean b_dep_a = depends.areRelated(b, a);
                 if (a_dep_b && b_dep_a)

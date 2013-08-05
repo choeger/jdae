@@ -29,21 +29,31 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 
 public final class DerivedEquation {
     public final GlobalEquation eqn;
-    public final int derOrder;
+    public final int minOrder;
+    public final int maxOrder;
     private Set<GlobalVariable> set;
 
     public DerivedEquation(GlobalEquation eqn, int derOrder) {
         super();
         this.eqn = eqn;
-        this.derOrder = derOrder;
+        this.maxOrder = derOrder;
+        this.minOrder = 0;
+    }
+
+    public DerivedEquation(GlobalEquation eqn, int minOrder, int maxOrder) {
+        super();
+        this.eqn = eqn;
+        this.maxOrder = maxOrder;
+        this.minOrder = minOrder;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + derOrder;
         result = prime * result + ((eqn == null) ? 0 : eqn.hashCode());
+        result = prime * result + maxOrder;
+        result = prime * result + minOrder;
         return result;
     }
 
@@ -56,24 +66,22 @@ public final class DerivedEquation {
         if (getClass() != obj.getClass())
             return false;
         DerivedEquation other = (DerivedEquation) obj;
-        if (derOrder != other.derOrder)
-            return false;
         if (eqn == null) {
             if (other.eqn != null)
                 return false;
         } else if (!eqn.equals(other.eqn))
             return false;
+        if (maxOrder != other.maxOrder)
+            return false;
+        if (minOrder != other.minOrder)
+            return false;
         return true;
-    }
-
-    public String toString() {
-        return String.format("d^%d(%s)/d^%dt", derOrder, eqn, derOrder);
     }
 
     public Collection<GlobalVariable> need() {
         if (set == null) {
             set = Sets.newTreeSet();
-            for (int d = 0; d <= derOrder; d++) {
+            for (int d = 0; d <= (maxOrder - minOrder); d++) {
                 for (GlobalVariable v : eqn.need()) {
                     set.add(v.der(d));
                 }

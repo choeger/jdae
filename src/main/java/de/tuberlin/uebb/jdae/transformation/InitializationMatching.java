@@ -76,7 +76,7 @@ public final class InitializationMatching {
         for (int i = 0; i < n; i++) {
             final DerivedEquation eq = allEquations.get(i);
             for (GlobalVariable v : eq.eqn.need()) {
-                final GlobalVariable der = v.der(eq.derOrder);
+                final GlobalVariable der = v.der(eq.maxOrder);
                 final int j = numberOf(der);
                 variables[j] = der;
                 sigma[j][i] = -1;

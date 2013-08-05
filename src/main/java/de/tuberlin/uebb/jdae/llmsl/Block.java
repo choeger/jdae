@@ -97,9 +97,9 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         int index = 0;
         for (DerivedEquation e : equations) {
-            this.equations[index] = new Residual(e.eqn.bind(blockVars), 0,
-                    e.derOrder);
-            views[index++] = view.derived(e.derOrder);
+            this.equations[index] = new Residual(e.eqn.bind(blockVars),
+                    e.minOrder, e.maxOrder);
+            views[index++] = view.derived(e.maxOrder);
         }
 
     }
@@ -110,7 +110,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         final Set<GlobalVariable> needed = Sets.newTreeSet();
         for (DerivedEquation eq : equations) {
-            final int order = eq.derOrder;
+            final int order = eq.maxOrder;
             for (int i = 0; i <= order; i++)
                 for (GlobalVariable gv : eq.eqn.need())
                     needed.add(gv.der(i));
