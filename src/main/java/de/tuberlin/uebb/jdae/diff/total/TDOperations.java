@@ -54,6 +54,7 @@ public final class TDOperations {
         this.subOps = new PDOperations(params);
         multOps = compileMultIndirection();
         compOps = compileCompIndirection();
+        smaller = order > 0 ? getInstance(order - 1, subOps.params) : null;
         System.out.println(stats(compOps));
     }
 
@@ -72,6 +73,7 @@ public final class TDOperations {
     }
 
     private final static TIntObjectMap<TIntObjectMap<TDOperations>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDOperations>>();
+    private final TDOperations smaller;
 
     public static TDOperations getInstance(int order, int params) {
         if (!instanceCache.containsKey(order))
@@ -479,7 +481,7 @@ public final class TDOperations {
     }
 
     public TDOperations smaller() {
-        return getInstance(order - 1, subOps.params);
+        return smaller;
     }
 
     private PDNumber[] antiDiff(PDNumber[] a) {
@@ -558,7 +560,7 @@ public final class TDOperations {
         for (int i = 1; i < Math.min(dt.length - offset, order + 1); ++i)
             c_values[i] = subOps.constant(dt[i + offset]);
 
-        return new TDNumber(c_values);
+        return new TDNumber(this, c_values);
     }
 
     public TDNumber constant(double d, double... dt) {
@@ -572,7 +574,7 @@ public final class TDOperations {
         for (int i = dt.length; i < order; ++i)
             c_values[i + 1] = subOps.constant(0.0);
 
-        return new TDNumber(c_values);
+        return new TDNumber(this, c_values);
     }
 
     public TDNumber variable(int idx, double... der) {
@@ -588,7 +590,7 @@ public final class TDOperations {
             for (int i = 0; i <= derivatives; i++)
                 vals[i].values[1 + idx + i] = 1;
 
-        return new TDNumber(vals);
+        return new TDNumber(this, vals);
     }
 
     public String toString() {

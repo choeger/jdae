@@ -68,19 +68,11 @@ public final class TDNumber {
         return true;
     }
 
-    public TDNumber diff() {
-        return new TDNumber(Arrays.copyOfRange(values, 1, values.length));
-    }
-
-    public TDNumber antiDiff() {
-        return new TDNumber(Arrays.copyOfRange(values, 0, values.length - 1));
-    }
-
     public TDNumber add(final TDNumber other) {
         assert other.values.length == values.length : "Cannot add two numbers of different dimensions!";
         final PDNumber[] newVal = new PDNumber[values.length];
         ops.add(values, other.values, newVal);
-        return new TDNumber(newVal);
+        return new TDNumber(ops, newVal);
     }
 
     public TDNumber add(final double value) {
@@ -88,7 +80,7 @@ public final class TDNumber {
         target[0] = values[0].add(value);
         for (int i = 1; i < target.length; i++)
             target[i] = values[i];
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber add(final int value) {
@@ -96,51 +88,51 @@ public final class TDNumber {
         target[0] = values[0].add(value);
         for (int i = 1; i < target.length; i++)
             target[i] = values[i];
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final TDNumber other) {
         final PDNumber[] target = new PDNumber[values.length];
         ops.mult(values, other.values, target);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final double value) {
         final PDNumber[] target = new PDNumber[values.length];
         for (int i = 0; i < target.length; i++)
             target[i] = values[i].mult(value);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final int value) {
         final PDNumber[] target = new PDNumber[values.length];
         for (int i = 0; i < target.length; i++)
             target[i] = values[i].mult(value);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber sin() {
         final PDNumber[] target = new PDNumber[values.length];
         ops.sin(values, target);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber cos() {
         final PDNumber[] target = new PDNumber[values.length];
         ops.cos(values, target);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber pow(int n) {
         final PDNumber[] target = new PDNumber[values.length];
         ops.pow(n, values, target);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber pow(double n) {
         final PDNumber[] target = new PDNumber[values.length];
         ops.pow(n, values, target);
-        return new TDNumber(target);
+        return new TDNumber(ops, target);
     }
 
     public TDNumber one() {
@@ -183,7 +175,7 @@ public final class TDNumber {
         final PDNumber[] values = new PDNumber[this.values.length];
         for (int i = 0; i < values.length; ++i)
             values[i] = this.values[i].copy();
-        return new TDNumber(values);
+        return new TDNumber(ops, values);
     }
 
 }
