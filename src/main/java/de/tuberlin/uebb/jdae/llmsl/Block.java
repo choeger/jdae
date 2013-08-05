@@ -37,7 +37,6 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
-import de.tuberlin.uebb.jdae.solvers.OptimalitySolver;
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
 
 /**
@@ -70,7 +69,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
     private double[] lastPoint = null;
 
     /* equation solver */
-    final OptimalitySolver solver = new OptimalitySolver();
     final ExecutionContext view;
 
     public Block(double[][] data, DataLayout layout,
@@ -101,6 +99,12 @@ public class Block implements MultivariateVectorFunction, IBlock {
                     e.minOrder, e.maxOrder);
             views[index++] = view.derived(e.maxOrder);
         }
+
+        jacobianMatrix = new DenseMatrix64F(this.variables.length + 1,
+                this.variables.length + 1);
+        residual = new DenseMatrix64F(this.variables.length + 1, 1);
+        x = new DenseMatrix64F(this.variables.length + 1);
+        solver = LinearSolverFactory.linear(this.variables.length + 1);
 
     }
 
@@ -246,6 +250,10 @@ public class Block implements MultivariateVectorFunction, IBlock {
             return ret;
         }
     };
+    private final DenseMatrix64F jacobianMatrix;
+    private final DenseMatrix64F residual;
+    private final DenseMatrix64F x;
+    private LinearSolver<DenseMatrix64F> solver;
 
     public MultivariateMatrixFunction jacobian() {
         return jacobian;
@@ -255,18 +263,9 @@ public class Block implements MultivariateVectorFunction, IBlock {
         final double[] point = views[0].loadD(variables);
         compute(point);
 
-        final DenseMatrix64F jacobian = new DenseMatrix64F(
-                variables.length + 1, variables.length + 1);
-        final DenseMatrix64F residual = new DenseMatrix64F(
-                variables.length + 1, 1);
-        final DenseMatrix64F x = new DenseMatrix64F(variables.length + 1);
-
-        final LinearSolver<DenseMatrix64F> solver = LinearSolverFactory
-                .linear(variables.length + 1);
-
         while (!writeNegResidual(residual.data)) {
-            writeJacobian(jacobian);
-            if (!solver.setA(jacobian))
+            writeJacobian(jacobianMatrix);
+            if (!solver.setA(jacobianMatrix))
                 throw new ConvergenceException();
             solver.solve(residual, x);
 
