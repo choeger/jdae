@@ -28,7 +28,6 @@ import java.util.Map;
 import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
@@ -36,6 +35,7 @@ import com.google.common.collect.Ordering;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
+import de.tuberlin.uebb.jdae.utils.IntPair;
 
 /**
  * @author choeger
@@ -68,53 +68,6 @@ public final class TDOperations {
                     keys += prod.key.keys.length;
                 }
         return String.format("%d terms with %d keys in total.", terms, keys);
-
-    }
-
-    public static final class IntPair implements Comparable<IntPair> {
-        public final int x;
-        public final int y;
-
-        public IntPair(int x, int y) {
-            super();
-            this.x = x;
-            this.y = y;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + x;
-            result = prime * result + y;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            IntPair other = (IntPair) obj;
-            if (x != other.x)
-                return false;
-            if (y != other.y)
-                return false;
-            return true;
-        }
-
-        @Override
-        public int compareTo(IntPair o) {
-            return ComparisonChain.start().compare(x, o.x).compare(y, o.y)
-                    .result();
-        }
-
-        public String toString() {
-            return "(" + x + ", " + y + ")";
-        }
 
     }
 

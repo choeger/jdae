@@ -80,7 +80,7 @@ public final class Causalisation {
         this.eqn_derivatives = new int[n];
 
         for (int i = 0; i < n; i++) {
-            layout[i] = new VariableRow(i + 1, (int) point[i], names.get(i + 1));
+            layout[i] = new VariableRow(i + 1, point[i], names.get(i + 1));
             eqn_derivatives[i] = (int) point[n + i];
             final GlobalEquation eqn = reduction.reduced.get(i);
 
