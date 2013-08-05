@@ -47,12 +47,9 @@ public final class ExecutionContext {
         }
     }
 
-    public double[] loadD(GlobalVariable[] vars) {
-        double[] ret = new double[vars.length + 1];
-        ret[0] = data[0][0];
+    public final void loadD(double[] point, GlobalVariable[] vars) {
         for (int i = 0; i < vars.length; i++)
-            ret[i + 1] = loadD(vars[i]);
-        return ret;
+            point[i] = loadD(vars[i]);
     }
 
     public double loadD(GlobalVariable v) {

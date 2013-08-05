@@ -100,12 +100,12 @@ public class Block implements MultivariateVectorFunction, IBlock {
             views[index++] = view.derived(e.maxOrder);
         }
 
-        jacobianMatrix = new DenseMatrix64F(this.variables.length + 1,
-                this.variables.length + 1);
-        residual = new DenseMatrix64F(this.variables.length + 1, 1);
-        x = new DenseMatrix64F(this.variables.length + 1);
-        solver = LinearSolverFactory.linear(this.variables.length + 1);
-
+        jacobianMatrix = new DenseMatrix64F(this.variables.length,
+                this.variables.length);
+        residual = new DenseMatrix64F(this.variables.length, 1);
+        x = new DenseMatrix64F(this.variables.length);
+        solver = LinearSolverFactory.linear(this.variables.length);
+        this.point = new double[this.variables.length];
     }
 
     private Map<GlobalVariable, BlockVariable> makeBlockVars(DataLayout layout,
@@ -138,10 +138,6 @@ public class Block implements MultivariateVectorFunction, IBlock {
         return blockVars;
     }
 
-    private double getPartialDerivative(TDNumber ds, int dt, int index) {
-        return ds.der(dt, index);
-    }
-
     @Override
     public double[] value(double[] point) {
         compute(point);
@@ -154,9 +150,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
     }
 
     private final void writeResidual(double[] ret) {
-        ret[0] = 0.0;
-
-        int index = 1;
+        int index = 0;
         for (int i = 0; i < residuals.length; i++) {
             final TDNumber r = residuals[i];
             final Residual eq = equations[i];
@@ -168,9 +162,8 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
     private final boolean writeNegResidual(double[] ret) {
         boolean converged = true;
-        ret[0] = 0.0;
 
-        int index = 1;
+        int index = 0;
         for (int i = 0; i < residuals.length; i++) {
             final TDNumber r = residuals[i];
             final Residual eq = equations[i];
@@ -185,24 +178,19 @@ public class Block implements MultivariateVectorFunction, IBlock {
         return converged;
     }
 
-    private void compute(double[] point) {
-        final long s = System.currentTimeMillis();
+    private void compute(double point[]) {
 
-        if (!Arrays.equals(lastPoint, point)) {
-            lastPoint = point.clone();
-            views[0].set(1, variables, point);
-
-            for (int i = 0; i < equations.length; i++) {
-                residuals[i] = equations[i].eq.exec(views[i]);
-            }
+        if (!Arrays.equals(point, this.point) || residuals[0] == null) {
+            for (int i = 0; i < point.length; i++)
+                this.point[i] = point[i];
+            forceCompute();
         }
-        evals += (System.currentTimeMillis() - s);
     }
 
-    private void forceCompute(double[] point) {
+    private void forceCompute() {
         final long s = System.currentTimeMillis();
 
-        views[0].set(1, variables, point);
+        views[0].set(0, variables, point);
 
         for (int i = 0; i < equations.length; i++) {
             residuals[i] = equations[i].eq.exec(views[i]);
@@ -211,16 +199,13 @@ public class Block implements MultivariateVectorFunction, IBlock {
         evals += (System.currentTimeMillis() - s);
     }
 
-    private final void writeJacobian(DenseMatrix64F matrix) {
-        matrix.set(0, 0, 1.0);
-
-        int index = 1;
+    private final void writeJacobian() {
+        int index = 0;
 
         for (int i = 0; i < equations.length; i++)
             for (int di = equations[i].minOrder; di <= equations[i].maxOrder; di++) {
                 for (int j = 0; j < variables.length; j++) {
-                    matrix.set(index, j + 1,
-                            getPartialDerivative(residuals[i], di, j));
+                    jacobianMatrix.set(index, j, residuals[i].der(di, j));
                 }
                 index++;
             }
@@ -233,16 +218,13 @@ public class Block implements MultivariateVectorFunction, IBlock {
         public double[][] value(double[] point) throws IllegalArgumentException {
             compute(point);
 
-            double[][] ret = new double[variables.length + 1][variables.length + 1];
-            ret[0][0] = 1.0;
-
-            int index = 1;
+            double[][] ret = new double[variables.length][variables.length];
+            int index = 0;
 
             for (int i = 0; i < equations.length; i++)
                 for (int di = 0; di <= equations[i].maxOrder; di++) {
                     for (int j = 0; j < variables.length; j++) {
-                        ret[index][j + 1] = getPartialDerivative(residuals[i],
-                                di, j);
+                        ret[index][j] = residuals[i].der(di, j);
                     }
                     index++;
                 }
@@ -254,17 +236,19 @@ public class Block implements MultivariateVectorFunction, IBlock {
     private final DenseMatrix64F residual;
     private final DenseMatrix64F x;
     private LinearSolver<DenseMatrix64F> solver;
+    private final double[] point;
 
     public MultivariateMatrixFunction jacobian() {
         return jacobian;
     }
 
     public void exec() {
-        final double[] point = views[0].loadD(variables);
-        compute(point);
+
+        views[0].loadD(point, variables);
+        forceCompute();
 
         while (!writeNegResidual(residual.data)) {
-            writeJacobian(jacobianMatrix);
+            writeJacobian();
             if (!solver.setA(jacobianMatrix))
                 throw new ConvergenceException();
             solver.solve(residual, x);
@@ -272,19 +256,10 @@ public class Block implements MultivariateVectorFunction, IBlock {
             for (int i = 0; i < point.length; ++i)
                 point[i] += x.data[i];
 
-            forceCompute(point);
+            forceCompute();
         }
 
-        views[0].set(1, variables, point);
-    }
-
-    public boolean converged() {
-        boolean converged = true;
-        for (int i = 0; i < residuals.length && converged; ++i) {
-
-        }
-
-        return converged;
+        views[0].set(0, variables, point);
     }
 
     @Override

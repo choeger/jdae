@@ -83,69 +83,70 @@ public class PendulumTest {
 
         final MultivariateMatrixFunction jacobian = initBlock.jacobian();
 
-        int length_eq = 0;
-        while (!(initBlock.equations[length_eq++].eq instanceof LengthBlockEquation))
+        int length_eq = -1;
+        while (!(initBlock.equations[++length_eq].eq instanceof LengthBlockEquation))
             ;
 
-        int xaccel_eq = 0;
-        while (!(initBlock.equations[xaccel_eq++].eq instanceof XAccelBlockEquation))
+        int xaccel_eq = -1;
+        while (!(initBlock.equations[++xaccel_eq].eq instanceof XAccelBlockEquation))
             ;
 
         if (length_eq < xaccel_eq)
             xaccel_eq += 2;
 
-        int yaccel_eq = 0;
-        while (!(initBlock.equations[yaccel_eq++].eq instanceof YAccelBlockEquation))
+        int yaccel_eq = -1;
+        while (!(initBlock.equations[++yaccel_eq].eq instanceof YAccelBlockEquation))
             ;
         if (length_eq < yaccel_eq)
             yaccel_eq += 2;
 
-        final double[][] testData = new double[][] { { 0, 0, 0, 0, 0, 0 },
-                { 0, 1, 1, 1, 0, 0 }, { 0, 0, 0, 0, 1, 1 },
-                { 0, 1, 2, 3, 4, 5 }, { 0, -5, 4, -3, 2, -1 },
-                { 0, 1, 1, 1, 1, 1 } };
+        final double[][] testData = new double[][] { { 0, 0, 0, 0, 0 },
+                { 1, 1, 1, 0, 0 }, { 0, 0, 0, 1, 1 }, { 1, 2, 3, 4, 5 },
+                { -5, 4, -3, 2, -1 }, { 1, 1, 1, 1, 1 } };
 
         for (double[] data : testData) {
             final double[][] M = jacobian.value(data);
-            assertThat(M.length, is(6));
-            assertThat(M[1].length, is(6));
+            assertThat(M.length, is(5));
+            assertThat(M[0].length, is(5));
+            assertThat(M[1].length, is(5));
+            assertThat(M[2].length, is(5));
+            assertThat(M[3].length, is(5));
+            assertThat(M[4].length, is(5));
 
             // x² + y² - 1
-            assertEquals(2 * data[1], M[length_eq][1], 1e-6);
+            assertEquals(2 * data[0], M[length_eq][0], 1e-6);
+            assertEquals(0.0, M[length_eq][1], 1e-6);
             assertEquals(0.0, M[length_eq][2], 1e-6);
             assertEquals(0.0, M[length_eq][3], 1e-6);
             assertEquals(0.0, M[length_eq][4], 1e-6);
-            assertEquals(0.0, M[length_eq][5], 1e-6);
 
             // 2x * dx + 2y * dy
-            assertEquals(2 * data[2], M[length_eq + 1][1], 1e-6);
-            assertEquals(2 * data[1], M[length_eq + 1][2], 1e-6);
+            assertEquals(2 * data[1], M[length_eq + 1][0], 1e-6);
+            assertEquals(2 * data[0], M[length_eq + 1][1], 1e-6);
+            assertEquals(0.0, M[length_eq + 1][2], 1e-6);
             assertEquals(0.0, M[length_eq + 1][3], 1e-6);
             assertEquals(0.0, M[length_eq + 1][4], 1e-6);
-            assertEquals(0.0, M[length_eq + 1][5], 1e-6);
 
             // 2x * ddx + 2dx² + 2y * ddy + 2dy²
-            assertEquals(2 * data[3], M[length_eq + 2][1], 1e-6);
-            assertEquals(4 * data[2], M[length_eq + 2][2], 1e-6);
-            assertEquals(2 * data[1], M[length_eq + 2][3], 1e-6);
+            assertEquals(2 * data[2], M[length_eq + 2][0], 1e-6);
+            assertEquals(4 * data[1], M[length_eq + 2][1], 1e-6);
+            assertEquals(2 * data[0], M[length_eq + 2][2], 1e-6);
+            assertEquals(0.0, M[length_eq + 2][3], 1e-6);
             assertEquals(2 * dae.data[3][0], M[length_eq + 2][4], 1e-6);
-            assertEquals(0.0, M[length_eq + 2][5], 1e-6);
 
             // ddy = F*y - g
             assertEquals(0.0, M[yaccel_eq][0], 1e-6);
             assertEquals(0.0, M[yaccel_eq][1], 1e-6);
             assertEquals(0.0, M[yaccel_eq][2], 1e-6);
-            assertEquals(0.0, M[yaccel_eq][3], 1e-6);
-            assertEquals(-dae.data[3][0], M[yaccel_eq][4], 1e-6);
-            assertEquals(1.0, M[yaccel_eq][5], 1e-6);
+            assertEquals(-dae.data[3][0], M[yaccel_eq][3], 1e-6);
+            assertEquals(1.0, M[yaccel_eq][4], 1e-6);
 
             // ddx = F*x
-            assertEquals(0.0, M[xaccel_eq][0], 1e-6);
-            assertEquals(-data[4], M[xaccel_eq][1], 1e-6);
-            assertEquals(0.0, M[xaccel_eq][2], 1e-6);
-            assertEquals(1.0, M[xaccel_eq][3], 1e-6);
-            assertEquals(-data[1], M[xaccel_eq][4], 1e-6);
-            assertEquals(0.0, M[xaccel_eq][5], 1e-6);
+            assertEquals(-data[3], M[xaccel_eq][0], 1e-6);
+            assertEquals(0.0, M[xaccel_eq][1], 1e-6);
+            assertEquals(1.0, M[xaccel_eq][2], 1e-6);
+            assertEquals(-data[0], M[xaccel_eq][3], 1e-6);
+            assertEquals(0.0, M[xaccel_eq][4], 1e-6);
         }
     }
 
