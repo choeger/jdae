@@ -159,7 +159,7 @@ public final class TDNumber {
         return ops.constant(d);
     }
 
-    public double der(int dt) {
+    public double der(final int dt) {
         return values[dt].values[0];
     }
 

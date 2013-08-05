@@ -50,12 +50,14 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
     public static final class Residual {
         public final BlockEquation eq;
-        public final int derOrder;
+        public final int maxOrder;
+        public final int minOrder;
 
-        public Residual(BlockEquation eq, int derOrder) {
+        public Residual(BlockEquation eq, int minOrder, int maxOrder) {
             super();
             this.eq = eq;
-            this.derOrder = derOrder;
+            this.maxOrder = maxOrder;
+            this.minOrder = minOrder;
         }
     }
 
@@ -95,7 +97,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
         int index = 0;
         for (DerivedEquation e : equations) {
-            this.equations[index] = new Residual(e.eqn.bind(blockVars),
+            this.equations[index] = new Residual(e.eqn.bind(blockVars), 0,
                     e.derOrder);
             views[index++] = view.derived(e.derOrder);
         }
@@ -154,8 +156,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
         for (int i = 0; i < residuals.length; i++) {
             final TDNumber r = residuals[i];
             final Residual eq = equations[i];
-            ret[index++] = r.getValue();
-            for (int di = 1; di <= eq.derOrder; di++) {
+            for (int di = eq.minOrder; di <= eq.maxOrder; di++) {
                 ret[index++] = r.der(di);
             }
         }
@@ -169,11 +170,8 @@ public class Block implements MultivariateVectorFunction, IBlock {
         for (int i = 0; i < residuals.length; i++) {
             final TDNumber r = residuals[i];
             final Residual eq = equations[i];
-            final double res = -r.getValue();
-            converged &= res <= 1e-6 && res >= -1e-6;
-            ret[index++] = res;
 
-            for (int di = 1; di <= eq.derOrder; di++) {
+            for (int di = eq.minOrder; di <= eq.maxOrder; di++) {
                 final double dres = -r.der(di);
                 converged &= dres <= 1e-6 && dres >= -1e-6;
                 ret[index++] = dres;
@@ -215,7 +213,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
         int index = 1;
 
         for (int i = 0; i < equations.length; i++)
-            for (int di = 0; di <= equations[i].derOrder; di++) {
+            for (int di = equations[i].minOrder; di <= equations[i].maxOrder; di++) {
                 for (int j = 0; j < variables.length; j++) {
                     matrix.set(index, j + 1,
                             getPartialDerivative(residuals[i], di, j));
@@ -237,7 +235,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
             int index = 1;
 
             for (int i = 0; i < equations.length; i++)
-                for (int di = 0; di <= equations[i].derOrder; di++) {
+                for (int di = 0; di <= equations[i].maxOrder; di++) {
                     for (int j = 0; j < variables.length; j++) {
                         ret[index][j + 1] = getPartialDerivative(residuals[i],
                                 di, j);
