@@ -87,17 +87,26 @@ public final class Causalisation {
             for (GlobalVariable v : eqn.need()) {
                 final int j = v.index - 1;
                 /* maximal degree of derivation of v in eqn */
-                final int max = matching.sigma(i, j);
+                final int max = matching.sigma(i, j) + point[n + i];
 
                 /* equation computing v */
                 final int other = matching.inverse[j];
+
+                /* maximal degree of derivation of v in other */
+                final int otherMax = matching.sigma(other, j)
+                        + point[n + other];
 
                 /*
                  * if eqn only uses a lower derivative, there is no dependency
                  * (the lower derivative is integrated)
                  */
-                if (max >= matching.sigma(i, j)) {
+
+                if (max >= otherMax) {
                     depends.relate(i, other);
+                } else {
+                    System.out.println(max + " too small, no dependency for: "
+                            + v + " from " + equations[i] + " to "
+                            + equations[other]);
                 }
             }
         }

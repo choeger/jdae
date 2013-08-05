@@ -61,11 +61,13 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         int i = 0;
         for (Set<Integer> block : causalisation.computations) {
             final Set<DerivedEquation> deriveds = Sets.newHashSet();
-            for (int k : block)
+            int size = 0;
+            for (int k : block) {
                 deriveds.add(new DerivedEquation(causalisation.equations[k],
                         causalisation.eqn_derivatives[k]));
-
-            if (block.size() == 1) {
+                size += causalisation.eqn_derivatives[k] + 1;
+            }
+            if (size == 1) {
                 /* causalisation */
                 final GlobalVariable var = causalisation.iteratees.get(i)
                         .iterator().next();
