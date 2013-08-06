@@ -53,10 +53,10 @@ public final class ResultStorage implements StepHandler {
 
     @Override
     public void handleStep(StepInterpolator arg0, boolean arg1) {
-        if (dae.data[0][0] != arg0.getInterpolatedTime()) {
-            dae.computeDerivatives(arg0.getInterpolatedTime(),
-                    arg0.getInterpolatedState(), new double[dae.getDimension()]);
-        }
+        // if (dae.data[0][0] != arg0.getInterpolatedTime()) {
+        // dae.computeDerivatives(arg0.getInterpolatedTime(),
+        // arg0.getInterpolatedState(), new double[dae.getDimension()]);
+        // }
 
         addResult(dae.data);
     }

@@ -50,8 +50,12 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public final List<GlobalVariable> states;
     private final Logger logger;
     public final IBlock[] initials;
-    public int evaluations;
+    private int evaluations;
     public long time;
+
+    public int getEvaluations() {
+        return evaluations;
+    }
 
     public ExecutableDAE(final DataLayout layout, Causalisation causalisation,
             InitializationCausalisation iCausalisation) {
@@ -122,6 +126,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     }
 
     public void integrate(final SimulationOptions options) {
+        evaluations = 0;
         data[0][0] = options.startTime;
 
         logger.log(Level.INFO, "Starting integration.");

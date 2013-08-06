@@ -148,14 +148,13 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         final long start = System.currentTimeMillis();
 
-        dae.evaluations = 0;
         dae.integrate(options);
 
         logger.log(
                 Level.INFO,
                 "Simulation finished after {1} accepted steps, {2} system-evaluations in {0}ms",
                 new Object[] { System.currentTimeMillis() - start,
-                        results.results.size(), dae.evaluations });
+                        results.results.size(), dae.getEvaluations() });
     }
 
     @Override
