@@ -147,6 +147,7 @@ public final class Causalisation {
         while (k.hasNext()
                 && (comp.compare(componentStart, (eqNext = k.next())) == 0)) {
             collectEquation(matching, eqNext, blockVars, blockEqns);
+            eqNext = null;
         }
 
         logger.log(Level.INFO,

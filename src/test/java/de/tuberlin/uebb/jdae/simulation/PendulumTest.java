@@ -183,7 +183,7 @@ public class PendulumTest {
     }
 
     @Test
-    public void testSimulationVariableStep() {
+    public void testLongSimulationVariableStep() {
 
         dae.data[1][0] = 0.1;
         dae.initialize();
@@ -192,11 +192,35 @@ public class PendulumTest {
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
-
     }
 
     @Test
-    public void testSimulationFixedStep() {
+    public void testShortSimulationFixedStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        runtime.simulateFixedStep(dae, 1, 100000);
+
+        assertEquals(1, dae.data[0][0], 1e-8);
+        assertEquals(-0.43542183, dae.data[1][0], 1e-6);
+    }
+
+    @Test
+    public void testShortSimulationVariableStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        runtime.simulateVariableStep(dae, 1, Double.MIN_VALUE,
+                Double.MAX_VALUE, 1e-6, 1e-6);
+
+        assertEquals(1, dae.data[0][0], 1e-8);
+        assertEquals(-0.4354014183074412, dae.data[1][0], 1e-6);
+    }
+
+    @Test
+    public void testLongSimulationFixedStep() {
 
         dae.data[1][0] = 0.1;
         dae.initialize();
@@ -206,6 +230,26 @@ public class PendulumTest {
         long start = System.currentTimeMillis();
         runtime.simulateFixedStep(dae, SIM_TEST_STOP_TIME,
                 SIM_TEST_STOP_TIME * 1000);
+        System.out.println("Overall simulation time: "
+                + (System.currentTimeMillis() - start));
+        System.out.println("Solver time: " + dae.time);
+        System.out.println("Block eval time: " + Block.evals);
+
+        assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+
+    }
+
+    @Test
+    public void testVeryLongSimulationFixedStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        Block.evals = 0;
+        dae.time = 0;
+        long start = System.currentTimeMillis();
+        runtime.simulateFixedStep(dae, SIM_TEST_STOP_TIME,
+                SIM_TEST_STOP_TIME * 10000);
         System.out.println("Overall simulation time: "
                 + (System.currentTimeMillis() - start));
         System.out.println("Solver time: " + dae.time);

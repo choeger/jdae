@@ -45,6 +45,7 @@ import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
  */
 public class Block implements MultivariateVectorFunction, IBlock {
 
+    private static final double TOLERANCE = 1e-8;
     public static long evals;
 
     public static final class Residual {
@@ -170,7 +171,7 @@ public class Block implements MultivariateVectorFunction, IBlock {
 
             for (int di = eq.minOrder; di <= eq.maxOrder; di++) {
                 final double dres = -r.der(di);
-                converged &= dres <= 1e-6 && dres >= -1e-6;
+                converged &= dres <= TOLERANCE && dres >= -TOLERANCE;
                 ret[index++] = dres;
             }
         }
