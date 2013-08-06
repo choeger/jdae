@@ -70,7 +70,6 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         for (TIntObjectMap<Range<Integer>> block : causalisation.computations) {
 
             final Set<DerivedEquation> deriveds = Sets.newHashSet();
-            int size = 0;
             final TIntObjectIterator<Range<Integer>> blockIter = block
                     .iterator();
             while (blockIter.hasNext()) {
@@ -80,9 +79,8 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
                 deriveds.add(new DerivedEquation(causalisation.equations[eq],
                         eqRange.lowerEndpoint(), eqRange.upperEndpoint()));
-                size += eqRange.upperEndpoint() - eqRange.lowerEndpoint();
             }
-            if (size == 1) {
+            if (causalisation.iteratees.get(i).size() == 1) {
                 /* causalisation */
                 final GlobalVariable var = causalisation.iteratees.get(i)
                         .iterator().next();
