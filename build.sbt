@@ -4,14 +4,16 @@ organization := "de.tuberlin.uebb"
 
 version := "0.1.0"
 
-scalaVersion := "2.10.0"
+autoScalaLibrary := false
+
+crossPaths := false
+
+EclipseKeys.projectFlavor := EclipseProjectFlavor.Java
+
+EclipseKeys.withSource := true
 
 javacOptions ++= Seq("-source", "1.7")
 
-resolvers += "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repository"
-
-// Only needed to track snapshot releases, SBT automatically includes the releases repository.
-resolvers += "Scala Tools Snapshots" at "http://scala-tools.org/repo-snapshots/"
 
 libraryDependencies ++= Seq(
 		    "com.google.guava" % "guava" % "14.0.1",
@@ -22,12 +24,10 @@ libraryDependencies ++= Seq(
 		    "com.google.code.gson" % "gson" % "2.2.2",
 		    "com.googlecode.efficient-java-matrix-library" % "ejml" % "0.23",
 		    "net.sf.trove4j" % "trove4j" % "3.0.3",
-		    "com.novocode" % "junit-interface" % "0.10-M4" % "test"
+		    "com.novocode" % "junit-interface" % "0.10" % "test"
 		    )
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
-
-EclipseKeys.withSource := true
 
 pomExtra :=
 <properties>
