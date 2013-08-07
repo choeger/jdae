@@ -54,7 +54,7 @@ public class LinearEquationTest {
                 new IBlock[] { null }, new IBlock[] {}, ImmutableList.of(h));
 
         /* don't try this at home! */
-        dae.blocks[0] = eq.specializeFor(b, dae);
+        dae.blocks[0] = eq.specializeFor(b, null, dae);
 
         dae.set(h, 1);
         dae.blocks[0].exec();

@@ -31,7 +31,6 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
@@ -80,26 +79,28 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                 deriveds.add(new DerivedEquation(causalisation.equations[eq],
                         eqRange.lowerEndpoint(), eqRange.upperEndpoint()));
             }
+
+            final IBlock block_i;
+            /* always prepare a numerical fallback, just in case */
+            final IBlock numericalSolution = new Block(data, layout,
+                    causalisation.iteratees.get(i), deriveds);
+
             if (causalisation.iteratees.get(i).size() == 1) {
                 /* causalisation */
                 final GlobalVariable var = causalisation.iteratees.get(i)
                         .iterator().next();
                 final GlobalEquation eq = deriveds.iterator().next().eqn;
 
-                /* always prepare a numerical fallback, just in case */
-                final IBlock numericalSolution = new Block(data, layout,
-                        ImmutableSet.of(var), deriveds);
                 if (eq.canSpecializeFor(var)) {
-                    this.blocks[i] = eq.specializeFor(var, numericalSolution,
-                            this);
+                    block_i = eq.specializeFor(var, numericalSolution, this);
                 } else {
-                    this.blocks[i] = numericalSolution;
+                    block_i = numericalSolution;
                 }
-                i++;
             } else {
-                this.blocks[i] = new Block(data, layout,
-                        causalisation.iteratees.get(i++), deriveds);
+                block_i = numericalSolution;
             }
+
+            blocks[i++] = block_i;
 
         }
         i = 0;

@@ -71,7 +71,8 @@ public final class ConstantGlobalEquation extends GlobalEquation {
         return var.equals(v);
     }
 
-    public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
+    public IBlock specializeFor(final GlobalVariable v, final IBlock alt,
+            final ExecutableDAE dae) {
 
         return new IBlock() {
 

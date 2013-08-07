@@ -40,7 +40,7 @@ public abstract class GlobalEquation {
     }
 
     public IBlock specializeFor(GlobalVariable v, IBlock alt, ExecutableDAE dae) {
-        return null;
+        throw new RuntimeException("Cannot specialize for " + v);
     }
 
 }

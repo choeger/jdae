@@ -73,7 +73,8 @@ public final class LinearGlobalEquation extends GlobalEquation {
         return variables.contains(v);
     }
 
-    public IBlock specializeFor(final GlobalVariable v, final ExecutableDAE dae) {
+    public IBlock specializeFor(final GlobalVariable v, final IBlock alt,
+            final ExecutableDAE dae) {
 
         return new IBlock() {
             final int j = need().indexOf(v);
