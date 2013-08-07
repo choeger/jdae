@@ -85,11 +85,15 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                 final GlobalVariable var = causalisation.iteratees.get(i)
                         .iterator().next();
                 final GlobalEquation eq = deriveds.iterator().next().eqn;
+
+                /* always prepare a numerical fallback, just in case */
+                final IBlock numericalSolution = new Block(data, layout,
+                        ImmutableSet.of(var), deriveds);
                 if (eq.canSpecializeFor(var)) {
-                    this.blocks[i] = eq.specializeFor(var, this);
+                    this.blocks[i] = eq.specializeFor(var, numericalSolution,
+                            this);
                 } else {
-                    this.blocks[i] = new Block(data, layout,
-                            ImmutableSet.of(var), deriveds);
+                    this.blocks[i] = numericalSolution;
                 }
                 i++;
             } else {

@@ -39,7 +39,7 @@ public abstract class GlobalEquation {
         return false;
     }
 
-    public IBlock specializeFor(GlobalVariable v, ExecutableDAE dae) {
+    public IBlock specializeFor(GlobalVariable v, IBlock alt, ExecutableDAE dae) {
         return null;
     }
 

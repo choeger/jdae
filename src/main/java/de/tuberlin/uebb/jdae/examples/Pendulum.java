@@ -110,23 +110,24 @@ public final class Pendulum implements LoadableModel {
             return v.isOneOf(x, x.der(2), F);
         }
 
-        public IBlock specializeFor(GlobalVariable v, final ExecutableDAE dae) {
+        public IBlock specializeFor(GlobalVariable v, final IBlock alt,
+                final ExecutableDAE dae) {
             if (v.equals(x)) {
-                return new DirectBlock(x) {
-                    public void exec() {
-                        dae.set(x, dae.load(x.der(2)) / dae.load(F));
+                return new DirectBlock(x, alt, dae) {
+                    public double computeValue() {
+                        return dae.load(x.der(2)) / dae.load(F);
                     }
                 };
             } else if (v.equals(F)) {
-                return new DirectBlock(F) {
-                    public void exec() {
-                        dae.set(F, dae.load(x.der(2)) / dae.load(x));
+                return new DirectBlock(F, alt, dae) {
+                    public double computeValue() {
+                        return dae.load(x.der(2)) / dae.load(x);
                     }
                 };
             } else if (v.equals(x.der(2))) {
-                return new DirectBlock(x.der(2)) {
-                    public void exec() {
-                        dae.set(x.der(2), dae.load(F) * dae.load(x));
+                return new DirectBlock(x.der(2), alt, dae) {
+                    public double computeValue() {
+                        return dae.load(F) * dae.load(x);
                     }
                 };
             }
@@ -198,23 +199,24 @@ public final class Pendulum implements LoadableModel {
             return v.isOneOf(y, y.der(2), F);
         }
 
-        public IBlock specializeFor(GlobalVariable v, final ExecutableDAE dae) {
+        public IBlock specializeFor(GlobalVariable v, final IBlock alt,
+                final ExecutableDAE dae) {
             if (v.equals(y)) {
-                return new DirectBlock(y) {
-                    public void exec() {
-                        dae.set(y, (dae.load(y.der(2)) + g) / dae.load(F));
+                return new DirectBlock(y, alt, dae) {
+                    public double computeValue() {
+                        return (dae.load(y.der(2)) + g) / dae.load(F);
                     }
                 };
             } else if (v.equals(F)) {
-                return new DirectBlock(F) {
-                    public void exec() {
-                        dae.set(F, (dae.load(y.der(2)) + g) / dae.load(y));
+                return new DirectBlock(F, alt, dae) {
+                    public double computeValue() {
+                        return (dae.load(y.der(2)) + g) / dae.load(y);
                     }
                 };
             } else if (v.equals(y.der(2))) {
-                return new DirectBlock(y.der(2)) {
-                    public void exec() {
-                        dae.set(y.der(2), dae.load(F) * dae.load(y) - g);
+                return new DirectBlock(y.der(2), alt, dae) {
+                    public double computeValue() {
+                        return dae.load(F) * dae.load(y) - g;
                     }
                 };
             }
@@ -289,20 +291,23 @@ public final class Pendulum implements LoadableModel {
         }
 
         public boolean canSpecializeFor(GlobalVariable v) {
-            return (v == x && v != y) || (v != x && v == y);
+            return v.equals(x) || v.equals(y);
         }
 
-        public IBlock specializeFor(GlobalVariable v, final ExecutableDAE dae) {
-            if (v == x) {
-                return new DirectBlock(x) {
-                    public void exec() {
-                        dae.set(x, Math.sqrt(Math.pow(dae.load(y), 2) - 1));
+        public IBlock specializeFor(GlobalVariable v, final IBlock alt,
+                final ExecutableDAE dae) {
+            if (v.equals(x)) {
+                return new DirectBlock(x, alt, dae) {
+                    public double computeValue() {
+                        return (dae.load(x) < 0 ? -1 : 1)
+                                * Math.sqrt(1 - Math.pow(dae.load(y), 2));
                     }
                 };
-            } else if (v == y) {
-                return new DirectBlock(y) {
-                    public void exec() {
-                        dae.set(y, Math.sqrt(Math.pow(dae.load(x), 2) - 1));
+            } else if (v.equals(y)) {
+                return new DirectBlock(y, alt, dae) {
+                    public double computeValue() {
+                        return (dae.load(y) < 0 ? -1 : 1)
+                                * Math.sqrt(1 - Math.pow(dae.load(x), 2));
                     }
                 };
             }

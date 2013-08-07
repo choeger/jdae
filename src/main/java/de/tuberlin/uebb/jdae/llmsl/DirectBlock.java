@@ -28,15 +28,30 @@ import com.google.common.collect.ImmutableList;
 public abstract class DirectBlock implements IBlock {
 
     public final GlobalVariable v;
+    private final IBlock alternative;
+    private final ExecutableDAE dae;
 
-    public DirectBlock(GlobalVariable v) {
-	this.v = v;
+    public DirectBlock(GlobalVariable v, IBlock alt, ExecutableDAE dae) {
+        this.v = v;
+        this.alternative = alt;
+        this.dae = dae;
     }
 
-    public abstract void exec();
+    public void exec() {
+        final double val = computeValue();
+
+        if (Double.isNaN(val)) {
+            alternative.exec();
+            System.out.println("Corrected to: " + dae.load(v));
+        } else {
+            dae.set(v, val);
+        }
+    }
+
+    public abstract double computeValue();
 
     public final Iterable<GlobalVariable> variables() {
-	return ImmutableList.of(v);
+        return ImmutableList.of(v);
     }
 
 }

@@ -80,7 +80,7 @@ public final class StiffHybrid implements LoadableModel {
 
                 @Override
                 public IBlock specializeFor(final GlobalVariable v,
-                        final ExecutableDAE dae) {
+                        final IBlock alt, final ExecutableDAE dae) {
                     if (v.equals(gdx1))
                         return new IBlock() {
 
@@ -146,7 +146,7 @@ public final class StiffHybrid implements LoadableModel {
                 }
 
                 @Override
-                public IBlock specializeFor(GlobalVariable v,
+                public IBlock specializeFor(GlobalVariable v, final IBlock alt,
                         final ExecutableDAE dae) {
                     if (v.equals(gx1)) {
                         return new IBlock() {

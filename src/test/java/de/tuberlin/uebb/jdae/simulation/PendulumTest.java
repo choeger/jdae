@@ -198,7 +198,6 @@ public class PendulumTest {
     public void testShortSimulationFixedStep() {
 
         dae.data[1][0] = 0.1;
-        dae.initialize();
 
         runtime.simulateFixedStep(dae, 1, 100000);
 
