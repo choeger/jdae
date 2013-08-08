@@ -159,6 +159,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     private void integrateInlineForwardEuler(final ResultStorage results,
             SimulationOptions options) {
         final long s = System.currentTimeMillis();
+        double stepSize = options.minStepSize;
 
         while (data[0][0] < options.stopTime) {
             evaluations++;
@@ -169,10 +170,14 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
             for (GlobalVariable state : states) {
                 data[state.index][state.der] += data[state.index][state.der + 1]
-                        * options.minStepSize;
+                        * stepSize;
             }
 
-            data[0][0] += options.minStepSize;
+            data[0][0] += stepSize;
+
+            if (options.stopTime - data[0][0] < stepSize)
+                stepSize = options.stopTime - data[0][0];
+
             results.addResult(data);
         }
 
