@@ -86,4 +86,15 @@ public class BouncingBallTest {
 
     }
 
+    @Test
+    public void testInlineSimulation() {
+        dae.initialize();
+        final int steps = 10000;
+        runtime.simulateInlineFixedStep(dae, 10, steps);
+
+        assertEquals(10, dae.data[0][0], 1.0 / steps);
+        assertThat(model.events, is(7));
+
+    }
+
 }
