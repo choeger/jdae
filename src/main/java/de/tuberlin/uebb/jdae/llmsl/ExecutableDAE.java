@@ -38,7 +38,7 @@ import com.google.common.collect.Sets;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
-import de.tuberlin.uebb.jdae.llmsl.events.EventHandler;
+import de.tuberlin.uebb.jdae.llmsl.events.EventEvaluator;
 import de.tuberlin.uebb.jdae.simulation.ResultStorage;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
@@ -49,7 +49,7 @@ import de.tuberlin.uebb.jdae.transformation.Reduction;
 public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public final double[][] data;
-    public final EventHandler eventHandler;
+    public final EventEvaluator eventHandler;
     public final DataLayout layout;
     public final IBlock[] blocks;
     public final List<GlobalVariable> states;
@@ -69,7 +69,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             final ContinuousEvent[] continuousEvents) {
         this.logger = Logger.getLogger(this.getClass().toString());
 
-        this.eventHandler = new EventHandler(continuousEvents);
+        this.eventHandler = new EventEvaluator(continuousEvents);
         this.layout = layout;
         this.states = causalisation.states;
         data = layout.alloc();
@@ -126,7 +126,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
             final IBlock[] initials, final List<GlobalVariable> states) {
 
-        this.eventHandler = new EventHandler(new ContinuousEvent[0]);
+        this.eventHandler = new EventEvaluator(new ContinuousEvent[0]);
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
         this.states = states;

@@ -27,13 +27,13 @@ import com.google.common.collect.Lists;
 
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 
-public final class EventHandler {
+public final class EventEvaluator {
 
     private final ContinuousEvent[] c_events;
     private final double[][] guards;
     private int current = 0;
 
-    public EventHandler(ContinuousEvent[] c_events) {
+    public EventEvaluator(ContinuousEvent[] c_events) {
         super();
         this.c_events = c_events;
         this.guards = new double[][] { new double[c_events.length], null };
