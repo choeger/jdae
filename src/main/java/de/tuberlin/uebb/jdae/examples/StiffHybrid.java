@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler.Action;
 import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.collect.ImmutableList;
@@ -32,14 +31,17 @@ import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.events.DiscreteModification;
+import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 public final class StiffHybrid implements LoadableModel {
@@ -200,38 +202,6 @@ public final class StiffHybrid implements LoadableModel {
 
     }
 
-    public final class Event1 extends ContinuousEvent {
-
-        final GlobalVariable x1;
-
-        public Event1(GlobalVariable x1) {
-            super();
-            this.x1 = x1;
-        }
-
-        @Override
-        public Collection<GlobalVariable> vars() {
-            return ImmutableList.of(x1);
-        }
-
-        @Override
-        public Action handleEvent(boolean increasing, ExecutableDAE dae) {
-            if (!increasing) {
-                events++;
-                delta = delta == 1 ? 0 : 1;
-                return Action.STOP;
-            }
-            return Action.CONTINUE;
-        }
-
-        @Override
-        public double f(ExecutableDAE dae) {
-            final double load = dae.load(x1);
-            return load - 0.1;
-        }
-
-    }
-
     public ImmutableList<Equation> equations() {
         return ImmutableList.of(new Equation1(), new Equation2());
     }
@@ -250,7 +220,18 @@ public final class StiffHybrid implements LoadableModel {
     @Override
     public Collection<ContinuousEvent> events(
             final Map<Unknown, GlobalVariable> ctxt) {
-        final ContinuousEvent e = new Event1(ctxt.get(x1));
+
+        final EventEffect effect = new DiscreteModification() {
+            @Override
+            public void modify() {
+                events++;
+                delta = delta == 1 ? 0 : 1;
+            }
+        };
+
+        final GlobalEquation guard = new ConstantEquation(x1, 0.1).bind(ctxt);
+
+        final ContinuousEvent e = new ContinuousEvent(guard, effect);
         return ImmutableList.of(e);
     }
 }

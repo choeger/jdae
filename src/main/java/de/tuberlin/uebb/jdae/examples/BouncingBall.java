@@ -21,8 +21,6 @@ package de.tuberlin.uebb.jdae.examples;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler.Action;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -32,9 +30,11 @@ import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
 import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
-import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
+import de.tuberlin.uebb.jdae.llmsl.events.Reinit;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 /**
@@ -109,45 +109,19 @@ public class BouncingBall implements LoadableModel {
         return "Bouncing Ball";
     }
 
-    public final class BounceEvent extends ContinuousEvent {
-
-        final GlobalVariable h, v;
-
-        public BounceEvent(GlobalVariable h, GlobalVariable v) {
-            super();
-            this.h = h;
-            this.v = v;
-        }
-
-        @Override
-        public Collection<GlobalVariable> vars() {
-            return ImmutableList.of(this.h);
-        }
-
-        @Override
-        public Action handleEvent(boolean increasing, ExecutableDAE dae) {
-            if (!increasing) {
-                events++;
-
-                /* the bounce effect */
-                dae.set(v, dae.load(v) * -0.8);
-                return Action.STOP;
-            }
-            return Action.CONTINUE;
-        }
-
-        @Override
-        public double f(ExecutableDAE dae) {
-            final double load = dae.load(this.h);
-            return load;
-        }
-
-    }
-
     @Override
     public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
-        ContinuousEvent bounce = new BounceEvent(ctxt.get(h), ctxt.get(v));
+
+        final GlobalEquation bounce_guard = new ConstantEquation(h, 0)
+                .bind(ctxt);
+
+        final GlobalEquation reinit_rhs = new ConstantLinear(0, 0,
+                new double[] { -1 }, ImmutableList.of(v)).bind(ctxt);
+        final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs);
+
+        final ContinuousEvent bounce = new ContinuousEvent(bounce_guard,
+                bounce_effect);
+
         return ImmutableList.of(bounce);
     }
-
 }

@@ -16,29 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.llmsl.events;
 
-import java.util.Collection;
-import java.util.Map;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 
-import de.tuberlin.uebb.jdae.hlmsl.Equation;
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+public interface EventEffect {
 
-/**
- * @author choeger
- * 
- */
-public interface LoadableModel {
-
-    public Map<GlobalVariable, Double> initials(
-            Map<Unknown, GlobalVariable> ctxt);
-
-    public Collection<Equation> equations();
-
-    public String name();
-
-    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
+    public ExecutableDAE apply(ExecutableDAE source);
 
 }

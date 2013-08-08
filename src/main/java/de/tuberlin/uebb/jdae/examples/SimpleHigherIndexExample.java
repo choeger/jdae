@@ -33,10 +33,10 @@ import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 public final class SimpleHigherIndexExample implements LoadableModel {

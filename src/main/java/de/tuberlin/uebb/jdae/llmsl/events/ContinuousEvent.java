@@ -16,29 +16,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.llmsl.events;
 
-import java.util.Collection;
-import java.util.Map;
+import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 
-import de.tuberlin.uebb.jdae.hlmsl.Equation;
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+public final class ContinuousEvent {
 
-/**
- * @author choeger
- * 
- */
-public interface LoadableModel {
+    public final EventEffect effect;
+    public final BlockEquation guard;
 
-    public Map<GlobalVariable, Double> initials(
-            Map<Unknown, GlobalVariable> ctxt);
-
-    public Collection<Equation> equations();
-
-    public String name();
-
-    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
+    public ContinuousEvent(GlobalEquation guard, EventEffect effect) {
+        super();
+        this.effect = effect;
+        this.guard = guard.bindIdentity();
+    }
 
 }

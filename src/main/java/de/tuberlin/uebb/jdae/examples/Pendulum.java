@@ -32,13 +32,13 @@ import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.DirectBlock;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 
 /**
  * A cartesian pendulum model

@@ -19,16 +19,16 @@
 
 package de.tuberlin.uebb.jdae.simulation;
 
-import org.apache.commons.math3.ode.events.EventHandler;
+import java.util.Collection;
+
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import de.tuberlin.uebb.jdae.examples.BouncingBallArray;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
@@ -52,11 +52,13 @@ public class BouncingArrayTest {
     private GlobalEquation h3_init = new ConstantGlobalEquation(
             reduction.ctxt.get(model.balls[2].h), 20.0);
 
+    final Collection<de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent> events = model
+            .events(reduction.ctxt);
+
     final ExecutableDAE dae = runtime.causalise(reduction,
             ImmutableList.of(h1_init, h2_init, h3_init),
-            model.initials(reduction.ctxt));
-    final Iterable<EventHandler> events = Iterables.transform(
-            model.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+            model.initials(reduction.ctxt),
+            events.toArray(new ContinuousEvent[events.size()]));
 
     @Test
     public void testCausalisation() {
@@ -73,7 +75,8 @@ public class BouncingArrayTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(h3_init, h2_init, h1_init),
-                model.initials(reduction.ctxt));
+                model.initials(reduction.ctxt),
+                events.toArray(new ContinuousEvent[events.size()]));
 
         dae.initialize();
 
@@ -87,7 +90,7 @@ public class BouncingArrayTest {
     public void testSimulation() {
         dae.initialize();
 
-        runtime.simulateVariableStep(dae, events, 1, Double.MIN_VALUE,
+        runtime.simulateVariableStep(dae, 1, Double.MIN_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
         assertEquals(1, dae.data[0][0], 1e-8);

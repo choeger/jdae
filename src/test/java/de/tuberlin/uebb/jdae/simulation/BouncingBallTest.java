@@ -18,16 +18,14 @@
  */
 package de.tuberlin.uebb.jdae.simulation;
 
-import org.apache.commons.math3.ode.events.EventHandler;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import de.tuberlin.uebb.jdae.examples.BouncingBall;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
@@ -45,11 +43,10 @@ public class BouncingBallTest {
 
     private GlobalEquation h_init = new ConstantGlobalEquation(
             reduction.ctxt.get(model.h), 10.0);
-
+    final ContinuousEvent[] events = model.events(reduction.ctxt).toArray(
+            new ContinuousEvent[0]);
     final ExecutableDAE dae = runtime.causalise(reduction,
-            ImmutableList.of(h_init), model.initials(reduction.ctxt));
-    final Iterable<EventHandler> events = Iterables.transform(
-            model.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+            ImmutableList.of(h_init), model.initials(reduction.ctxt), events);
 
     @Test
     public void testCausalisation() {
@@ -70,7 +67,7 @@ public class BouncingBallTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(h_init),
-                model.initials(reduction.ctxt));
+                model.initials(reduction.ctxt), events);
 
         dae.initialize();
 
@@ -81,7 +78,7 @@ public class BouncingBallTest {
     public void testSimulation() {
         dae.initialize();
 
-        runtime.simulateVariableStep(dae, events, 10, Double.MIN_VALUE,
+        runtime.simulateVariableStep(dae, 10, Double.MIN_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
         assertEquals(10, dae.data[0][0], 1e-8);

@@ -25,11 +25,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
-import org.apache.commons.math3.ode.events.EventHandler;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.EulerIntegrator;
-
-import com.google.common.collect.ImmutableList;
 
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
@@ -37,6 +34,7 @@ import de.tuberlin.uebb.jdae.llmsl.DataLayout;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationCausalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationMatching;
@@ -76,27 +74,27 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * (de.tuberlin.uebb.jdae.dae.SolvableDAE, java.util.Map, double, int)
      */
     @Override
-    public void simulateFixedStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, final int steps) {
+    public void simulateFixedStep(ExecutableDAE dae, double stop_time,
+            final int steps) {
         final double stepSize = (stop_time / steps);
 
         final FirstOrderIntegrator i = new EulerIntegrator(stepSize);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 stepSize * 1e-3, stepSize, stepSize, i);
 
-        simulate(dae, events, options);
+        simulate(dae, options);
     }
 
     @Override
-    public void simulateInlineFixedStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, final int steps) {
+    public void simulateInlineFixedStep(ExecutableDAE dae, double stop_time,
+            final int steps) {
         final double stepSize = (stop_time / steps);
 
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 stepSize * 1e-3, stepSize, stepSize,
                 InlineIntegratorSelection.INLINE_FORWARD_EULER);
 
-        simulate(dae, events, options);
+        simulate(dae, options);
     }
 
     /*
@@ -111,21 +109,13 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     public void simulateVariableStep(ExecutableDAE dae, double stop_time,
             double minStep, double maxStep, double absoluteTolerance,
             double relativeTolerance) {
-        simulateVariableStep(dae, ImmutableList.<EventHandler> of(), stop_time,
-                minStep, maxStep, absoluteTolerance, relativeTolerance);
-    }
-
-    @Override
-    public void simulateVariableStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, double minStep,
-            double maxStep, double absoluteTolerance, double relativeTolerance) {
 
         final FirstOrderIntegrator i = new DormandPrince54Integrator(minStep,
                 maxStep, absoluteTolerance, relativeTolerance);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 absoluteTolerance, minStep, maxStep, i);
 
-        simulate(dae, events, options);
+        simulate(dae, options);
     }
 
     @Override
@@ -134,8 +124,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public void simulate(ExecutableDAE dae, Iterable<EventHandler> events,
-            SimulationOptions options) {
+    public void simulate(ExecutableDAE dae, SimulationOptions options) {
         results = new ResultStorage(dae);
 
         final long iStart = System.currentTimeMillis();
@@ -152,10 +141,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
             options.integrator.clearStepHandlers();
 
             options.integrator.addStepHandler(results);
-            for (EventHandler e : events) {
-                options.integrator.addEventHandler(e, options.maxStepSize,
-                        options.tolerance, 1000);
-            }
+            // TODO: add event Handler
         }
 
         final long start = System.currentTimeMillis();
@@ -170,20 +156,6 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public void simulateFixedStep(ExecutableDAE dae, double stopTime,
-            int fixedSteps) {
-        simulateFixedStep(dae, ImmutableList.<EventHandler> of(), stopTime,
-                fixedSteps);
-    }
-
-    @Override
-    public void simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
-            int fixedSteps) {
-        simulateInlineFixedStep(dae, ImmutableList.<EventHandler> of(),
-                stopTime, fixedSteps);
-    }
-
-    @Override
     public Reduction reduce(final Collection<Equation> equations) {
         final Reduction reduction = new Reduction(equations);
         logger.log(Level.INFO, "Reduced system to {0} non-equality equations.",
@@ -194,7 +166,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     @Override
     public ExecutableDAE causalise(Reduction reduction,
             List<GlobalEquation> initialEquations,
-            Map<GlobalVariable, Double> startValues) {
+            Map<GlobalVariable, Double> startValues, ContinuousEvent[] c_events) {
         final long match_start = System.currentTimeMillis();
 
         final Matching matching = new Matching(reduction, logger);
@@ -218,7 +190,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 iMatching, logger);
 
         final ExecutableDAE dae = new ExecutableDAE(new DataLayout(
-                causality.layout), causality, iCausalisation);
+                causality.layout), causality, iCausalisation, c_events);
 
         return dae;
 

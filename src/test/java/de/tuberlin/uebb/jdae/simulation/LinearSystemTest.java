@@ -29,6 +29,7 @@ import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -58,7 +59,7 @@ public class LinearSystemTest {
             LINEAR2));
     final ExecutableDAE dae = runtime.causalise(reduction,
             ImmutableList.<GlobalEquation> of(),
-            ImmutableMap.<GlobalVariable, Double> of());
+            ImmutableMap.<GlobalVariable, Double> of(), new ContinuousEvent[0]);
 
     @Test
     public void testCausalisation() {

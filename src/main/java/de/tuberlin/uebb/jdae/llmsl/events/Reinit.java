@@ -16,29 +16,33 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.dae;
 
-import java.util.Collection;
-import java.util.Map;
+package de.tuberlin.uebb.jdae.llmsl.events;
 
-import de.tuberlin.uebb.jdae.hlmsl.Equation;
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 
 /**
  * @author choeger
  * 
  */
-public interface LoadableModel {
+public final class Reinit implements EventEffect {
 
-    public Map<GlobalVariable, Double> initials(
-            Map<Unknown, GlobalVariable> ctxt);
+    public final GlobalVariable target;
+    private final BlockEquation val;
 
-    public Collection<Equation> equations();
+    public Reinit(GlobalVariable target, GlobalEquation val) {
+        super();
+        this.target = target;
+        this.val = val.bindIdentity();
+    }
 
-    public String name();
-
-    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
-
+    @Override
+    public ExecutableDAE apply(ExecutableDAE source) {
+        final double d = val.exec(source.execCtxt).der(0);
+        source.set(target, d);
+        return source;
+    }
 }

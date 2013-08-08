@@ -19,20 +19,18 @@
 package de.tuberlin.uebb.jdae.simulation;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
-import org.apache.commons.math3.ode.events.EventHandler;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import de.tuberlin.uebb.jdae.examples.Pendulum;
 import de.tuberlin.uebb.jdae.examples.Pendulum.LengthBlockEquation;
 import de.tuberlin.uebb.jdae.examples.Pendulum.XAccelBlockEquation;
 import de.tuberlin.uebb.jdae.examples.Pendulum.YAccelBlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.Block;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
@@ -53,11 +51,11 @@ public class PendulumTest {
 
     final GlobalEquation initial_y = new ConstantGlobalEquation(
             reduction.ctxt.get(model.y), -0.9);
-
-    final ExecutableDAE dae = runtime.causalise(reduction,
-            ImmutableList.of(initial_y), model.initials(reduction.ctxt));
-    final Iterable<EventHandler> events = Iterables.transform(
-            model.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+    final ContinuousEvent[] events = model.events(reduction.ctxt).toArray(
+            new ContinuousEvent[0]);
+    final ExecutableDAE dae = runtime
+            .causalise(reduction, ImmutableList.of(initial_y),
+                    model.initials(reduction.ctxt), events);
 
     @Test
     public void testCausalisation() {
@@ -78,7 +76,7 @@ public class PendulumTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(initial_y),
-                model.initials(reduction.ctxt));
+                model.initials(reduction.ctxt), events);
 
         final Block initBlock = (Block) dae.initials[2];
 
@@ -156,7 +154,7 @@ public class PendulumTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(initial_y),
-                model.initials(reduction.ctxt));
+                model.initials(reduction.ctxt), events);
 
         dae.data[1][0] = 0.1;
 

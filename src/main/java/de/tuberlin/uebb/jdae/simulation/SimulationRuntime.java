@@ -22,13 +22,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.ode.events.EventHandler;
-
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 public interface SimulationRuntime {
@@ -39,21 +38,13 @@ public interface SimulationRuntime {
 
     public ExecutableDAE causalise(Reduction reduction,
             List<GlobalEquation> initialEquations,
-            Map<GlobalVariable, Double> startValues);
+            Map<GlobalVariable, Double> startValues, ContinuousEvent[] c_events);
 
-    public void simulate(ExecutableDAE dae, Iterable<EventHandler> events,
-            SimulationOptions options);
-
-    public void simulateFixedStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, int steps);
+    public void simulate(ExecutableDAE dae, SimulationOptions options);
 
     public void simulateVariableStep(ExecutableDAE dae, double stop_time,
             double minStep, double maxStep, double absoluteTolerance,
             double relativeTolerance);
-
-    public void simulateVariableStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, double minStep,
-            double maxStep, double absoluteTolerance, double relativeTolerance);
 
     public ResultStorage lastResults();
 
@@ -62,8 +53,5 @@ public interface SimulationRuntime {
 
     public void simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
             int fixedSteps);
-
-    public void simulateInlineFixedStep(ExecutableDAE dae,
-            Iterable<EventHandler> events, double stop_time, int steps);
 
 }

@@ -16,29 +16,29 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with modim. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.tuberlin.uebb.jdae.dae;
+package de.tuberlin.uebb.jdae.llmsl.events;
 
-import java.util.Collection;
-import java.util.Map;
-
-import de.tuberlin.uebb.jdae.hlmsl.Equation;
-import de.tuberlin.uebb.jdae.hlmsl.Unknown;
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 
 /**
  * @author choeger
  * 
  */
-public interface LoadableModel {
+public abstract class DiscreteModification implements EventEffect {
 
-    public Map<GlobalVariable, Double> initials(
-            Map<Unknown, GlobalVariable> ctxt);
+    public abstract void modify();
 
-    public Collection<Equation> equations();
+    /*
+     * (nicht-Javadoc)
+     * 
+     * @see
+     * de.tuberlin.uebb.jdae.llmsl.events.EventEffect#apply(de.tuberlin.uebb
+     * .jdae.llmsl.ExecutableDAE)
+     */
+    @Override
+    public ExecutableDAE apply(ExecutableDAE source) {
 
-    public String name();
-
-    public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
+        return source;
+    }
 
 }

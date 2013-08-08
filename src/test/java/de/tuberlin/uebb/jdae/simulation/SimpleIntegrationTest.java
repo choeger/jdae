@@ -29,6 +29,7 @@ import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantLinear;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.Matchers.is;
@@ -52,10 +53,11 @@ public class SimpleIntegrationTest {
             ImmutableList.of(x, dx));
 
     final Reduction reduction = runtime.reduce(ImmutableList.of(eq));
+
     final ExecutableDAE dae = runtime
             .causalise(reduction, ImmutableList.of(new ConstantEquation(x, 1.0)
                     .bind(reduction.ctxt)), ImmutableMap
-                    .<GlobalVariable, Double> of());
+                    .<GlobalVariable, Double> of(), new ContinuousEvent[0]);
 
     @Test
     public void testCausalisation() {

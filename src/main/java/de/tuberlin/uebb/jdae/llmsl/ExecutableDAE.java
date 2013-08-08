@@ -22,6 +22,7 @@ package de.tuberlin.uebb.jdae.llmsl;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.TIntObjectMap;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -35,6 +36,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.simulation.ResultStorage;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
@@ -45,6 +47,7 @@ import de.tuberlin.uebb.jdae.transformation.Reduction;
 public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public final double[][] data;
+    public final ContinuousEvent[] continuousEvents;
     public final DataLayout layout;
     public final IBlock[] blocks;
     public final List<GlobalVariable> states;
@@ -53,14 +56,18 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     private int evaluations;
     public long time;
 
+    public final ExecutionContext execCtxt;
+
     public int getEvaluations() {
         return evaluations;
     }
 
     public ExecutableDAE(final DataLayout layout, Causalisation causalisation,
-            InitializationCausalisation iCausalisation) {
+            InitializationCausalisation iCausalisation,
+            final ContinuousEvent[] continuousEvents) {
         this.logger = Logger.getLogger(this.getClass().toString());
 
+        this.continuousEvents = continuousEvents;
         this.layout = layout;
         this.states = causalisation.states;
         data = layout.alloc();
@@ -110,11 +117,14 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         for (Set<DerivedEquation> block : iCausalisation.computations)
             initials[i] = new Block(data, layout,
                     iCausalisation.iteratees.get(i++), block);
+
+        this.execCtxt = new ExecutionContext(0, new GlobalVariable[0], data);
     }
 
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
             final IBlock[] initials, final List<GlobalVariable> states) {
 
+        this.continuousEvents = new ContinuousEvent[0];
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
         this.states = states;
@@ -122,6 +132,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
         this.blocks = blocks.clone();
         this.initials = initials.clone();
+        this.execCtxt = new ExecutionContext(0, new GlobalVariable[0], data);
     }
 
     public void initialize() {
@@ -242,6 +253,24 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public double time() {
         return data[0][0];
+    }
+
+    public int lastBlock(final Collection<GlobalVariable> vars) {
+        final Set<GlobalVariable> left = Sets.newTreeSet(vars);
+        left.removeAll(states);
+
+        int i = 0;
+        while (!left.isEmpty() && i < blocks.length) {
+            for (GlobalVariable gv : blocks[i].variables())
+                left.remove(gv);
+            i++;
+        }
+
+        if (!left.isEmpty())
+            throw new RuntimeException(
+                    "The following variables are not computed: "
+                            + left.toString());
+        return i;
     }
 
 }

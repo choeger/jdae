@@ -19,16 +19,14 @@
 
 package de.tuberlin.uebb.jdae.transformation;
 
-import org.apache.commons.math3.ode.events.EventHandler;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import de.tuberlin.uebb.jdae.examples.SimpleHigherIndexExample;
-import de.tuberlin.uebb.jdae.llmsl.ContinuousEvent;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
+import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
@@ -52,9 +50,9 @@ public final class SimpleIndexReductionTest {
     public void testCausalisation() {
         assertThat(reduction.reduced.size(), is(2));
 
-        final ExecutableDAE dae = runtime
-                .causalise(reduction, ImmutableList.<GlobalEquation> of(),
-                        m.initials(reduction.ctxt));
+        final ExecutableDAE dae = runtime.causalise(reduction,
+                ImmutableList.<GlobalEquation> of(),
+                m.initials(reduction.ctxt), new ContinuousEvent[0]);
 
         assertNotNull(dae);
 
@@ -67,9 +65,9 @@ public final class SimpleIndexReductionTest {
 
     @Test
     public void testInitialization() {
-        final ExecutableDAE dae = runtime
-                .causalise(reduction, ImmutableList.<GlobalEquation> of(),
-                        m.initials(reduction.ctxt));
+        final ExecutableDAE dae = runtime.causalise(reduction,
+                ImmutableList.<GlobalEquation> of(),
+                m.initials(reduction.ctxt), new ContinuousEvent[0]);
 
         dae.initialize();
 
@@ -79,14 +77,15 @@ public final class SimpleIndexReductionTest {
 
     @Test
     public void testSimulation() {
-        final ExecutableDAE dae = runtime
-                .causalise(reduction, ImmutableList.<GlobalEquation> of(),
-                        m.initials(reduction.ctxt));
 
-        final Iterable<EventHandler> events = Iterables.transform(
-                m.events(reduction.ctxt), ContinuousEvent.instantiation(dae));
+        final ContinuousEvent[] events = m.events(reduction.ctxt).toArray(
+                new ContinuousEvent[0]);
 
-        runtime.simulateVariableStep(dae, events, 1.0, Double.MAX_VALUE,
+        final ExecutableDAE dae = runtime.causalise(reduction,
+                ImmutableList.<GlobalEquation> of(),
+                m.initials(reduction.ctxt), events);
+
+        runtime.simulateVariableStep(dae, 1.0, Double.MAX_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
         assertEquals(0.5, dae.load(reduction, m.dx), 1e-6);

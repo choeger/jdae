@@ -18,6 +18,12 @@
  */
 package de.tuberlin.uebb.jdae.llmsl;
 
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
+
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 
 /**
@@ -25,6 +31,17 @@ import de.tuberlin.uebb.jdae.diff.total.TDNumber;
  * 
  */
 public final class BlockConstant implements BlockVariable {
+
+    public final static Function<GlobalVariable, BlockVariable> GLOB_CONSTANT = new Function<GlobalVariable, BlockVariable>() {
+        public BlockVariable apply(final GlobalVariable v) {
+            return new BlockConstant(v);
+        }
+    };
+
+    public final static Map<GlobalVariable, BlockVariable> globalCtxt(
+            Set<GlobalVariable> vars) {
+        return Maps.asMap(vars, GLOB_CONSTANT);
+    }
 
     public final GlobalVariable var;
 

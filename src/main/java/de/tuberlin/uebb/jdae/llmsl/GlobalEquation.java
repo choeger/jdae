@@ -22,6 +22,8 @@ package de.tuberlin.uebb.jdae.llmsl;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Sets;
+
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
 
 public abstract class GlobalEquation {
@@ -30,6 +32,10 @@ public abstract class GlobalEquation {
 
     public abstract BlockEquation bind(
             final Map<GlobalVariable, BlockVariable> blockCtxt);
+
+    public BlockEquation bindIdentity() {
+        return bind(BlockConstant.globalCtxt(Sets.newTreeSet(need())));
+    }
 
     public DerivedEquation der(int i) {
         return new DerivedEquation(this, i);
