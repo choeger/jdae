@@ -35,6 +35,7 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.simulation.ResultStorage;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
@@ -128,10 +129,46 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             iB.exec();
     }
 
-    public void integrate(final SimulationOptions options) {
+    public void integrate(final ResultStorage results,
+            final SimulationOptions options) {
         evaluations = 0;
         data[0][0] = options.startTime;
 
+        if (options.integrator != null) {
+            integrateApacheCommonsIntegrator(options);
+        } else {
+            switch (options.inlineIntegrator) {
+            case INLINE_FORWARD_EULER:
+                integrateInlineForwardEuler(results, options);
+                break;
+            }
+        }
+    }
+
+    private void integrateInlineForwardEuler(final ResultStorage results,
+            SimulationOptions options) {
+        final long s = System.currentTimeMillis();
+
+        while (data[0][0] < options.stopTime) {
+            evaluations++;
+
+            for (int i = 0; i < blocks.length; i++) {
+                blocks[i].exec();
+            }
+
+            for (GlobalVariable state : states) {
+                data[state.index][state.der] += data[state.index][state.der + 1]
+                        * options.minStepSize;
+            }
+
+            data[0][0] += options.minStepSize;
+            results.addResult(data);
+        }
+
+        time += (System.currentTimeMillis() - s);
+    }
+
+    public void integrateApacheCommonsIntegrator(final SimulationOptions options) {
         logger.log(Level.INFO, "Starting integration.");
         final double[] stateVector = new double[states.size()];
 

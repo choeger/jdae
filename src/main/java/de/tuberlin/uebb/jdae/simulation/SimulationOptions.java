@@ -33,6 +33,18 @@ public final class SimulationOptions {
     public final double maxStepSize;
 
     public final double tolerance;
+    public final InlineIntegratorSelection inlineIntegrator;
+
+    public SimulationOptions(double startTime, double stopTime, double tol,
+            double minStep, double maxStep, InlineIntegratorSelection integrator) {
+        this.startTime = startTime;
+        this.minStepSize = minStep;
+        this.maxStepSize = maxStep;
+        this.tolerance = tol;
+        this.stopTime = stopTime;
+        this.integrator = null;
+        this.inlineIntegrator = integrator;
+    }
 
     public SimulationOptions(double startTime, double stopTime, double tol,
             double minStep, double maxStep, FirstOrderIntegrator integrator) {
@@ -43,6 +55,7 @@ public final class SimulationOptions {
         this.tolerance = tol;
         this.stopTime = stopTime;
         this.integrator = integrator;
+        this.inlineIntegrator = null;
     }
 
     public String toString() {

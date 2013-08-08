@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -132,8 +133,10 @@ public final class ResultStorage implements StepHandler {
         while (!results.isEmpty() && (results.peekLast()[0][0] >= data[0][0])) {
             results.removeLast();
         }
-
-        results.add(data);
+        final double[][] cp = new double[data.length][];
+        for (int i = 0; i < data.length; i++)
+            cp[i] = Arrays.copyOf(data[i], data[i].length);
+        results.add(cp);
     }
 
 }

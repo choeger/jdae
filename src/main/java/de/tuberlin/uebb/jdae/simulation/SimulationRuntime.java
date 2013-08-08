@@ -37,27 +37,33 @@ public interface SimulationRuntime {
 
     public Reduction reduce(Collection<Equation> equations);
 
-    public abstract ExecutableDAE causalise(Reduction reduction,
+    public ExecutableDAE causalise(Reduction reduction,
             List<GlobalEquation> initialEquations,
             Map<GlobalVariable, Double> startValues);
 
-    public abstract void simulate(ExecutableDAE dae,
-            Iterable<EventHandler> events, SimulationOptions options);
+    public void simulate(ExecutableDAE dae, Iterable<EventHandler> events,
+            SimulationOptions options);
 
-    public abstract void simulateFixedStep(ExecutableDAE dae,
+    public void simulateFixedStep(ExecutableDAE dae,
             Iterable<EventHandler> events, double stop_time, int steps);
 
-    public abstract void simulateVariableStep(ExecutableDAE dae,
-            double stop_time, double minStep, double maxStep,
-            double absoluteTolerance, double relativeTolerance);
+    public void simulateVariableStep(ExecutableDAE dae, double stop_time,
+            double minStep, double maxStep, double absoluteTolerance,
+            double relativeTolerance);
 
-    void simulateVariableStep(ExecutableDAE dae, Iterable<EventHandler> events,
-            double stop_time, double minStep, double maxStep,
-            double absoluteTolerance, double relativeTolerance);
+    public void simulateVariableStep(ExecutableDAE dae,
+            Iterable<EventHandler> events, double stop_time, double minStep,
+            double maxStep, double absoluteTolerance, double relativeTolerance);
 
-    ResultStorage lastResults();
+    public ResultStorage lastResults();
 
-    public abstract void simulateFixedStep(ExecutableDAE dae, double stopTime,
+    public void simulateFixedStep(ExecutableDAE dae, double stopTime,
             int fixedSteps);
+
+    public void simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
+            int fixedSteps);
+
+    public void simulateInlineFixedStep(ExecutableDAE dae,
+            Iterable<EventHandler> events, double stop_time, int steps);
 
 }

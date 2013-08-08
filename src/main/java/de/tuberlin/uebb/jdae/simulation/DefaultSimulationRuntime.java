@@ -85,7 +85,18 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 stepSize * 1e-3, stepSize, stepSize, i);
 
         simulate(dae, events, options);
+    }
 
+    @Override
+    public void simulateInlineFixedStep(ExecutableDAE dae,
+            Iterable<EventHandler> events, double stop_time, final int steps) {
+        final double stepSize = (stop_time / steps);
+
+        final SimulationOptions options = new SimulationOptions(0.0, stop_time,
+                stepSize * 1e-3, stepSize, stepSize,
+                InlineIntegratorSelection.INLINE_FORWARD_EULER);
+
+        simulate(dae, events, options);
     }
 
     /*
@@ -136,19 +147,20 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         logger.log(Level.INFO, "About to simulate using options: {0}", options);
 
-        options.integrator.clearEventHandlers();
-        options.integrator.clearStepHandlers();
+        if (options.integrator != null) {
+            options.integrator.clearEventHandlers();
+            options.integrator.clearStepHandlers();
 
-        options.integrator.addStepHandler(results);
-
-        for (EventHandler e : events) {
-            options.integrator.addEventHandler(e, options.maxStepSize,
-                    options.tolerance, 1000);
+            options.integrator.addStepHandler(results);
+            for (EventHandler e : events) {
+                options.integrator.addEventHandler(e, options.maxStepSize,
+                        options.tolerance, 1000);
+            }
         }
 
         final long start = System.currentTimeMillis();
 
-        dae.integrate(options);
+        dae.integrate(results, options);
 
         logger.log(
                 Level.INFO,
@@ -162,6 +174,13 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
             int fixedSteps) {
         simulateFixedStep(dae, ImmutableList.<EventHandler> of(), stopTime,
                 fixedSteps);
+    }
+
+    @Override
+    public void simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
+            int fixedSteps) {
+        simulateInlineFixedStep(dae, ImmutableList.<EventHandler> of(),
+                stopTime, fixedSteps);
     }
 
     @Override

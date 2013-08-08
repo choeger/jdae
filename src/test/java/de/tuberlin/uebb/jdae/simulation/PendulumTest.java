@@ -37,6 +37,7 @@ import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThan;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -192,6 +193,7 @@ public class PendulumTest {
                 Double.MAX_VALUE, 1e-6, 1e-6);
 
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+        assertThat(runtime.lastResults().results.size(), is(greaterThan(1)));
     }
 
     @Test
@@ -203,6 +205,7 @@ public class PendulumTest {
 
         assertEquals(1, dae.data[0][0], 1e-8);
         assertEquals(-0.43542183, dae.data[1][0], 1e-6);
+        assertThat(runtime.lastResults().results.size(), is(100001));
     }
 
     @Test
@@ -235,7 +238,50 @@ public class PendulumTest {
         System.out.println("Block eval time: " + Block.evals);
 
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+        assertThat(runtime.lastResults().results.size(),
+                is(SIM_TEST_STOP_TIME * 1000));
+    }
 
+    @Test
+    public void testLongSimulationInlineFixedStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        Block.evals = 0;
+        dae.time = 0;
+        long start = System.currentTimeMillis();
+        runtime.simulateInlineFixedStep(dae, SIM_TEST_STOP_TIME,
+                SIM_TEST_STOP_TIME * 1000);
+        System.out.println("Overall simulation time: "
+                + (System.currentTimeMillis() - start));
+        System.out.println("Solver time: " + dae.time);
+        System.out.println("Block eval time: " + Block.evals);
+
+        assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+        assertThat(runtime.lastResults().results.size(),
+                is(SIM_TEST_STOP_TIME * 1000));
+    }
+
+    @Test
+    public void testVeryLongSimulationInlineFixedStep() {
+
+        dae.data[1][0] = 0.1;
+        dae.initialize();
+
+        Block.evals = 0;
+        dae.time = 0;
+        long start = System.currentTimeMillis();
+        runtime.simulateInlineFixedStep(dae, SIM_TEST_STOP_TIME,
+                SIM_TEST_STOP_TIME * 10000);
+        System.out.println("Overall simulation time: "
+                + (System.currentTimeMillis() - start));
+        System.out.println("Solver time: " + dae.time);
+        System.out.println("Block eval time: " + Block.evals);
+
+        assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
+        assertThat(runtime.lastResults().results.size(),
+                is(SIM_TEST_STOP_TIME * 10000));
     }
 
     @Test
