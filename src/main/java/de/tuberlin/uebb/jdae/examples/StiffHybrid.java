@@ -232,7 +232,7 @@ public final class StiffHybrid implements LoadableModel {
         final GlobalEquation guard = new ConstantEquation(x1, 0.1).bind(ctxt);
 
         final ContinuousEvent e = new ContinuousEvent(guard, effect,
-                ContinuousEvent.EventDirection.BOTH);
+                ContinuousEvent.EventDirection.DOWN);
         return ImmutableList.of(e);
     }
 }

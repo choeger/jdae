@@ -37,6 +37,7 @@ import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.events.DiscreteModification;
 import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
 import de.tuberlin.uebb.jdae.llmsl.events.Reinit;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
@@ -157,8 +158,15 @@ public final class BouncingBallRadius {
                 .bind(ctxt);
 
         final GlobalEquation reinit_rhs = new ConstantLinear(0, 0,
-                new double[] { -1 }, ImmutableList.of(v)).bind(ctxt);
-        final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs);
+                new double[] { -0.8 }, ImmutableList.of(v)).bind(ctxt);
+        final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs)
+                .and(new DiscreteModification() {
+
+                    @Override
+                    public void modify() {
+                        events++;
+                    }
+                });
 
         final ContinuousEvent bounce = new ContinuousEvent(bounce_guard,
                 bounce_effect, ContinuousEvent.EventDirection.DOWN);

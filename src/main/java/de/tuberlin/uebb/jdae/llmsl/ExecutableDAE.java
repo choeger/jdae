@@ -69,7 +69,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             final ContinuousEvent[] continuousEvents) {
         this.logger = Logger.getLogger(this.getClass().toString());
 
-        this.eventHandler = new EventEvaluator(continuousEvents);
+        this.eventHandler = new EventEvaluator(this, continuousEvents);
         this.layout = layout;
         this.states = causalisation.states;
         data = layout.alloc();
@@ -126,7 +126,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
             final IBlock[] initials, final List<GlobalVariable> states) {
 
-        this.eventHandler = new EventEvaluator(new ContinuousEvent[0]);
+        this.eventHandler = new EventEvaluator(this, new ContinuousEvent[0]);
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
         this.states = states;
@@ -181,7 +181,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             }
 
             final Collection<EventEffect> effects = eventHandler
-                    .calculateEffects(this);
+                    .calculateEffects();
 
             if (!effects.isEmpty()) {
                 ExecutableDAE nextDae = this;
@@ -206,6 +206,10 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public void integrateApacheCommonsIntegrator(final SimulationOptions options) {
         logger.log(Level.INFO, "Starting integration.");
+
+        options.integrator.addEventHandler(eventHandler, options.maxStepSize,
+                options.tolerance, 1000);
+
         final double[] stateVector = new double[states.size()];
 
         writeStates(stateVector);
@@ -213,6 +217,17 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         while (data[0][0] < options.stopTime) {
             data[0][0] = options.integrator.integrate(this, data[0][0],
                     stateVector, options.stopTime, stateVector);
+
+            if (eventHandler.getResult() != null
+                    && eventHandler.getResult().t == data[0][0]) {
+                final ExecutableDAE next = eventHandler.getResult().effect
+                        .apply(this);
+                eventHandler.acceptLastStep();
+                if (next != this) {
+                    throw new RuntimeException(
+                            "Cannot handle structural changes yet.");
+                }
+            }
 
             writeStates(stateVector);
         }
@@ -240,8 +255,16 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     @Override
     public void computeDerivatives(double t, double[] y, double[] yDot)
             throws MaxCountExceededException, DimensionMismatchException {
+        computeDerivatives(t, y);
 
+        for (int i = 0; i < states.size(); i++) {
+            yDot[i] = load(states.get(i).der());
+        }
+    }
+
+    public void computeDerivatives(double t, double[] y) {
         final long s = System.currentTimeMillis();
+
         evaluations++;
 
         data[0][0] = t;
@@ -252,10 +275,6 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
         for (int i = 0; i < blocks.length; i++) {
             blocks[i].exec();
-        }
-
-        for (int i = 0; i < states.size(); i++) {
-            yDot[i] = load(states.get(i).der());
         }
 
         time += (System.currentTimeMillis() - s);
