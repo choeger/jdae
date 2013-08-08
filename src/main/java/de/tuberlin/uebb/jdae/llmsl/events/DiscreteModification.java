@@ -24,7 +24,7 @@ import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
  * @author choeger
  * 
  */
-public abstract class DiscreteModification implements EventEffect {
+public abstract class DiscreteModification extends EventEffect {
 
     public abstract void modify();
 
@@ -37,7 +37,7 @@ public abstract class DiscreteModification implements EventEffect {
      */
     @Override
     public ExecutableDAE apply(ExecutableDAE source) {
-
+        modify();
         return source;
     }
 

@@ -19,30 +19,22 @@
 
 package de.tuberlin.uebb.jdae.llmsl.events;
 
-import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
-import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
-import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 
-/**
- * @author choeger
- * 
- */
-public final class Reinit extends EventEffect {
+public final class CombinedEffect extends EventEffect {
 
-    public final GlobalVariable target;
-    private final BlockEquation val;
-
-    public Reinit(GlobalVariable target, GlobalEquation val) {
+    public CombinedEffect(EventEffect first, EventEffect second) {
         super();
-        this.target = target;
-        this.val = val.bindIdentity();
+        this.first = first;
+        this.second = second;
     }
 
     @Override
     public ExecutableDAE apply(ExecutableDAE source) {
-        final double d = val.exec(source.execCtxt).der(0);
-        source.set(target, d);
-        return source;
+        return second.apply(first.apply(source));
     }
+
+    final EventEffect first;
+    final EventEffect second;
+
 }

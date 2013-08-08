@@ -23,13 +23,20 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 
 public final class ContinuousEvent {
 
+    public static enum EventDirection {
+        UP, DOWN, BOTH;
+    }
+
+    public final EventDirection direction;
     public final EventEffect effect;
     public final BlockEquation guard;
 
-    public ContinuousEvent(GlobalEquation guard, EventEffect effect) {
+    public ContinuousEvent(GlobalEquation guard, EventEffect effect,
+            EventDirection dir) {
         super();
         this.effect = effect;
         this.guard = guard.bindIdentity();
+        this.direction = dir;
     }
 
 }

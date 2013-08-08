@@ -20,8 +20,11 @@ package de.tuberlin.uebb.jdae.llmsl.events;
 
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 
-public interface EventEffect {
+public abstract class EventEffect {
 
-    public ExecutableDAE apply(ExecutableDAE source);
+    public abstract ExecutableDAE apply(ExecutableDAE source);
 
+    public EventEffect and(final EventEffect other) {
+        return new CombinedEffect(this, other);
+    }
 }

@@ -231,7 +231,8 @@ public final class StiffHybrid implements LoadableModel {
 
         final GlobalEquation guard = new ConstantEquation(x1, 0.1).bind(ctxt);
 
-        final ContinuousEvent e = new ContinuousEvent(guard, effect);
+        final ContinuousEvent e = new ContinuousEvent(guard, effect,
+                ContinuousEvent.EventDirection.BOTH);
         return ImmutableList.of(e);
     }
 }

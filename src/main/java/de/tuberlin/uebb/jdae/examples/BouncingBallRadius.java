@@ -161,7 +161,7 @@ public final class BouncingBallRadius {
         final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs);
 
         final ContinuousEvent bounce = new ContinuousEvent(bounce_guard,
-                bounce_effect);
+                bounce_effect, ContinuousEvent.EventDirection.DOWN);
 
         return ImmutableList.of(bounce);
     }

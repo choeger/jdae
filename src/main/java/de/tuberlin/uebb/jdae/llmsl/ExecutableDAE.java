@@ -37,6 +37,8 @@ import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
+import de.tuberlin.uebb.jdae.llmsl.events.EventHandler;
 import de.tuberlin.uebb.jdae.simulation.ResultStorage;
 import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
@@ -47,7 +49,7 @@ import de.tuberlin.uebb.jdae.transformation.Reduction;
 public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public final double[][] data;
-    public final ContinuousEvent[] continuousEvents;
+    public final EventHandler eventHandler;
     public final DataLayout layout;
     public final IBlock[] blocks;
     public final List<GlobalVariable> states;
@@ -67,7 +69,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             final ContinuousEvent[] continuousEvents) {
         this.logger = Logger.getLogger(this.getClass().toString());
 
-        this.continuousEvents = continuousEvents;
+        this.eventHandler = new EventHandler(continuousEvents);
         this.layout = layout;
         this.states = causalisation.states;
         data = layout.alloc();
@@ -124,7 +126,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
             final IBlock[] initials, final List<GlobalVariable> states) {
 
-        this.continuousEvents = new ContinuousEvent[0];
+        this.eventHandler = new EventHandler(new ContinuousEvent[0]);
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
         this.states = states;
@@ -162,6 +164,11 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         double stepSize = options.minStepSize;
 
         while (data[0][0] < options.stopTime) {
+            data[0][0] += stepSize;
+
+            if (options.stopTime - data[0][0] < stepSize)
+                stepSize = options.stopTime - data[0][0];
+
             evaluations++;
 
             for (int i = 0; i < blocks.length; i++) {
@@ -173,11 +180,24 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                         * stepSize;
             }
 
-            data[0][0] += stepSize;
+            final Collection<EventEffect> effects = eventHandler
+                    .calculateEffects(this);
 
-            if (options.stopTime - data[0][0] < stepSize)
-                stepSize = options.stopTime - data[0][0];
+            if (!effects.isEmpty()) {
+                ExecutableDAE nextDae = this;
 
+                for (EventEffect effect : effects) {
+                    nextDae = effect.apply(nextDae);
+                }
+
+                if (nextDae != this) {
+                    throw new RuntimeException(
+                            "Cannot handle structural changes yet.");
+                }
+            }
+
+            /* accept step */
+            eventHandler.acceptLastStep();
             results.addResult(data);
         }
 

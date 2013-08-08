@@ -33,6 +33,7 @@ import de.tuberlin.uebb.jdae.hlmsl.specials.Equality;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.events.DiscreteModification;
 import de.tuberlin.uebb.jdae.llmsl.events.EventEffect;
 import de.tuberlin.uebb.jdae.llmsl.events.Reinit;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
@@ -112,15 +113,21 @@ public class BouncingBall implements LoadableModel {
     @Override
     public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
 
-        final GlobalEquation bounce_guard = new ConstantEquation(h, 0)
+        final GlobalEquation bounce_guard = new ConstantEquation(b, 0)
                 .bind(ctxt);
 
         final GlobalEquation reinit_rhs = new ConstantLinear(0, 0,
-                new double[] { -1 }, ImmutableList.of(v)).bind(ctxt);
-        final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs);
+                new double[] { -0.8 }, ImmutableList.of(v)).bind(ctxt);
+        final EventEffect bounce_effect = new Reinit(ctxt.get(v), reinit_rhs)
+                .and(new DiscreteModification() {
+                    @Override
+                    public void modify() {
+                        events++;
+                    }
+                });
 
         final ContinuousEvent bounce = new ContinuousEvent(bounce_guard,
-                bounce_effect);
+                bounce_effect, ContinuousEvent.EventDirection.DOWN);
 
         return ImmutableList.of(bounce);
     }
