@@ -36,12 +36,18 @@ public final class EventEvaluator implements EventHandler {
 
     private final ExecutableDAE ctxt;
     private final ContinuousEvent[] c_events;
+    private final int blockNumbers[];
+    private final double noEvents[];
     private final double[][] guards;
     private int current = 0;
 
     public EventEvaluator(final ExecutableDAE ctxt, ContinuousEvent[] c_events) {
         super();
         this.c_events = c_events;
+        this.blockNumbers = new int[c_events.length];
+	this.noEvents = new double[c_events.length];
+        for (int i = 0; i < blockNumbers.length; i++)
+            blockNumbers[i] = ctxt.lastBlock(c_events[i].guardGlobal.need());
         this.ctxt = ctxt;
         this.guards = new double[][] { new double[c_events.length], null };
     }
@@ -56,28 +62,32 @@ public final class EventEvaluator implements EventHandler {
         }
 
         for (int i = 0; i < c_events.length; i++) {
-            final ContinuousEvent cev = c_events[i];
-            guards[store][i] = cev.guard.exec(ctxt.execCtxt).der(0);
-            final double os = Math.signum(guards[current][i]);
-            final double ns = Math.signum(guards[store][i]);
-
-            if (os != ns) {
-                switch (cev.direction) {
-                case UP:
-                    if (ns > 0)
-                        effects.add(cev.effect);
-                    break;
-                case DOWN:
-                    if (ns < 0)
-                        effects.add(cev.effect);
-                    break;
-                case BOTH:
-                    effects.add(cev.effect);
-                }
-            }
+	    final ContinuousEvent cev = c_events[i];
+	    guards[store][i] = cev.guard.exec(ctxt.execCtxt).der(0);
+	    if (isCandidate(i))
+		effects.add(cev.effect);
         }
 
         return effects;
+    }
+
+    private boolean isCandidate(final int i) {
+	final int store = (current + 1) % 2;
+	final ContinuousEvent cev = c_events[i];
+	final double os = Math.signum(guards[current][i]);
+	final double ns = Math.signum(guards[store][i]);
+
+	if (os != ns) {
+	    switch (cev.direction) {
+	    case UP:
+		return ns > 0;
+	    case DOWN:
+                return ns < 0;
+	    case BOTH:
+		return true;
+            }
+	} 
+	return false;
     }
 
     private void calculateFirstStep() {
@@ -104,6 +114,8 @@ public final class EventEvaluator implements EventHandler {
             calculateFirstStep();
             acceptLastStep();
         }
+	for (int i = 0; i < noEvents.length; i++)
+	    noEvents[i] = t0;
     }
 
     @Override
@@ -124,18 +136,25 @@ public final class EventEvaluator implements EventHandler {
         double g = Double.MAX_VALUE;
         int cand = -1;
 
-        ctxt.computeDerivatives(t, y);
-
+        ctxt.setState(t, y);
+        int from = 0;
         for (int i = 0; i < c_events.length; i++) {
-            final ContinuousEvent cev = c_events[i];
-            guards[store][i] = cev.guard.exec(ctxt.execCtxt).der(0);
+	    if (noEvents[i] < t) {
+		final ContinuousEvent cev = c_events[i];
+		ctxt.computeDerivatives(from, blockNumbers[i]);
+		from = blockNumbers[i] + 1;
 
-            final double p = guards[store][i] * guards[store][i];
-            if (g > p) {
-                g = p;
-                cand = i;
-            }
-
+		guards[store][i] = cev.guard.exec(ctxt.execCtxt).der(0);
+		if (isCandidate(i)) {
+		    final double p = guards[store][i] * guards[store][i];
+		    if (g > p) {
+			g = p;
+			cand = i;
+		    }
+		} else {
+		    noEvents[i] = t;
+		}
+	    }
         }
         return cand;
     }

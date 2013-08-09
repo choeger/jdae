@@ -30,6 +30,7 @@ public final class ContinuousEvent {
     public final EventDirection direction;
     public final EventEffect effect;
     public final BlockEquation guard;
+    public final GlobalEquation guardGlobal;
 
     public ContinuousEvent(GlobalEquation guard, EventEffect effect,
             EventDirection dir) {
@@ -37,6 +38,7 @@ public final class ContinuousEvent {
         this.effect = effect;
         this.guard = guard.bindIdentity();
         this.direction = dir;
+        this.guardGlobal = guard;
     }
 
 }
