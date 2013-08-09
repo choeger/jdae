@@ -255,39 +255,32 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     @Override
     public void computeDerivatives(double t, double[] y, double[] yDot)
             throws MaxCountExceededException, DimensionMismatchException {
-        computeDerivatives(t, y);
+        setState(t, y);
+
+        computeDerivatives(0, blocks.length);
 
         for (int i = 0; i < states.size(); i++) {
             yDot[i] = load(states.get(i).der());
         }
     }
 
-    public void computeDerivatives(double t, double[] y) {
+    public void computeDerivatives(final int from, final int to) {
         final long s = System.currentTimeMillis();
 
         evaluations++;
 
-        data[0][0] = t;
-
-        for (int i = 0; i < states.size(); i++) {
-            set(states.get(i), y[i]);
-        }
-
-        for (int i = 0; i < blocks.length; i++) {
+        for (int i = from; i < to; i++) {
             blocks[i].exec();
         }
 
         time += (System.currentTimeMillis() - s);
     }
 
-    public void computeDerivativesUpTo(int block, double t, double[] y) {
+    public void setState(double t, double[] y) {
         data[0][0] = t;
+
         for (int i = 0; i < states.size(); i++) {
             set(states.get(i), y[i]);
-        }
-
-        for (int i = 0; i < block && i < blocks.length; i++) {
-            blocks[i].exec();
         }
     }
 
