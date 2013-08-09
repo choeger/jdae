@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
+import org.apache.commons.math3.ode.events.EventHandler;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
@@ -69,7 +70,6 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             final ContinuousEvent[] continuousEvents) {
         this.logger = Logger.getLogger(this.getClass().toString());
 
-        this.eventHandler = new EventEvaluator(this, continuousEvents);
         this.layout = layout;
         this.states = causalisation.states;
         data = layout.alloc();
@@ -121,6 +121,9 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                     iCausalisation.iteratees.get(i++), block);
 
         this.execCtxt = new ExecutionContext(0, new GlobalVariable[0], data);
+
+	//must be last, calls methods here
+        this.eventHandler = new EventEvaluator(this, continuousEvents);
     }
 
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
@@ -207,8 +210,9 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public void integrateApacheCommonsIntegrator(final SimulationOptions options) {
         logger.log(Level.INFO, "Starting integration.");
 
-        options.integrator.addEventHandler(eventHandler, options.maxStepSize,
-                options.tolerance, 1000);
+	for (EventHandler handler : eventHandler.getEventHandlers())
+	    options.integrator.addEventHandler(handler, options.maxStepSize,
+					       options.tolerance, 1000);
 
         final double[] stateVector = new double[states.size()];
 

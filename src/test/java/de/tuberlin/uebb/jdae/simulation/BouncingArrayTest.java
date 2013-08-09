@@ -87,8 +87,6 @@ public class BouncingArrayTest {
 
     }
 
-    @Ignore
-    // not yet implemented in new EventHandler
     @Test
     public void testSimulation() {
         dae.initialize();

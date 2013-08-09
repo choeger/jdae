@@ -30,34 +30,44 @@ import com.google.common.collect.Lists;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent.EventDirection;
 
-public final class EventEvaluator implements EventHandler {
+public final class EventEvaluator {
 
     private EventResult result;
 
+    private final EventHandler[] evHdlr;
     private final ExecutableDAE ctxt;
     private final ContinuousEvent[] c_events;
-    private final int blockNumbers[];
-    private final double noEvents[];
     private final double[][] guards;
     private int current = 0;
+    private final double lastAttempt[] = {Double.MIN_VALUE};
+    private final int blockStart[] = {0};
 
     public EventEvaluator(final ExecutableDAE ctxt, ContinuousEvent[] c_events) {
         super();
         this.c_events = c_events;
-        this.blockNumbers = new int[c_events.length];
-	this.noEvents = new double[c_events.length];
-        for (int i = 0; i < blockNumbers.length; i++)
-            blockNumbers[i] = ctxt.lastBlock(c_events[i].guardGlobal.need());
+	this.evHdlr = new EventHandler[c_events.length];
         this.ctxt = ctxt;
+
+        for (int i = 0; i < evHdlr.length; i++)
+            evHdlr[i] = new CommonsMathEventHandler(i);
+
         this.guards = new double[][] { new double[c_events.length], null };
     }
 
+    public EventHandler[] getEventHandlers() {
+	return evHdlr;
+    }
+
+    /**
+     * Collect all events in the current interval. 
+     * No refinement will be done.
+     */
     public Collection<EventEffect> calculateEffects() {
         final List<EventEffect> effects = Lists.newArrayList();
         final int store = (current + 1) % 2;
 
         if (guards[store] == null) {
-            calculateFirstStep();
+            calculateStep();
             return ImmutableList.of();
         }
 
@@ -90,7 +100,7 @@ public final class EventEvaluator implements EventHandler {
 	return false;
     }
 
-    private void calculateFirstStep() {
+    private void calculateStep() {
         final int store = (current + 1) % 2;
         guards[store] = new double[c_events.length];
         for (int i = 0; i < c_events.length; i++) {
@@ -104,82 +114,58 @@ public final class EventEvaluator implements EventHandler {
     }
 
     public void acceptLastStep() {
+	calculateStep();
         this.current = (current + 1) % 2;
     }
 
-    @Override
-    public void init(double t0, double[] y0, double t) {
-        final int store = (current + 1) % 2;
-        if (guards[store] == null) {
-            calculateFirstStep();
-            acceptLastStep();
-        }
-	for (int i = 0; i < noEvents.length; i++)
-	    noEvents[i] = t0;
-    }
+    private final class CommonsMathEventHandler implements EventHandler {
+	
+	final int blockNumber;
+	final ContinuousEvent cev;
 
-    @Override
-    public double g(double t, double[] y) {
-        if (result != null && result.t == t)
-            return 0.0;
+	public CommonsMathEventHandler(int e) {
+	    this.cev = c_events[e];
+	    this.blockNumber = ctxt.lastBlock(cev.guardGlobal.need());
+	}
 
-        final int store = (current + 1) % 2;
-        final int cand = getCandidate(t, y, store);
-        if (cand == -1)
-            return 0;
+	@Override
+	public void init(double t0, double[] y0, double t) { }
 
-        System.out.println("t: " + t + " g: " + guards[store][cand]);
-        return guards[store][cand];
-    }
-
-    public int getCandidate(double t, double[] y, final int store) {
-        double g = Double.MAX_VALUE;
-        int cand = -1;
-
-        ctxt.setState(t, y);
-        int from = 0;
-        for (int i = 0; i < c_events.length; i++) {
-	    if (noEvents[i] < t) {
-		final ContinuousEvent cev = c_events[i];
-		ctxt.computeDerivatives(from, blockNumbers[i]);
-		from = blockNumbers[i] + 1;
-
-		guards[store][i] = cev.guard.exec(ctxt.execCtxt).der(0);
-		if (isCandidate(i)) {
-		    final double p = guards[store][i] * guards[store][i];
-		    if (g > p) {
-			g = p;
-			cand = i;
-		    }
-		} else {
-		    noEvents[i] = t;
-		}
+	@Override
+	public double g(double t, double[] y) {
+	    if (result != null && result.t == t)
+		return 0.0;
+	    
+	    if (t != lastAttempt[0]) {
+		ctxt.setState(t, y);
+		blockStart[0] = 0;
+		lastAttempt[0] = t;
 	    }
-        }
-        return cand;
-    }
 
-    @Override
-    public Action eventOccurred(double t, double[] y, boolean increasing) {
-        System.out.println("Event at t: " + t);
-        final int store = (current + 1) % 2;
-        final int cand = getCandidate(t, y, store);
+	    ctxt.computeDerivatives(blockStart[0], blockNumber);
+	    blockStart[0] = Math.max(blockStart[0], blockNumber);
 
-        result = null;
-        guards[store][cand] = 0;
+	    final double p = cev.guard.exec(ctxt.execCtxt).der(0);
+	    System.out.println("t: " + t + " g: " + p);
+	    return p;	
+	}
 
-        if (increasing && c_events[cand].direction != EventDirection.DOWN) {
-            result = new EventResult(t, y, c_events[cand].effect);
-            return Action.STOP;
-        } else if (!increasing && c_events[cand].direction != EventDirection.UP) {
-            result = new EventResult(t, y, c_events[cand].effect);
-            return Action.STOP;
-        }
+	@Override
+	public Action eventOccurred(double t, double[] y, boolean increasing) {
+	    System.out.println("Event at t: " + t);
+ 
+	    if (increasing && cev.direction != EventDirection.DOWN) {
+		result = new EventResult(t, y, cev.effect);
+		return Action.STOP;
+	    } else if (!increasing && cev.direction != EventDirection.UP) {
+		result = new EventResult(t, y, cev.effect);
+		return Action.STOP;
+	    }
 
-        return Action.CONTINUE;
-    }
+	    return Action.CONTINUE;
+	}
 
-    @Override
-    public void resetState(double t, double[] y) {
+	@Override
+	public void resetState(double t, double[] y) { }
     }
 }
