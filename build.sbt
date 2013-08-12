@@ -14,8 +14,10 @@ EclipseKeys.withSource := true
 
 javacOptions ++= Seq("-source", "1.7")
 
+resolvers += "Local Maven Repository" at "file:///"+Path.userHome+"/.m2/repository"
 
 libraryDependencies ++= Seq(
+		    "de.tuberlin.uebb.jdae" % "jbop" % "1.0.0-SNAPSHOT",
 		    "com.google.guava" % "guava" % "14.0.1",
 		    "com.google.guava" % "guava-testlib" % "14.0.1",		    
 		    "org.hamcrest" % "hamcrest-all" % "1.3",
