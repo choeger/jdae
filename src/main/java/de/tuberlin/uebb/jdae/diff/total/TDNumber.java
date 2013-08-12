@@ -19,7 +19,7 @@
 package de.tuberlin.uebb.jdae.diff.total;
 
 import java.util.Arrays;
-
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 
 public final class TDNumber {
@@ -29,7 +29,7 @@ public final class TDNumber {
 
     public TDNumber(int order, int params) {
         this.values = new PDNumber[order + 1];
-        this.ops = TDOperations.getInstance(order, params);
+        this.ops = TDOpsFactory.getInstance(order, params);
         for (int i = 0; i <= order; i++)
             values[i] = new PDNumber(params);
     }
@@ -37,7 +37,7 @@ public final class TDNumber {
     public TDNumber(PDNumber[] values) {
         super();
         this.values = values;
-        this.ops = TDOperations.getInstance(values.length - 1,
+        this.ops = TDOpsFactory.getInstance(values.length - 1,
                 values[0].values.length - 1);
     }
 

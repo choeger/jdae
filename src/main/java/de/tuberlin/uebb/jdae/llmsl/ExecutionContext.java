@@ -19,6 +19,7 @@
 
 package de.tuberlin.uebb.jdae.llmsl;
 
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory;
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.diff.total.TDOperations;
 
@@ -37,7 +38,7 @@ public final class ExecutionContext {
         this.params = vars.clone();
         this.data = data.clone();
 
-        this.compiler = TDOperations.getInstance(order, params.length);
+        this.compiler = TDOpsFactory.getInstance(order, params.length);
     }
 
     public final void set(int start, GlobalVariable[] vars, double[] point) {

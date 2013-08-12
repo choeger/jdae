@@ -80,8 +80,8 @@ public class TDNumberTest {
     }
 
     final static TDOperations[] exampleOps = new TDOperations[] {
-            TDOperations.getInstance(0, 0), TDOperations.getInstance(2, 0),
-            TDOperations.getInstance(2, 2), TDOperations.getInstance(5, 10) };
+            TDOpsFactory.getInstance(0, 0), TDOpsFactory.getInstance(2, 0),
+            TDOpsFactory.getInstance(2, 2), TDOpsFactory.getInstance(5, 10) };
 
     @Parameters(name = "TD Test on: {0}")
     public static Collection<Object[]> data() {
@@ -102,8 +102,8 @@ public class TDNumberTest {
 
     @Test
     public void testEqualsContract() {
-        if (ops.subOps.params > 0) {
-            final double[] der = new double[ops.order + 1];
+        if (ops.subOps().params > 0) {
+            final double[] der = new double[ops.order() + 1];
             for (int i = 0; i < der.length; ++i)
                 der[i] = 1.0 + i;
 

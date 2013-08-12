@@ -179,7 +179,7 @@ public class TDNumberIntegrationTest {
 
     @Test
     public void testLengthConstraintPartialDerivative0() {
-        final TDOperations ops = TDOperations.getInstance(0, 2);
+        final TDOperations ops = TDOpsFactory.getInstance(0, 2);
 
         final TDNumber tx = ops.variable(0, x, dx, ddx);
         final TDNumber ty = ops.variable(1, y, dy, ddy);
@@ -190,7 +190,7 @@ public class TDNumberIntegrationTest {
 
     @Test
     public void testLengthConstraintPartialDerivative1() {
-        final TDOperations ops = TDOperations.getInstance(1, 4);
+        final TDOperations ops = TDOpsFactory.getInstance(1, 4);
 
         final TDNumber tx = ops.variable(0, 1, x, dx, ddx);
         final TDNumber ty = ops.variable(2, 1, y, dy, ddy);
