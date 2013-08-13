@@ -25,38 +25,49 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.math3.util.FastMath;
-
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Ordering;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.Optimizer;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.utils.IntPair;
 
 public final class TDOpsFactory {
-    private final static TIntObjectMap<TIntObjectMap<TDInterpreter>> instanceCache = 
-	new TIntObjectHashMap<TIntObjectMap<TDInterpreter>>();
+    public static final TDOperations NO_OPS = new TDEmptyOperations();
 
-    public static TDInterpreter getInstance(int order, int params) {
+    private final static TIntObjectMap<TIntObjectMap<TDInterpreter>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDInterpreter>>();
+
+    public static TDOperations getInstance(int order, int params) {
         if (!instanceCache.containsKey(order))
             instanceCache.put(order, new TIntObjectHashMap<TDInterpreter>());
 
         final TIntObjectMap<TDInterpreter> map = instanceCache.get(order);
 
         if (!map.containsKey(params)) {
-	    final PDOperations subOps = new PDOperations(params);
-            final TDInterpreter ops = new TDInterpreter(order, params, compileMultIndirection(order, subOps), compileCompIndirection(order, subOps));
+            final PDOperations subOps = new PDOperations(params);
+            final TDInterpreter ops = new TDInterpreter(order, subOps,
+                    compileMultIndirection(order, subOps),
+                    compileCompIndirection(order, subOps),
+                    order > 0 ? getInstance(order - 1, params) : NO_OPS);
             map.put(params, ops);
-            return ops;
+
+            final Optimizer optimizer = new Optimizer();
+            try {
+                System.out.println("Creating specialized TDOperations: "
+                        + params + "x" + order);
+                return optimizer.optimize(ops, "__" + params + "x" + order);
+            } catch (final JBOPClassException e) {
+                throw new RuntimeException(
+                        "TDOperations couldn't be specialized.", e);
+            }
         } else
             return map.get(params);
     }
 
-   static final class ProductElements {
+    public static final class ProductElements {
         public final int lhs_row;
         public final int lhs_column;
         public final int rhs_row;
@@ -104,7 +115,7 @@ public final class TDOpsFactory {
 
     }
 
-    final static class Product {
+    public final static class Product {
         public final ProductElements elements;
         public final int factor;
 
@@ -127,8 +138,7 @@ public final class TDOpsFactory {
     }
 
     private static final Product[][][] compileMultIndirection(final int order,
-							      final PDOperations subOps
-							      ) {
+            final PDOperations subOps) {
         final Product[][][] multOps = new Product[order + 1][][];
         addMultOps(order, subOps, 0, 0, 0, multOps);
 
@@ -142,7 +152,7 @@ public final class TDOpsFactory {
     }
 
     private static final void addMultOps(int order, final PDOperations subOps,
-					 int row, int a, int b, Product[][][] ops) {
+            int row, int a, int b, Product[][][] ops) {
         if (ops[row] == null) {
             ops[row] = new Product[subOps.params + 1][];
         }
@@ -187,7 +197,7 @@ public final class TDOpsFactory {
         return array;
     }
 
-    static final class CompositionKey {
+    public static final class CompositionKey {
         public final int f_order;
         public final IntPair[] keys;
 
@@ -237,7 +247,7 @@ public final class TDOpsFactory {
         }
     }
 
-    final static class CompositionProduct {
+    public final static class CompositionProduct {
         public final int f_factor;
         public final CompositionKey key;
 
@@ -261,7 +271,8 @@ public final class TDOpsFactory {
         }
     }
 
-    private static final CompositionProduct[][][] compileCompIndirection(int order, PDOperations subOps) {
+    private static final CompositionProduct[][][] compileCompIndirection(
+            int order, PDOperations subOps) {
         final CompositionProduct[][][] ops = new CompositionProduct[order + 1][][];
         addCompOps(order, subOps, ops);
 
@@ -289,9 +300,8 @@ public final class TDOpsFactory {
         return array;
     }
 
-    private static final void addCompOps(final int order, 
-					 final PDOperations subOps, 
-					 CompositionProduct[][][] ops) {
+    private static final void addCompOps(final int order,
+            final PDOperations subOps, CompositionProduct[][][] ops) {
         ops[0] = new CompositionProduct[subOps.params + 1][];
         ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
                 new IntPair[0]) };
@@ -302,10 +312,10 @@ public final class TDOpsFactory {
         }
 
         if (order > 0) {
-            final TDInterpreter smaller = getInstance(order - 1, subOps.params);
+            final TDOperations smaller = getInstance(order - 1, subOps.params);
 
-            final CompositionProduct[][][] subCompOps = smaller.compOps;
-            final Product[][][] multOps = smaller.multOps;
+            final CompositionProduct[][][] subCompOps = smaller.compOps();
+            final Product[][][] multOps = smaller.multOps();
 
             for (int i = 0; i < subCompOps.length; ++i) {
                 ops[i + 1] = new CompositionProduct[subOps.params + 1][];
@@ -334,6 +344,5 @@ public final class TDOpsFactory {
             }
         }
     }
-
 
 }

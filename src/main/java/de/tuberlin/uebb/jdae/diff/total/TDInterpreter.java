@@ -44,22 +44,20 @@ import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.*;
  */
 public final class TDInterpreter implements TDOperations {
 
-    public final PDOperations subOps;
     public final int order;
+    public final PDOperations subOps;
 
     final Product[][][] multOps;
     final CompositionProduct[][][] compOps;
-    final TDInterpreter smaller;
+    final TDOperations smaller;
 
-    TDInterpreter(int order, int params, Product[][][] multOps, 
-		  CompositionProduct[][][] compOps) {
-        super();
-        this.order = order;
-        this.subOps = new PDOperations(params);
-        this.multOps = multOps;
-        this.compOps = compOps;
-        smaller = order > 0 ? TDOpsFactory.getInstance(order - 1, subOps.params) : null;
-        System.out.println(stats(compOps));
+    public TDInterpreter(int order, PDOperations subOps, Product[][][] multOps,
+			 CompositionProduct[][][] compOps, TDOperations smaller) {
+	this.order = order;
+	this.subOps = subOps;
+	this.multOps = multOps;
+	this.compOps = compOps;
+	this.smaller = smaller;
     }
 
     public int order() {
@@ -68,6 +66,14 @@ public final class TDInterpreter implements TDOperations {
 
     public PDOperations subOps() {
 	return subOps;
+    }
+
+    public Product[][][] multOps() {
+	return this.multOps;
+    }
+
+    public CompositionProduct[][][] compOps() {
+	return this.compOps;
     }
 
     private String stats(CompositionProduct[][][] compositionProducts) {
