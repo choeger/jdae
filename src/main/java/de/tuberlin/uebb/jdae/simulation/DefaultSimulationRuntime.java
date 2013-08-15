@@ -79,7 +79,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * (de.tuberlin.uebb.jdae.dae.SolvableDAE, java.util.Map, double, int)
      */
     @Override
-    public void simulateFixedStep(ExecutableDAE dae, double stop_time,
+    public SimulationOptions simulateFixedStep(ExecutableDAE dae, double stop_time,
             final int steps) {
         final double stepSize = (stop_time / steps);
 
@@ -88,10 +88,11 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 stepSize * 1e-3, stepSize, stepSize, i);
 
         simulate(dae, options);
+	return options;
     }
 
     @Override
-    public void simulateInlineFixedStep(ExecutableDAE dae, double stop_time,
+    public SimulationOptions simulateInlineFixedStep(ExecutableDAE dae, double stop_time,
             final int steps) {
         final double stepSize = (stop_time / steps);
 
@@ -100,6 +101,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 InlineIntegratorSelection.INLINE_FORWARD_EULER);
 
         simulate(dae, options);
+	return options;
     }
 
     /*
@@ -111,7 +113,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * double, double, double)
      */
     @Override
-    public void simulateVariableStep(ExecutableDAE dae, double stop_time,
+    public SimulationOptions simulateVariableStep(ExecutableDAE dae, double stop_time,
             double minStep, double maxStep, double absoluteTolerance,
             double relativeTolerance) {
 
@@ -121,6 +123,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 absoluteTolerance, minStep, maxStep, i);
 
         simulate(dae, options);
+	return options;
     }
 
     @Override

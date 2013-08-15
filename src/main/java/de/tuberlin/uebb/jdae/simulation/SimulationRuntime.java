@@ -45,16 +45,16 @@ public interface SimulationRuntime {
 
     public void simulate(ExecutableDAE dae, SimulationOptions options);
 
-    public void simulateVariableStep(ExecutableDAE dae, double stop_time,
+    public SimulationOptions simulateVariableStep(ExecutableDAE dae, double stop_time,
             double minStep, double maxStep, double absoluteTolerance,
             double relativeTolerance);
 
     public ResultStorage lastResults();
 
-    public void simulateFixedStep(ExecutableDAE dae, double stopTime,
+    public SimulationOptions simulateFixedStep(ExecutableDAE dae, double stopTime,
             int fixedSteps);
 
-    public void simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
+    public SimulationOptions simulateInlineFixedStep(ExecutableDAE dae, double stopTime,
             int fixedSteps);
 
 }
