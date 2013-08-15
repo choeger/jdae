@@ -104,6 +104,11 @@ public final class SimpleHigherIndexExample implements LoadableModel {
     }
 
     @Override
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.of();
+    }
+
+    @Override
     public Collection<Equation> equations() {
         return ImmutableList.of(eq1, eq2);
     }

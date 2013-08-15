@@ -59,9 +59,9 @@ public final class BouncingBallRadius {
 
     public final Unknown e, h, v, b, dh, dv;
 
-    final Equation evals, freeFall, accel, bottom;
+    final Equation evals, freeFall, accel, bottom, h_init;
 
-    public BouncingBallRadius(int idx, SimulationRuntime runtime) {
+    public BouncingBallRadius(int idx, SimulationRuntime runtime, final double h_initial) {
         super();
         this.index = idx;
 
@@ -77,6 +77,7 @@ public final class BouncingBallRadius {
         this.dv = v.der();
 
         this.freeFall = new ConstantEquation(dv, -9.81);
+	this.h_init = new ConstantEquation(h, h_initial);
 
         this.evals = new Equation() {
 
@@ -147,6 +148,10 @@ public final class BouncingBallRadius {
             }
         };
         this.accel = new Equality(v, dh);
+    }
+    
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.of(h_init);
     }
 
     public Collection<Equation> equations() {

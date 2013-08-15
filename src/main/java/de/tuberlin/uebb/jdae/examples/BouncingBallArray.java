@@ -36,17 +36,26 @@ import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 public class BouncingBallArray implements LoadableModel {
 
     public final BouncingBallRadius[] balls = { null, null, null };
+    public final double[] initial_h = {5, 10, 20};
 
     public BouncingBallArray(SimulationRuntime runtime) {
         for (int i = 1; i <= 3; ++i)
-            balls[i - 1] = new BouncingBallRadius(i, runtime);
+            balls[i - 1] = new BouncingBallRadius(i, runtime, initial_h[i-1]);
     }
 
     @Override
     public Map<GlobalVariable, Double> initials(
             Map<Unknown, GlobalVariable> ctxt) {
-        return ImmutableMap.of(ctxt.get(balls[0].h), 5.0, ctxt.get(balls[1].h),
-                10.0, ctxt.get(balls[2].h), 20.0);
+        return ImmutableMap.of(ctxt.get(balls[0].h), initial_h[0], 
+			       ctxt.get(balls[1].h), initial_h[1], 
+			       ctxt.get(balls[2].h), initial_h[2]);
+    }
+
+    @Override
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.copyOf(Iterables.concat(balls[0].initialEquations(), 
+						     balls[1].initialEquations(), 
+						     balls[2].initialEquations()));
     }
 
     @Override

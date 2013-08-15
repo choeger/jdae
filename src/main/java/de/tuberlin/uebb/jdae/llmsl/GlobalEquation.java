@@ -23,7 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Sets;
+import com.google.common.base.Function;
 
+import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
 
 public abstract class GlobalEquation {
@@ -49,4 +52,11 @@ public abstract class GlobalEquation {
         throw new RuntimeException("Cannot specialize for " + v);
     }
 
+    public static Function<Equation, GlobalEquation> bindFrom(final Map<Unknown, GlobalVariable> ctxt) {
+	return new Function<Equation, GlobalEquation>() {
+	    public GlobalEquation apply(Equation eq) {
+		return eq.bind(ctxt);
+	    }
+	};
+    }
 }

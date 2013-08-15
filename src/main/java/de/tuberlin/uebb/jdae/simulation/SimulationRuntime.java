@@ -29,6 +29,7 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
+import de.tuberlin.uebb.jdae.dae.LoadableModel;
 
 public interface SimulationRuntime {
 
@@ -39,6 +40,8 @@ public interface SimulationRuntime {
     public ExecutableDAE causalise(Reduction reduction,
             List<GlobalEquation> initialEquations,
             Map<GlobalVariable, Double> startValues, ContinuousEvent[] c_events);
+
+    public ExecutableDAE causalise(LoadableModel model);
 
     public void simulate(ExecutableDAE dae, SimulationOptions options);
 

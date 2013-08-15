@@ -202,6 +202,12 @@ public final class StiffHybrid implements LoadableModel {
 
     }
 
+    @Override
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.of();
+    }
+
+    @Override
     public ImmutableList<Equation> equations() {
         return ImmutableList.of(new Equation1(), new Equation2());
     }

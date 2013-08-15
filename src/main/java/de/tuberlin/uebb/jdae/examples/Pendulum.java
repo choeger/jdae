@@ -52,14 +52,21 @@ public final class Pendulum implements LoadableModel {
     public final Unknown y = new Unknown("y", 2, 0);
     public final Unknown F = new Unknown("F", 3, 0);
 
+    @Override
     public Map<GlobalVariable, Double> initials(
             Map<Unknown, GlobalVariable> ctxt) {
         return ImmutableMap.of();
     }
 
+    @Override
     public Collection<Equation> equations() {
         return ImmutableList.of(new XAccelEquation(), new YAccelEquation(),
                 new LengthEquation());
+    }
+
+    @Override
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.of();
     }
 
     public String name() {

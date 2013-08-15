@@ -46,20 +46,7 @@ public class BouncingArrayTest {
     final BouncingBallArray model = new BouncingBallArray(runtime);
     final Reduction reduction = runtime.reduce(model.equations());
 
-    private GlobalEquation h1_init = new ConstantGlobalEquation(
-            reduction.ctxt.get(model.balls[0].h), 5.0);
-    private GlobalEquation h2_init = new ConstantGlobalEquation(
-            reduction.ctxt.get(model.balls[1].h), 10.0);
-    private GlobalEquation h3_init = new ConstantGlobalEquation(
-            reduction.ctxt.get(model.balls[2].h), 20.0);
-
-    final Collection<de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent> events = model
-            .events(reduction.ctxt);
-
-    final ExecutableDAE dae = runtime.causalise(reduction,
-            ImmutableList.of(h1_init, h2_init, h3_init),
-            model.initials(reduction.ctxt),
-            events.toArray(new ContinuousEvent[events.size()]));
+    final ExecutableDAE dae = runtime.causalise(model);
 
     @Test
     public void testCausalisation() {
@@ -74,10 +61,7 @@ public class BouncingArrayTest {
     @Test
     public void testInitialization() {
 
-        final ExecutableDAE dae = runtime.causalise(reduction,
-                ImmutableList.<GlobalEquation> of(h3_init, h2_init, h1_init),
-                model.initials(reduction.ctxt),
-                events.toArray(new ContinuousEvent[events.size()]));
+        final ExecutableDAE dae = runtime.causalise(model);
 
         dae.initialize();
 

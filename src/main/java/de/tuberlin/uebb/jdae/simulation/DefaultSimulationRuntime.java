@@ -34,12 +34,17 @@ import de.tuberlin.uebb.jdae.llmsl.DataLayout;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
+import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationCausalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationMatching;
 import de.tuberlin.uebb.jdae.transformation.Matching;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+
 
 /**
  * Simulation entry point. This class contains a unique
@@ -161,6 +166,17 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         logger.log(Level.INFO, "Reduced system to {0} non-equality equations.",
                 reduction.reduced.size());
         return reduction;
+    }
+
+    @Override
+    public ExecutableDAE causalise(LoadableModel model) {
+	final Reduction reduction = reduce(model.equations());
+	final Collection<ContinuousEvent> events = model.events(reduction.ctxt);
+	return causalise(reduction, 
+			 Lists.transform(ImmutableList.copyOf(model.initialEquations()), 
+					 GlobalEquation.bindFrom(reduction.ctxt)), 
+			 model.initials(reduction.ctxt), 
+			 events.toArray(new ContinuousEvent[events.size()]));
     }
 
     @Override

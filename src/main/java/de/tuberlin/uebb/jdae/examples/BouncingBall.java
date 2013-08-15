@@ -63,6 +63,7 @@ public class BouncingBall implements LoadableModel {
     final Equation freeFall;
     final Equation bottom;
     final Equation accel;
+    final Equation h_init;
 
     public BouncingBall(SimulationRuntime runtime) {
         super();
@@ -72,6 +73,7 @@ public class BouncingBall implements LoadableModel {
         this.b = runtime.newUnknown("b");
         this.dh = h.der();
         this.dv = v.der();
+	this.h_init = new ConstantEquation(h, 10.0);
 
         this.bottom = new ConstantLinear(0.0, -0.5, new double[] { 1, -1 },
                 ImmutableList.of(b, h));
@@ -88,6 +90,11 @@ public class BouncingBall implements LoadableModel {
     public Map<GlobalVariable, Double> initials(
             Map<Unknown, GlobalVariable> ctxt) {
         return ImmutableMap.of(ctxt.get(h), 10.0);
+    }
+
+    @Override
+    public Collection<Equation> initialEquations() {
+	return ImmutableList.of(h_init);
     }
 
     /*

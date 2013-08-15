@@ -30,5 +30,5 @@ public interface Equation {
     public Collection<Unknown> unknowns();
 
     public GlobalEquation bind(final Map<Unknown, GlobalVariable> ctxt);
-
+        
 }

@@ -37,6 +37,8 @@ public interface LoadableModel {
 
     public Collection<Equation> equations();
 
+    public Collection<Equation> initialEquations();
+
     public String name();
 
     public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
