@@ -211,6 +211,10 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         final ExecutableDAE dae = new ExecutableDAE(new DataLayout(
                 causality.layout), causality, iCausalisation, c_events);
 
+	for(Map.Entry<GlobalVariable, Double> e : startValues.entrySet()) {
+	    dae.set(e.getKey(), e.getValue());
+	}
+
         return dae;
 
     }
