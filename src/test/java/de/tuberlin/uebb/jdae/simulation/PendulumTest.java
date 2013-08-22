@@ -46,7 +46,7 @@ public class PendulumTest {
     private static final int SIM_TEST_STOP_TIME = 100;
 
     final SimulationRuntime runtime = new DefaultSimulationRuntime();
-    final Pendulum model = new Pendulum();
+    final Pendulum model = new Pendulum(runtime);
     final Reduction reduction = runtime.reduce(model.equations());
 
     final GlobalEquation initial_y = new ConstantGlobalEquation(
