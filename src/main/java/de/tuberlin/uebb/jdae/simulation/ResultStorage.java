@@ -39,6 +39,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
 
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
+import de.tuberlin.uebb.jdae.llmsl.DataLayout;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 
 public final class ResultStorage implements StepHandler {
@@ -60,6 +61,10 @@ public final class ResultStorage implements StepHandler {
         // }
 
         addResult(dae.data);
+    }
+
+    public DataLayout getLayout() {
+	return dae.layout;
     }
 
     // TODO Automatisch generierter Methodenstub

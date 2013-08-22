@@ -107,4 +107,12 @@ public final class DataLayout implements Iterable<GlobalVariable> {
     public Iterator<GlobalVariable> iterator() {
         return new VariableIterator();
     }
+
+    public double valueAt(final GlobalVariable var, final double[][] data) {
+	return data[var.index][var.der];
+    }
+
+    public double timeValue(final double[][] data) {
+	return data[0][0];
+    }
 }
