@@ -30,6 +30,7 @@ public final class Examples {
 	final ImmutableMap.Builder<String, Class<? extends LoadableModel>> builder = 
 	    ImmutableMap.builder();
 	builder.put("BouncingBall", BouncingBall.class);
+	builder.put("Pendulum", Pendulum.class);
 	return builder.build();
     }
 
