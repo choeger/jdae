@@ -55,21 +55,6 @@ public final class TDOperations {
         multOps = compileMultIndirection();
         compOps = compileCompIndirection();
         smaller = order > 0 ? getInstance(order - 1, subOps.params) : null;
-        System.out.println(stats(compOps));
-    }
-
-    private String stats(CompositionProduct[][][] compositionProducts) {
-
-        int keys = 0;
-        int terms = 0;
-        for (CompositionProduct[][] row : compositionProducts)
-            for (CompositionProduct[] column : row)
-                for (CompositionProduct prod : column) {
-                    terms++;
-                    keys += prod.key.keys.length;
-                }
-        return String.format("%d terms with %d keys in total.", terms, keys);
-
     }
 
     private final static TIntObjectMap<TIntObjectMap<TDOperations>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDOperations>>();
