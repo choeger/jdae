@@ -29,6 +29,7 @@ import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.diff.total.TDRegister;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
@@ -39,6 +40,7 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 /**
  * A cartesian pendulum model
@@ -48,14 +50,19 @@ import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
  */
 public final class Pendulum implements LoadableModel {
 
-    public final Unknown x = new Unknown("x", 1, 0);
-    public final Unknown y = new Unknown("y", 2, 0);
-    public final Unknown F = new Unknown("F", 3, 0);
+    public final Unknown x,y,F;
+
+    public Pendulum(final SimulationRuntime runtime) {
+	this.x = runtime.newUnknown("x");
+	this.y = runtime.newUnknown("y");
+	this.F = runtime.newUnknown("F");
+    }
+    
 
     @Override
     public Map<GlobalVariable, Double> initials(
             Map<Unknown, GlobalVariable> ctxt) {
-        return ImmutableMap.of();
+        return ImmutableMap.of(ctxt.get(x), 0.1);
     }
 
     @Override
@@ -66,7 +73,7 @@ public final class Pendulum implements LoadableModel {
 
     @Override
     public Collection<Equation> initialEquations() {
-	return ImmutableList.of();
+	return ImmutableList.of((Equation) new ConstantEquation(y, -0.9));
     }
 
     public String name() {
