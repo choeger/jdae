@@ -28,7 +28,6 @@ import java.util.Map;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
-import com.google.common.collect.Ordering;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
@@ -160,7 +159,7 @@ public final class TDOpsFactory {
             super();
             this.f_order = f_order;
             this.keys = Arrays.copyOf(keys, keys.length);
-            Arrays.sort(this.keys, Ordering.natural());
+            Arrays.sort(this.keys);
         }
 
         @Override
@@ -193,9 +192,11 @@ public final class TDOpsFactory {
             final StringBuilder b = new StringBuilder();
             b.append("f^(" + f_order + ") * P[");
             for (IntPair k : keys) {
-                b.append("a_");
-                b.append(k);
-                b.append(" ");
+                b.append("a_(");
+                b.append(k.x);
+                b.append(", ");
+                b.append(k.y == 0 ? "0" : "i");
+                b.append(") ");
             }
             b.append("]");
             return b.toString();
@@ -225,10 +226,10 @@ public final class TDOpsFactory {
             return "( " + f_factor + " * " + key + ")";
         }
 
-        public double apply(final PDNumber[] a, final double[] f) {
+        public double apply(final int col, final PDNumber[] a, final double[] f) {
             double d = f_factor * f[key.f_order];
-            for (IntPair p : key.keys)
-                d *= a[p.x].values[p.y];
+            for (IntPair k : key.keys)
+                d *= a[k.x].values[col * k.y];
             return d;
         }
     }
@@ -259,45 +260,66 @@ public final class TDOpsFactory {
 
         final CompositionProduct[] array = map.values().toArray(
                 new CompositionProduct[map.size()]);
+        System.out.println("Compressed  " + products.length
+                + " products down to " + array.length);
         return array;
     }
 
     private static final void addCompOps(final int order,
             final PDOperations subOps, CompositionProduct[][][] ops) {
-        ops[0] = new CompositionProduct[subOps.params + 1][];
+        ops[0] = new CompositionProduct[2][];
+
+        /* |[f ° a]|(0,0) = f(a(0,0)) */
         ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
                 new IntPair[0]) };
 
-        for (int i = 1; i <= subOps.params; ++i) {
-            ops[0][i] = new CompositionProduct[] { new CompositionProduct(1, 1,
-                    new IntPair[] { new IntPair(0, i) }) };
-        }
+        /* |[f ° a]|(0,i) = f'(a(0,0)) * a(0,i) */
+        ops[0][1] = new CompositionProduct[] { new CompositionProduct(1, 1,
+                new IntPair[] { new IntPair(0, 1) }) };
 
         if (order > 0) {
             final TDOperations smaller = getInstance(order - 1, subOps.params);
+
+            /* D(|[f ° a]|) = |[f' ° I(a)]| * D(a) */
 
             final CompositionProduct[][][] subCompOps = smaller.compOps();
             final Product[][][] multOps = smaller.multOps();
 
             for (int i = 0; i < subCompOps.length; ++i) {
-                ops[i + 1] = new CompositionProduct[subOps.params + 1][];
+                ops[i + 1] = new CompositionProduct[2][];
 
-                for (int j = 0; j < subCompOps[i].length; ++j) {
-                    final Product[] sum = multOps[i][Math.min(j, 1)];
+                for (int j = 0; j < 2; ++j) {
+                    final Product[] sum = multOps[i][j];
+
                     final List<CompositionProduct> newComp = Lists
                             .newArrayList();
+
                     for (Product product : sum) {
-                        final CompositionProduct[] lhs = subCompOps[product.key.x][j];
-                        final int a_i = product.key.y + 1;
-                        final int a_j = 0;
+
+                        final CompositionProduct[] lhs;
+                        final IntPair a_i;
+
+                        if (product.key.z == 1) {
+                            /* |[f' ° I(a)]|(x, col) * D(a)(y, 0) */
+                            lhs = subCompOps[product.key.x][1];
+                            a_i = new IntPair(product.key.y + 1, 0);
+                        } else {
+                            /* |[f' ° I(a)]|(x, 0) * D(a)(y, col) */
+                            lhs = subCompOps[product.key.x][0];
+
+                            a_i = new IntPair(product.key.y + 1, 1);
+                        }
 
                         for (CompositionProduct p : lhs) {
+                            final IntPair[] newProduct = ObjectArrays.concat(
+                                    p.key.keys, new IntPair[] { a_i },
+                                    IntPair.class);
+
                             newComp.add(new CompositionProduct(
                                     p.key.f_order + 1, p.f_factor
-                                            * product.factor, ObjectArrays
-                                            .concat(new IntPair(a_i, a_j),
-                                                    p.key.keys)));
+                                            * product.factor, newProduct));
                         }
+
                     }
 
                     ops[i + 1][j] = newComp
@@ -306,5 +328,4 @@ public final class TDOpsFactory {
             }
         }
     }
-
 }

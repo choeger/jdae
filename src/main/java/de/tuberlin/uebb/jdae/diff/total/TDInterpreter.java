@@ -93,10 +93,15 @@ public final class TDInterpreter implements TDOperations {
             if (target[i] == null)
                 target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
 
-            for (int j = 0; j < compOps[i].length; ++j) {
+            target[i].values[0] = 0;
+            for (int k = 0; k < compOps[i][0].length; ++k) {
+                target[i].values[0] += compOps[i][0][k].apply(0, a, f);
+            }
+
+            for (int j = 1; j <= subOps.params; ++j) {
                 target[i].values[j] = 0;
-                for (int k = 0; k < compOps[i][j].length; ++k) {
-                    target[i].values[j] += compOps[i][j][k].apply(a, f);
+                for (int k = 0; k < compOps[i][1].length; ++k) {
+                    target[i].values[j] += compOps[i][1][k].apply(j, a, f);
                 }
             }
         }
