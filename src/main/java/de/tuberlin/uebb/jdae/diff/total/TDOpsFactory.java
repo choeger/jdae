@@ -30,110 +30,67 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Ordering;
 
-import de.tuberlin.uebb.jbop.exception.JBOPClassException;
-import de.tuberlin.uebb.jbop.optimizer.Optimizer;
+import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.utils.IntPair;
+import de.tuberlin.uebb.jdae.utils.IntTriple;
 
 public final class TDOpsFactory {
     public static final TDOperations NO_OPS = new TDEmptyOperations();
 
-    private final static TIntObjectMap<TIntObjectMap<TDInterpreter>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDInterpreter>>();
+    private final static TIntObjectMap<TIntObjectMap<TDOperations>> instanceCache = new TIntObjectHashMap<TIntObjectMap<TDOperations>>();
 
     public static TDOperations getInstance(int order, int params) {
         if (!instanceCache.containsKey(order))
-            instanceCache.put(order, new TIntObjectHashMap<TDInterpreter>());
+            instanceCache.put(order, new TIntObjectHashMap<TDOperations>());
 
-        final TIntObjectMap<TDInterpreter> map = instanceCache.get(order);
+        final TIntObjectMap<TDOperations> map = instanceCache.get(order);
 
         if (!map.containsKey(params)) {
             final PDOperations subOps = new PDOperations(params);
+
+            final CompositionProduct[][][] compOps = compileCompIndirection(
+                    order, subOps);
             final TDInterpreter ops = new TDInterpreter(order, subOps,
-                    compileMultIndirection(order, subOps),
-                    compileCompIndirection(order, subOps),
+                    compileMultIndirection(order, subOps), compOps,
                     order > 0 ? getInstance(order - 1, params) : NO_OPS);
             map.put(params, ops);
-
-            final Optimizer optimizer = new Optimizer();
-            try {
-                System.out.println("Creating specialized TDOperations: "
-                        + params + "x" + order);
-                return optimizer.optimize(ops, "__" + params + "x" + order);
-            } catch (final JBOPClassException e) {
-                throw new RuntimeException(
-                        "TDOperations couldn't be specialized.", e);
-            }
-        } else
-            return map.get(params);
-    }
-
-    public static final class ProductElements {
-        public final int lhs_row;
-        public final int lhs_column;
-        public final int rhs_row;
-        public final int rhs_column;
-
-        public ProductElements(int lhs_row, int lhs_column, int rhs_row,
-                int rhs_column) {
-            super();
-            this.lhs_row = lhs_row;
-            this.lhs_column = lhs_column;
-            this.rhs_row = rhs_row;
-            this.rhs_column = rhs_column;
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + lhs_column;
-            result = prime * result + lhs_row;
-            result = prime * result + rhs_column;
-            result = prime * result + rhs_row;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ProductElements other = (ProductElements) obj;
-            if (lhs_column != other.lhs_column)
-                return false;
-            if (lhs_row != other.lhs_row)
-                return false;
-            if (rhs_column != other.rhs_column)
-                return false;
-            if (rhs_row != other.rhs_row)
-                return false;
-            return true;
-        }
-
+        return map.get(params);
     }
 
     public final static class Product {
-        public final ProductElements elements;
         public final int factor;
+        public final IntTriple key;
 
-        public Product(int lhs_row, int lhs_column, int rhs_row,
-                int rhs_column, int factor) {
+        public Product(int lhs, int rhs, boolean aDer, int factor) {
             super();
-            this.elements = new ProductElements(lhs_row, lhs_column, rhs_row,
-                    rhs_column);
+            this.key = new IntTriple(lhs, rhs, aDer ? 1 : 0);
             this.factor = factor;
         }
 
-        public Product(int factor, ProductElements elements) {
+        protected Product(final IntTriple key, int factor) {
+            this.key = key;
             this.factor = factor;
-            this.elements = elements;
         }
 
         public Product plusOne() {
-            return new Product(factor + 1, elements);
+            return new Product(key, factor + 1);
+        }
+
+        public String toString() {
+            if (key.z == 1) {
+                return String.format("%d * a[%d][i] * b[%d][0]", factor, key.x,
+                        key.y);
+            } else
+                return String.format("%d * a[%d][0] * b[%d][i]", factor, key.x,
+                        key.y);
+        }
+
+        public double eval(final int col, final PDNumber[] a, final PDNumber[] b) {
+            return factor * a[key.x].values[key.z * col]
+                    * b[key.y].values[(1 - key.z) * col];
         }
     }
 
@@ -154,11 +111,11 @@ public final class TDOpsFactory {
     private static final void addMultOps(int order, final PDOperations subOps,
             int row, int a, int b, Product[][][] ops) {
         if (ops[row] == null) {
-            ops[row] = new Product[subOps.params + 1][];
+            ops[row] = new Product[2][];
         }
 
         // (a*b)[0] == a[0] * b[0]
-        final Product[] sum = new Product[] { new Product(a, 0, b, 0, 1) };
+        final Product[] sum = new Product[] { new Product(a, b, false, 1) };
         if (ops[row][0] == null) {
             ops[row][0] = sum;
         } else {
@@ -166,15 +123,13 @@ public final class TDOpsFactory {
         }
 
         // (a*b)[i] == a[0] * der(b)[i] + der(a)[i] * b[0]
-        for (int i = 1; i <= subOps.params; ++i) {
-            final Product[] sum2 = new Product[] { new Product(a, 0, b, i, 1),
-                    new Product(a, i, b, 0, 1) };
-            if (ops[row][i] == null) {
-                ops[row][i] = sum2;
-            } else {
-                ops[row][i] = ObjectArrays.concat(sum2, ops[row][i],
-                        Product.class);
-            }
+        final Product[] sum2 = new Product[] { new Product(a, b, true, 1),
+                new Product(a, b, false, 1) };
+
+        if (ops[row][1] == null) {
+            ops[row][1] = sum2;
+        } else {
+            ops[row][1] = ObjectArrays.concat(sum2, ops[row][1], Product.class);
         }
 
         if (row < order) {
@@ -184,13 +139,13 @@ public final class TDOpsFactory {
     }
 
     private static Product[] merge(Product[] products) {
-        final Map<ProductElements, Product> map = Maps.newHashMap();
+        final Map<IntTriple, Product> map = Maps.newHashMap();
 
         for (Product product : products) {
-            if (map.containsKey(product.elements))
-                map.put(product.elements, map.get(product.elements).plusOne());
+            if (map.containsKey(product.key))
+                map.put(product.key, map.get(product.key).plusOne());
             else
-                map.put(product.elements, product);
+                map.put(product.key, product);
         }
 
         final Product[] array = map.values().toArray(new Product[map.size()]);
@@ -269,6 +224,13 @@ public final class TDOpsFactory {
         public String toString() {
             return "( " + f_factor + " * " + key + ")";
         }
+
+        public double apply(final PDNumber[] a, final double[] f) {
+            double d = f_factor * f[key.f_order];
+            for (IntPair p : key.keys)
+                d *= a[p.x].values[p.y];
+            return d;
+        }
     }
 
     private static final CompositionProduct[][][] compileCompIndirection(
@@ -321,13 +283,13 @@ public final class TDOpsFactory {
                 ops[i + 1] = new CompositionProduct[subOps.params + 1][];
 
                 for (int j = 0; j < subCompOps[i].length; ++j) {
-                    final Product[] sum = multOps[i][j];
+                    final Product[] sum = multOps[i][Math.min(j, 1)];
                     final List<CompositionProduct> newComp = Lists
                             .newArrayList();
                     for (Product product : sum) {
-                        final CompositionProduct[] lhs = subCompOps[product.elements.lhs_row][product.elements.lhs_column];
-                        final int a_i = product.elements.rhs_row + 1;
-                        final int a_j = product.elements.rhs_column;
+                        final CompositionProduct[] lhs = subCompOps[product.key.x][j];
+                        final int a_i = product.key.y + 1;
+                        final int a_j = 0;
 
                         for (CompositionProduct p : lhs) {
                             newComp.add(new CompositionProduct(

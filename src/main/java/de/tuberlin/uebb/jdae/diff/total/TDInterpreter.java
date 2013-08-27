@@ -18,25 +18,17 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.ObjectArrays;
-import com.google.common.collect.Ordering;
 
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
-import de.tuberlin.uebb.jdae.utils.IntPair;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.*;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionProduct;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.Product;
 
 /**
  * @author choeger
@@ -47,46 +39,37 @@ public final class TDInterpreter implements TDOperations {
     public final int order;
     public final PDOperations subOps;
 
+    @ImmutableArray
     final Product[][][] multOps;
+
+    @ImmutableArray
     final CompositionProduct[][][] compOps;
+
     final TDOperations smaller;
 
     public TDInterpreter(int order, PDOperations subOps, Product[][][] multOps,
-			 CompositionProduct[][][] compOps, TDOperations smaller) {
-	this.order = order;
-	this.subOps = subOps;
-	this.multOps = multOps;
-	this.compOps = compOps;
-	this.smaller = smaller;
+            CompositionProduct[][][] compOps, TDOperations smaller) {
+        this.order = order;
+        this.subOps = subOps;
+        this.multOps = multOps;
+        this.compOps = compOps;
+        this.smaller = smaller;
     }
 
     public int order() {
-	return order;
+        return order;
     }
 
     public PDOperations subOps() {
-	return subOps;
+        return subOps;
     }
 
     public Product[][][] multOps() {
-	return this.multOps;
+        return this.multOps;
     }
 
     public CompositionProduct[][][] compOps() {
-	return this.compOps;
-    }
-
-    private String stats(CompositionProduct[][][] compositionProducts) {
-
-        int keys = 0;
-        int terms = 0;
-        for (CompositionProduct[][] row : compositionProducts)
-            for (CompositionProduct[] column : row)
-                for (CompositionProduct prod : column) {
-                    terms++;
-                    keys += prod.key.keys.length;
-                }
-        return String.format("%d terms with %d keys in total.", terms, keys);
+        return this.compOps;
     }
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
@@ -102,7 +85,8 @@ public final class TDInterpreter implements TDOperations {
         }
     }
 
- 
+    @Optimizable
+    @StrictLoops
     public final void compInd(final double[] f, final PDNumber[] a,
             final PDNumber[] target) {
         for (int i = 0; i < compOps.length; ++i) {
@@ -111,32 +95,31 @@ public final class TDInterpreter implements TDOperations {
 
             for (int j = 0; j < compOps[i].length; ++j) {
                 target[i].values[j] = 0;
-                for (final CompositionProduct p : compOps[i][j]) {
-                    double d = p.f_factor * f[p.key.f_order];
-                    for (final IntPair k : p.key.keys) {
-                        d *= a[k.x].values[k.y];
-                    }
-                    target[i].values[j] += d;
+                for (int k = 0; k < compOps[i][j].length; ++k) {
+                    target[i].values[j] += compOps[i][j][k].apply(a, f);
                 }
             }
         }
     }
 
+    @Optimizable
+    @StrictLoops
     public final void multInd(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
 
-        for (int i = 0; i < multOps.length; ++i) {
+        for (int i = 0; i < multOps.length; i++) {
             if (target[i] == null)
                 target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
 
-            final Product[][] multOpsRow = multOps[i];
+            target[i].values[0] = 0;
+            for (Product product : multOps[i][0]) {
+                target[i].values[0] += product.eval(0, a, b);
+            }
 
-            for (int j = 0; j < multOpsRow.length; ++j) {
+            for (int j = 1; j <= subOps.params; ++j) {
                 target[i].values[j] = 0;
-                for (Product product : multOpsRow[j]) {
-                    target[i].values[j] += a[product.elements.lhs_row].values[product.elements.lhs_column]
-                            * b[product.elements.rhs_row].values[product.elements.rhs_column]
-                            * product.factor;
+                for (Product product : multOps[i][1]) {
+                    target[i].values[j] += product.eval(j, a, b);
                 }
             }
         }

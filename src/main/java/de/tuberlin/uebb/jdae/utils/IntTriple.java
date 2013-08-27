@@ -20,14 +20,16 @@ package de.tuberlin.uebb.jdae.utils;
 
 import com.google.common.collect.ComparisonChain;
 
-public final class IntPair implements Comparable<IntPair> {
+public final class IntTriple implements Comparable<IntTriple> {
     public final int x;
     public final int y;
+    public final int z;
 
-    public IntPair(int x, int y) {
+    public IntTriple(int x, int y, int z) {
         super();
         this.x = x;
         this.y = y;
+        this.z = z;
     }
 
     @Override
@@ -36,6 +38,7 @@ public final class IntPair implements Comparable<IntPair> {
         int result = 1;
         result = prime * result + x;
         result = prime * result + y;
+        result = prime * result + z;
         return result;
     }
 
@@ -47,20 +50,23 @@ public final class IntPair implements Comparable<IntPair> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        IntPair other = (IntPair) obj;
+        IntTriple other = (IntTriple) obj;
         if (x != other.x)
             return false;
         if (y != other.y)
+            return false;
+        if (z != other.z)
             return false;
         return true;
     }
 
     @Override
-    public int compareTo(IntPair o) {
-        return ComparisonChain.start().compare(x, o.x).compare(y, o.y).result();
+    public int compareTo(IntTriple o) {
+        return ComparisonChain.start().compare(x, o.x).compare(y, o.y)
+                .compare(z, o.z).result();
     }
 
     public String toString() {
-        return "(" + x + ", " + y + ")";
+        return "(" + x + ", " + y + ", " + z + ")";
     }
 }
