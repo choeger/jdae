@@ -23,6 +23,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
@@ -31,26 +32,28 @@ import de.tuberlin.uebb.jdae.utils.IntTriple;
 
 public final class MultiplicationInterpreter implements Multiplication {
 
-    public final MultiplicationInterpreter smaller;
+    public final Multiplication smaller;
+
+    @ImmutableArray
     public final Product[] value;
+
+    @ImmutableArray
     public final Product[] partialDerivative;
 
     private final int order;
 
-    public MultiplicationInterpreter(MultiplicationInterpreter smaller,
-            Product[] value, Product[] partialDerivative) {
+    public MultiplicationInterpreter(Multiplication smaller, Product[] value,
+            Product[] partialDerivative) {
         super();
-        this.smaller = smaller;
+        this.smaller = smaller == null ? EMPTY_MULTIPLICATION : smaller;
         this.value = merge(value);
         this.partialDerivative = merge(partialDerivative);
         this.order = countOrder();
     }
 
-    private int countOrder() {
-        if (smaller == null)
-            return 0;
-        else
-            return smaller.countOrder() + 1;
+    @Override
+    public int countOrder() {
+        return smaller.countOrder() + 1;
     }
 
     /*
@@ -69,23 +72,46 @@ public final class MultiplicationInterpreter implements Multiplication {
     public final void multInd(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target, PDOperations subOps) {
 
-        if (smaller != null)
+        if (smaller != EMPTY_MULTIPLICATION)
             smaller.multInd(a, b, target, subOps);
 
         if (target[order] == null)
             target[order] = new PDNumber(subOps, new double[subOps.params + 1]);
 
-        target[order].values[0] = 0;
-
-        for (Product product : value) {
-            target[order].values[0] += product.eval(0, a, b);
-        }
+        evalValue(a, b, target);
 
         for (int j = 1; j <= subOps.params; ++j) {
-            target[order].values[j] = 0;
-            for (Product product : partialDerivative) {
-                target[order].values[j] += product.eval(j, a, b);
-            }
+            evalPartialDerivative(a, b, target, j);
+        }
+    }
+
+    @Optimizable
+    @StrictLoops
+    public final void evalPartialDerivative(final PDNumber[] a,
+            final PDNumber[] b, final PDNumber[] target, final int j) {
+        target[order].values[j] = 0;
+        for (int p = 0; p < partialDerivative.length; ++p) {
+            final int x = partialDerivative[p].key.x;
+            final int y = partialDerivative[p].key.y;
+            final int z = partialDerivative[p].key.z;
+            final int factor = partialDerivative[p].factor;
+
+            target[order].values[j] += factor * a[x].values[z * j]
+                    * b[y].values[(1 - z) * j];
+        }
+    }
+
+    @Optimizable
+    @StrictLoops
+    public final void evalValue(final PDNumber[] a, final PDNumber[] b,
+            final PDNumber[] target) {
+        target[order].values[0] = 0;
+        for (int p = 0; p < value.length; ++p) {
+            final int x = value[p].key.x;
+            final int y = value[p].key.y;
+            final int factor = value[p].factor;
+
+            target[order].values[0] += factor * a[x].values[0] * b[y].values[0];
         }
     }
 

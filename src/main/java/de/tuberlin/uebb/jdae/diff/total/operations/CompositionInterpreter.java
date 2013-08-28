@@ -23,33 +23,36 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 
+import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public final class CompositionInterpreter implements Composition {
-    public final CompositionInterpreter smaller;
 
+    public final Composition smaller;
+
+    @ImmutableArray
     public final CompositionProduct[] value;
+
+    @ImmutableArray
     public final CompositionProduct[] partialDerivative;
 
     private final int order;
 
-    public CompositionInterpreter(CompositionInterpreter smaller,
+    public CompositionInterpreter(Composition smaller,
             CompositionProduct[] value, CompositionProduct[] partialDerivative) {
         super();
-        this.smaller = smaller;
+        this.smaller = smaller == null ? EMPTY_COMPOSITION : smaller;
         this.order = countOrder();
         this.value = merge(value);
         this.partialDerivative = merge(partialDerivative);
     }
 
-    private int countOrder() {
-        if (smaller == null)
-            return 0;
-        else
-            return smaller.order + 1;
+    @Override
+    public int countOrder() {
+        return smaller.countOrder() + 1;
     }
 
     private static CompositionProduct[] merge(CompositionProduct[] products) {
@@ -69,37 +72,78 @@ public final class CompositionInterpreter implements Composition {
         return array;
     }
 
-    /* (nicht-Javadoc)
-     * @see de.tuberlin.uebb.jdae.diff.total.operations.Composition#compInd(double[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDOperations)
+    /*
+     * (nicht-Javadoc)
+     * 
+     * @see
+     * de.tuberlin.uebb.jdae.diff.total.operations.Composition#compInd(double[],
+     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
+     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
+     * de.tuberlin.uebb.jdae.diff.partial.PDOperations)
      */
     @Override
     @Optimizable
     @StrictLoops
     public final void compInd(final double[] f, final PDNumber[] a,
             final PDNumber[] target, final PDOperations subOps) {
-        if (smaller != null)
+        if (smaller != EMPTY_COMPOSITION)
             smaller.compInd(f, a, target, subOps);
 
         if (target[order] == null)
             target[order] = new PDNumber(subOps, new double[subOps.params + 1]);
 
-        target[order].values[0] = 0;
-        for (int k = 0; k < value.length; ++k) {
-            target[order].values[0] += value[k].apply(0, a, f);
-        }
+        evalValue(f, a, target);
 
         for (int j = 1; j <= subOps.params; ++j) {
-            target[order].values[j] = 0;
-            for (int k = 0; k < partialDerivative.length; ++k) {
-                target[order].values[j] += partialDerivative[k].apply(j, a, f);
-            }
+            evalPartialDerivative(f, a, target, j);
         }
     }
 
-    public CompositionInterpreter get(int x) {
+    @Optimizable
+    @StrictLoops
+    public final void evalValue(final double[] f, final PDNumber[] a,
+            final PDNumber[] target) {
+        target[order].values[0] = 0;
+        for (int k = 0; k < value.length; ++k) {
+            double d = value[k].f_factor * f[value[k].key.f_order];
+            for (int l = 0; l < value[k].key.keys.length; l++)
+                d *= a[value[k].key.keys[l].x].values[0];
+
+            target[order].values[0] += d;
+        }
+    }
+
+    @Optimizable
+    @StrictLoops
+    public final void evalPartialDerivative(final double[] f,
+            final PDNumber[] a, final PDNumber[] target, final int col) {
+        target[order].values[col] = 0;
+        for (int k = 0; k < partialDerivative.length; ++k) {
+            double d = partialDerivative[k].f_factor
+                    * f[partialDerivative[k].key.f_order];
+            for (int l = 0; l < partialDerivative[k].key.keys.length; l++)
+                d *= a[partialDerivative[k].key.keys[l].x].values[partialDerivative[k].key.keys[l].y
+                        * col];
+
+            target[order].values[col] += d;
+        }
+    }
+
+    @Override
+    public Composition get(int x) {
         if (x == order)
             return this;
         else
             return smaller.get(x);
+    }
+
+    @Override
+    public CompositionProduct[] value() {
+        return value;
+    }
+
+    @Override
+    public CompositionProduct[] partialDerivative() {
+        return partialDerivative;
     }
 }

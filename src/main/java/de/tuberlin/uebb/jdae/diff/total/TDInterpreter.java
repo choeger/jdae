@@ -22,11 +22,13 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.base.Joiner;
 
+import de.tuberlin.uebb.jbop.exception.JBOPClassException;
+import de.tuberlin.uebb.jbop.optimizer.Optimizer;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionOperation;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionProduct;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
+import de.tuberlin.uebb.jdae.diff.total.operations.Composition;
+import de.tuberlin.uebb.jdae.diff.total.operations.CompositionProduct;
+import de.tuberlin.uebb.jdae.diff.total.operations.Multiplication;
 
 /**
  * @author choeger
@@ -34,21 +36,26 @@ import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
  */
 public final class TDInterpreter implements TDOperations {
 
+    private static final Optimizer OPTIMIZER = new Optimizer();
+
     public final int order;
     public final PDOperations subOps;
 
-    final MultiplicationOperations multOps;
-    final CompositionOperation compOps;
+    final Multiplication mult;
+    final Composition comp;
 
     final TDOperations smaller;
 
     public TDInterpreter(int order, PDOperations subOps,
-            MultiplicationOperations multOps, CompositionOperation compOps,
-            TDOperations smaller) {
+            Multiplication multOps, Composition compOps, TDOperations smaller) {
         this.order = order;
         this.subOps = subOps;
-        this.multOps = multOps;
-        this.compOps = compOps;
+        try {
+            this.mult = OPTIMIZER.optimize(multOps, "_" + order);
+            this.comp = OPTIMIZER.optimize(compOps, "_" + order);
+        } catch (JBOPClassException e) {
+            throw new RuntimeException(e);
+        }
         this.smaller = smaller;
     }
 
@@ -60,12 +67,12 @@ public final class TDInterpreter implements TDOperations {
         return subOps;
     }
 
-    public MultiplicationOperations multOps() {
-        return this.multOps;
+    public Multiplication multOps() {
+        return this.mult;
     }
 
-    public CompositionOperation compOps() {
-        return this.compOps;
+    public Composition compOps() {
+        return this.comp;
     }
 
     public final void add(final PDNumber[] a, final PDNumber[] b,
@@ -83,11 +90,11 @@ public final class TDInterpreter implements TDOperations {
 
     public final void mult(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
-        multOps.multInd(a, b, target, subOps);
+        mult.multInd(a, b, target, subOps);
     }
 
     public void compose(double f[], final PDNumber[] a, final PDNumber[] target) {
-        compOps.compInd(f, a, target, subOps);
+        comp.compInd(f, a, target, subOps);
     }
 
     public TDOperations smaller() {

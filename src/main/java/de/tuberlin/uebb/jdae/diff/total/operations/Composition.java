@@ -24,7 +24,17 @@ import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public interface Composition {
 
+    public static final Composition EMPTY_COMPOSITION = new EmptyComposition();
+
     void compInd(double[] f, PDNumber[] a, PDNumber[] target,
             PDOperations subOps);
+
+    int countOrder();
+
+    Composition get(int x);
+
+    CompositionProduct[] value();
+
+    CompositionProduct[] partialDerivative();
 
 }

@@ -20,8 +20,8 @@ package de.tuberlin.uebb.jdae.diff.total;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionOperation;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
+import de.tuberlin.uebb.jdae.diff.total.operations.Composition;
+import de.tuberlin.uebb.jdae.diff.total.operations.Multiplication;
 
 /**
  * @author choeger
@@ -106,8 +106,8 @@ public interface TDOperations {
      */
     TDNumber variable(int idx, int n, double... der);
 
-    MultiplicationOperations multOps();
+    Multiplication multOps();
 
-    CompositionOperation compOps();
+    Composition compOps();
 
 }

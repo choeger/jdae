@@ -24,7 +24,11 @@ import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public interface Multiplication {
 
+    public static final Multiplication EMPTY_MULTIPLICATION = new EmptyMultiplication();
+
     void multInd(PDNumber[] a, PDNumber[] b, PDNumber[] target,
             PDOperations subOps);
+
+    int countOrder();
 
 }
