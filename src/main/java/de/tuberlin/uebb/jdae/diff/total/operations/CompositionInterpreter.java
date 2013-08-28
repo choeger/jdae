@@ -105,11 +105,13 @@ public final class CompositionInterpreter implements Composition {
             final PDNumber[] target) {
         target[order].values[0] = 0;
         for (int k = 0; k < value.length; ++k) {
-            double d = value[k].f_factor * f[value[k].key.f_order];
-            for (int l = 0; l < value[k].key.keys.length; l++)
-                d *= a[value[k].key.keys[l].x].values[0];
+            if (f[value[k].key.f_order] != 0) {
+                double d = value[k].f_factor * f[value[k].key.f_order];
+                for (int l = 0; l < value[k].key.keys.length; l++)
+                    d *= a[value[k].key.keys[l].x].values[0];
 
-            target[order].values[0] += d;
+                target[order].values[0] += d;
+            }
         }
     }
 
@@ -119,13 +121,15 @@ public final class CompositionInterpreter implements Composition {
             final PDNumber[] a, final PDNumber[] target, final int col) {
         target[order].values[col] = 0;
         for (int k = 0; k < partialDerivative.length; ++k) {
-            double d = partialDerivative[k].f_factor
-                    * f[partialDerivative[k].key.f_order];
-            for (int l = 0; l < partialDerivative[k].key.keys.length; l++)
-                d *= a[partialDerivative[k].key.keys[l].x].values[partialDerivative[k].key.keys[l].y
-                        * col];
+            if (f[partialDerivative[k].key.f_order] != 0) {
+                double d = partialDerivative[k].f_factor
+                        * f[partialDerivative[k].key.f_order];
+                for (int l = 0; l < partialDerivative[k].key.keys.length; l++)
+                    d *= a[partialDerivative[k].key.keys[l].x].values[partialDerivative[k].key.keys[l].y
+                            * col];
 
-            target[order].values[col] += d;
+                target[order].values[col] += d;
+            }
         }
     }
 

@@ -54,6 +54,7 @@ public final class TDInterpreter implements TDOperations {
             this.mult = OPTIMIZER.optimize(multOps, "_" + order);
             this.comp = OPTIMIZER.optimize(compOps, "_" + order);
         } catch (JBOPClassException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
         this.smaller = smaller;
