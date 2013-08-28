@@ -29,6 +29,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.ObjectArrays;
 
+import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
+import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.utils.IntPair;
@@ -48,8 +50,8 @@ public final class TDOpsFactory {
         if (!map.containsKey(params)) {
             final PDOperations subOps = new PDOperations(params);
 
-            final CompositionProduct[][][] compOps = compileCompIndirection(
-                    order, subOps);
+            final CompositionOperation compOps = compileCompIndirection(subOps,
+                    order);
             final TDInterpreter ops = new TDInterpreter(order, subOps,
                     compileMultIndirection(order, subOps), compOps,
                     order > 0 ? getInstance(order - 1, params) : NO_OPS);
@@ -93,62 +95,115 @@ public final class TDOpsFactory {
         }
     }
 
-    private static final Product[][][] compileMultIndirection(final int order,
-            final PDOperations subOps) {
-        final Product[][][] multOps = new Product[order + 1][][];
-        addMultOps(order, subOps, 0, 0, 0, multOps);
+    private static final MultiplicationOperations compileMultIndirection(
+            final int order, final PDOperations subOps) {
 
-        for (int i = 0; i < multOps.length; ++i) {
-            for (int j = 0; j < multOps[i].length; ++j) {
-                multOps[i][j] = merge(multOps[i][j]);
+        if (order > 0) {
+            final MultiplicationOperations smaller = getInstance(order - 1,
+                    subOps.params).multOps();
+
+            /* D|[a*b]| = D(a) * I(b) + I(a) * D(b) */
+
+            final List<Product> value = Lists.newArrayList();
+            for (Product p : smaller.value) {
+                /* D(a) * I(b) */
+                value.add(new Product(p.key.x + 1, p.key.y, false, p.factor));
+
+                /* I(a) * D(b) */
+                value.add(new Product(p.key.x, p.key.y + 1, false, p.factor));
+            }
+
+            final List<Product> der = Lists.newArrayList();
+            for (Product p : smaller.partialDerivative) {
+                /* D(a) * I(b) */
+                der.add(new Product(p.key.x + 1, p.key.y, p.key.z == 1,
+                        p.factor));
+
+                /* I(a) * D(b) */
+                der.add(new Product(p.key.x, p.key.y + 1, p.key.z == 1,
+                        p.factor));
+            }
+
+            return new MultiplicationOperations(smaller,
+                    value.toArray(new Product[value.size()]),
+                    der.toArray(new Product[der.size()]));
+
+        } else {
+            // |[a*b]|(0,0) == a[0] * b[0]
+            final Product[] value = new Product[] { new Product(0, 0, false, 1) };
+
+            // (a*b)[i] == a[0] * der(b)[i] + der(a)[i] * b[0]
+            final Product[] derivatives = new Product[] {
+                    new Product(0, 0, true, 1), new Product(0, 0, false, 1) };
+
+            return new MultiplicationOperations(null, value, derivatives);
+        }
+    }
+
+    public static final class MultiplicationOperations {
+
+        public final MultiplicationOperations smaller;
+        public final Product[] value;
+        public final Product[] partialDerivative;
+
+        private final int order;
+
+        public MultiplicationOperations(MultiplicationOperations smaller,
+                Product[] value, Product[] partialDerivative) {
+            super();
+            this.smaller = smaller;
+            this.value = merge(value);
+            this.partialDerivative = merge(partialDerivative);
+            this.order = countOrder();
+        }
+
+        private int countOrder() {
+            if (smaller == null)
+                return 0;
+            else
+                return smaller.countOrder() + 1;
+        }
+
+        @Optimizable
+        @StrictLoops
+        public final void multInd(final PDNumber[] a, final PDNumber[] b,
+                final PDNumber[] target, PDOperations subOps) {
+
+            if (smaller != null)
+                smaller.multInd(a, b, target, subOps);
+
+            if (target[order] == null)
+                target[order] = new PDNumber(subOps,
+                        new double[subOps.params + 1]);
+
+            target[order].values[0] = 0;
+
+            for (Product product : value) {
+                target[order].values[0] += product.eval(0, a, b);
+            }
+
+            for (int j = 1; j <= subOps.params; ++j) {
+                target[order].values[j] = 0;
+                for (Product product : partialDerivative) {
+                    target[order].values[j] += product.eval(j, a, b);
+                }
             }
         }
 
-        return multOps;
-    }
+        private static Product[] merge(Product[] products) {
+            final Map<IntTriple, Product> map = Maps.newHashMap();
 
-    private static final void addMultOps(int order, final PDOperations subOps,
-            int row, int a, int b, Product[][][] ops) {
-        if (ops[row] == null) {
-            ops[row] = new Product[2][];
+            for (Product product : products) {
+                if (map.containsKey(product.key))
+                    map.put(product.key, map.get(product.key).plusOne());
+                else
+                    map.put(product.key, product);
+            }
+
+            final Product[] array = map.values().toArray(
+                    new Product[map.size()]);
+            return array;
         }
-
-        // (a*b)[0] == a[0] * b[0]
-        final Product[] sum = new Product[] { new Product(a, b, false, 1) };
-        if (ops[row][0] == null) {
-            ops[row][0] = sum;
-        } else {
-            ops[row][0] = ObjectArrays.concat(sum, ops[row][0], Product.class);
-        }
-
-        // (a*b)[i] == a[0] * der(b)[i] + der(a)[i] * b[0]
-        final Product[] sum2 = new Product[] { new Product(a, b, true, 1),
-                new Product(a, b, false, 1) };
-
-        if (ops[row][1] == null) {
-            ops[row][1] = sum2;
-        } else {
-            ops[row][1] = ObjectArrays.concat(sum2, ops[row][1], Product.class);
-        }
-
-        if (row < order) {
-            addMultOps(order, subOps, row + 1, a + 1, b, ops);
-            addMultOps(order, subOps, row + 1, a, b + 1, ops);
-        }
-    }
-
-    private static Product[] merge(Product[] products) {
-        final Map<IntTriple, Product> map = Maps.newHashMap();
-
-        for (Product product : products) {
-            if (map.containsKey(product.key))
-                map.put(product.key, map.get(product.key).plusOne());
-            else
-                map.put(product.key, product);
-        }
-
-        final Product[] array = map.values().toArray(new Product[map.size()]);
-        return array;
     }
 
     public static final class CompositionKey {
@@ -234,98 +289,141 @@ public final class TDOpsFactory {
         }
     }
 
-    private static final CompositionProduct[][][] compileCompIndirection(
-            int order, PDOperations subOps) {
-        final CompositionProduct[][][] ops = new CompositionProduct[order + 1][][];
-        addCompOps(order, subOps, ops);
+    public final static class CompositionOperation {
+        public final CompositionOperation smaller;
 
-        for (int i = 0; i < ops.length; ++i) {
-            for (int j = 0; j < ops[i].length; ++j) {
-                ops[i][j] = merge(ops[i][j]);
+        private final CompositionProduct[] value;
+        private final CompositionProduct[] partialDerivative;
+
+        private final int order;
+
+        public CompositionOperation(CompositionOperation smaller,
+                CompositionProduct[] value,
+                CompositionProduct[] partialDerivative) {
+            super();
+            this.smaller = smaller;
+            this.order = countOrder();
+            this.value = merge(value);
+            this.partialDerivative = merge(partialDerivative);
+        }
+
+        private int countOrder() {
+            if (smaller == null)
+                return 0;
+            else
+                return smaller.order + 1;
+        }
+
+        private static CompositionProduct[] merge(CompositionProduct[] products) {
+            final Map<CompositionKey, CompositionProduct> map = Maps
+                    .newHashMap();
+
+            for (CompositionProduct product : products) {
+                if (map.containsKey(product.key)) {
+                    map.put(product.key, map.get(product.key).plus(product));
+                } else
+                    map.put(product.key, product);
+            }
+
+            final CompositionProduct[] array = map.values().toArray(
+                    new CompositionProduct[map.size()]);
+            System.out.println("Compressed  " + products.length
+                    + " products down to " + array.length);
+            return array;
+        }
+
+        @Optimizable
+        @StrictLoops
+        public final void compInd(final double[] f, final PDNumber[] a,
+                final PDNumber[] target, final PDOperations subOps) {
+            if (smaller != null)
+                smaller.compInd(f, a, target, subOps);
+
+            if (target[order] == null)
+                target[order] = new PDNumber(subOps,
+                        new double[subOps.params + 1]);
+
+            target[order].values[0] = 0;
+            for (int k = 0; k < value.length; ++k) {
+                target[order].values[0] += value[k].apply(0, a, f);
+            }
+
+            for (int j = 1; j <= subOps.params; ++j) {
+                target[order].values[j] = 0;
+                for (int k = 0; k < partialDerivative.length; ++k) {
+                    target[order].values[j] += partialDerivative[k].apply(j, a,
+                            f);
+                }
             }
         }
 
-        return ops;
-    }
-
-    private static CompositionProduct[] merge(CompositionProduct[] products) {
-        final Map<CompositionKey, CompositionProduct> map = Maps.newHashMap();
-
-        for (CompositionProduct product : products) {
-            if (map.containsKey(product.key)) {
-                map.put(product.key, map.get(product.key).plus(product));
-            } else
-                map.put(product.key, product);
+        public CompositionOperation get(int x) {
+            if (x == order)
+                return this;
+            else
+                return smaller.get(x);
         }
-
-        final CompositionProduct[] array = map.values().toArray(
-                new CompositionProduct[map.size()]);
-        System.out.println("Compressed  " + products.length
-                + " products down to " + array.length);
-        return array;
     }
 
-    private static final void addCompOps(final int order,
-            final PDOperations subOps, CompositionProduct[][][] ops) {
-        ops[0] = new CompositionProduct[2][];
-
-        /* |[f ° a]|(0,0) = f(a(0,0)) */
-        ops[0][0] = new CompositionProduct[] { new CompositionProduct(0, 1,
-                new IntPair[0]) };
-
-        /* |[f ° a]|(0,i) = f'(a(0,0)) * a(0,i) */
-        ops[0][1] = new CompositionProduct[] { new CompositionProduct(1, 1,
-                new IntPair[] { new IntPair(0, 1) }) };
+    private static final CompositionOperation compileCompIndirection(
+            final PDOperations subOps, int order) {
 
         if (order > 0) {
             final TDOperations smaller = getInstance(order - 1, subOps.params);
 
             /* D(|[f ° a]|) = |[f' ° I(a)]| * D(a) */
 
-            final CompositionProduct[][][] subCompOps = smaller.compOps();
-            final Product[][][] multOps = smaller.multOps();
+            final CompositionOperation subCompOps = smaller.compOps();
+            final MultiplicationOperations multOps = smaller.multOps();
 
-            for (int i = 0; i < subCompOps.length; ++i) {
-                ops[i + 1] = new CompositionProduct[2][];
+            final CompositionProduct[][] p = new CompositionProduct[2][];
 
-                for (int j = 0; j < 2; ++j) {
-                    final Product[] sum = multOps[i][j];
+            for (int j = 0; j < 2; ++j) {
+                final Product[] sum = j == 0 ? multOps.value
+                        : multOps.partialDerivative;
 
-                    final List<CompositionProduct> newComp = Lists
-                            .newArrayList();
+                final List<CompositionProduct> newComp = Lists.newArrayList();
 
-                    for (Product product : sum) {
+                for (Product product : sum) {
 
-                        final CompositionProduct[] lhs;
-                        final IntPair a_i;
+                    final CompositionProduct[] lhs;
+                    final IntPair a_i;
 
-                        if (product.key.z == 1) {
-                            /* |[f' ° I(a)]|(x, col) * D(a)(y, 0) */
-                            lhs = subCompOps[product.key.x][1];
-                            a_i = new IntPair(product.key.y + 1, 0);
-                        } else {
-                            /* |[f' ° I(a)]|(x, 0) * D(a)(y, col) */
-                            lhs = subCompOps[product.key.x][0];
-
-                            a_i = new IntPair(product.key.y + 1, 1);
-                        }
-
-                        for (CompositionProduct p : lhs) {
-                            final IntPair[] newProduct = ObjectArrays.concat(
-                                    p.key.keys, new IntPair[] { a_i },
-                                    IntPair.class);
-
-                            newComp.add(new CompositionProduct(
-                                    p.key.f_order + 1, p.f_factor
-                                            * product.factor, newProduct));
-                        }
-
+                    if (product.key.z == 1) {
+                        /* |[f' ° I(a)]|(x, col) * D(a)(y, 0) */
+                        lhs = subCompOps.get(product.key.x).partialDerivative;
+                        a_i = new IntPair(product.key.y + 1, 0);
+                    } else {
+                        /* |[f' ° I(a)]|(x, 0) * D(a)(y, col) */
+                        lhs = subCompOps.get(product.key.x).value;
+                        a_i = new IntPair(product.key.y + 1, 1);
                     }
 
-                    ops[i + 1][j] = newComp
-                            .toArray(new CompositionProduct[newComp.size()]);
+                    for (CompositionProduct l : lhs) {
+                        final IntPair[] newProduct = ObjectArrays.concat(
+                                l.key.keys, new IntPair[] { a_i },
+                                IntPair.class);
+
+                        newComp.add(new CompositionProduct(l.key.f_order + 1,
+                                l.f_factor * product.factor, newProduct));
+                    }
+
                 }
+
+                p[j] = newComp.toArray(new CompositionProduct[newComp.size()]);
             }
+
+            return new CompositionOperation(subCompOps, p[0], p[1]);
+        } else {
+            /* |[f ° a]|(0,0) = f(a(0,0)) */
+            final CompositionProduct[] values = new CompositionProduct[] { new CompositionProduct(
+                    0, 1, new IntPair[0]) };
+
+            /* |[f ° a]|(0,i) = f'(a(0,0)) * a(0,i) */
+            final CompositionProduct[] partials = new CompositionProduct[] { new CompositionProduct(
+                    1, 1, new IntPair[] { new IntPair(0, 1) }) };
+
+            return new CompositionOperation(null, values, partials);
         }
     }
 }

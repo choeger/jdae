@@ -22,13 +22,11 @@ import org.apache.commons.math3.util.FastMath;
 
 import com.google.common.base.Joiner;
 
-import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
-import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
-import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionOperation;
 import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionProduct;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.Product;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
 
 /**
  * @author choeger
@@ -39,16 +37,14 @@ public final class TDInterpreter implements TDOperations {
     public final int order;
     public final PDOperations subOps;
 
-    @ImmutableArray
-    final Product[][][] multOps;
-
-    @ImmutableArray
-    final CompositionProduct[][][] compOps;
+    final MultiplicationOperations multOps;
+    final CompositionOperation compOps;
 
     final TDOperations smaller;
 
-    public TDInterpreter(int order, PDOperations subOps, Product[][][] multOps,
-            CompositionProduct[][][] compOps, TDOperations smaller) {
+    public TDInterpreter(int order, PDOperations subOps,
+            MultiplicationOperations multOps, CompositionOperation compOps,
+            TDOperations smaller) {
         this.order = order;
         this.subOps = subOps;
         this.multOps = multOps;
@@ -64,11 +60,11 @@ public final class TDInterpreter implements TDOperations {
         return subOps;
     }
 
-    public Product[][][] multOps() {
+    public MultiplicationOperations multOps() {
         return this.multOps;
     }
 
-    public CompositionProduct[][][] compOps() {
+    public CompositionOperation compOps() {
         return this.compOps;
     }
 
@@ -85,58 +81,13 @@ public final class TDInterpreter implements TDOperations {
         }
     }
 
-    @Optimizable
-    @StrictLoops
-    public final void compInd(final double[] f, final PDNumber[] a,
-            final PDNumber[] target) {
-        for (int i = 0; i < compOps.length; ++i) {
-            if (target[i] == null)
-                target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
-
-            target[i].values[0] = 0;
-            for (int k = 0; k < compOps[i][0].length; ++k) {
-                target[i].values[0] += compOps[i][0][k].apply(0, a, f);
-            }
-
-            for (int j = 1; j <= subOps.params; ++j) {
-                target[i].values[j] = 0;
-                for (int k = 0; k < compOps[i][1].length; ++k) {
-                    target[i].values[j] += compOps[i][1][k].apply(j, a, f);
-                }
-            }
-        }
-    }
-
-    @Optimizable
-    @StrictLoops
-    public final void multInd(final PDNumber[] a, final PDNumber[] b,
-            final PDNumber[] target) {
-
-        for (int i = 0; i < multOps.length; i++) {
-            if (target[i] == null)
-                target[i] = new PDNumber(subOps, new double[subOps.params + 1]);
-
-            target[i].values[0] = 0;
-            for (Product product : multOps[i][0]) {
-                target[i].values[0] += product.eval(0, a, b);
-            }
-
-            for (int j = 1; j <= subOps.params; ++j) {
-                target[i].values[j] = 0;
-                for (Product product : multOps[i][1]) {
-                    target[i].values[j] += product.eval(j, a, b);
-                }
-            }
-        }
-    }
-
     public final void mult(final PDNumber[] a, final PDNumber[] b,
             final PDNumber[] target) {
-        multInd(a, b, target);
+        multOps.multInd(a, b, target, subOps);
     }
 
     public void compose(double f[], final PDNumber[] a, final PDNumber[] target) {
-        compInd(f, a, target);
+        compOps.compInd(f, a, target, subOps);
     }
 
     public TDOperations smaller() {

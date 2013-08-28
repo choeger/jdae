@@ -5,8 +5,8 @@ package de.tuberlin.uebb.jdae.diff.total;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionProduct;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.Product;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionOperation;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
 
 /**
  * @author choeger
@@ -173,8 +173,8 @@ public class TDEmptyOperations implements TDOperations {
      * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#multOps()
      */
     @Override
-    public Product[][][] multOps() {
-        return new Product[][][] { { {} } };
+    public MultiplicationOperations multOps() {
+        return null;
     }
 
     /*
@@ -183,8 +183,8 @@ public class TDEmptyOperations implements TDOperations {
      * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#compOps()
      */
     @Override
-    public CompositionProduct[][][] compOps() {
-        return new CompositionProduct[][][] { { {} } };
+    public CompositionOperation compOps() {
+        return null;
     }
 
 }

@@ -147,7 +147,8 @@ public class TDNumberDifferentialTest {
     }
 
     public TDNumber inner(final TDNumber x, final TDNumber y) {
-        return x.mult(2).add(y.pow(2));
+        final TDNumber t = y.mult(y);
+        return x.mult(2).add(t);
     }
 
     final private double df2() {

@@ -20,7 +20,8 @@ package de.tuberlin.uebb.jdae.diff.total;
 
 import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.*;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.CompositionOperation;
+import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory.MultiplicationOperations;
 
 /**
  * @author choeger
@@ -41,18 +42,16 @@ public interface TDOperations {
     /**
      * Invoke addition a + b and store result in target
      */
-    void add(final PDNumber[] a, final PDNumber[] b,
-		    final PDNumber[] target);
+    void add(final PDNumber[] a, final PDNumber[] b, final PDNumber[] target);
 
-    
     /**
      * Invoke multiplaction a * b and store result in target
-     */    
-    void mult(final PDNumber[] a, final PDNumber[] b,
-	      final PDNumber[] target);
+     */
+    void mult(final PDNumber[] a, final PDNumber[] b, final PDNumber[] target);
+
     /**
-     * Invoke the composition f ° a and store result in target.
-     * Note: f must contain the total derivatives computed at a[0][0]
+     * Invoke the composition f ° a and store result in target. Note: f must
+     * contain the total derivatives computed at a[0][0]
      */
     void compose(double f[], final PDNumber[] a, final PDNumber[] target);
 
@@ -60,7 +59,6 @@ public interface TDOperations {
      * @return the operations for the TDNumber of one less degree.
      */
     TDOperations smaller();
-
 
     /**
      * Invoke the sinus of a and store result in target
@@ -83,35 +81,33 @@ public interface TDOperations {
     void pow(double n, final PDNumber[] a, final PDNumber[] target);
 
     /**
-     * Create a matching constant variable (that is, a variable
-     * with given total derivatives and no partial derivatives).
-     * The values start at index offset in dt.
+     * Create a matching constant variable (that is, a variable with given total
+     * derivatives and no partial derivatives). The values start at index offset
+     * in dt.
      */
     TDNumber constantVar(int offset, double... dt);
 
     /**
-     * Create a matching constant variable (that is, a variable
-     * with given total derivatives and no partial derivatives).
-     * The derivatives are defined by the array dt.
+     * Create a matching constant variable (that is, a variable with given total
+     * derivatives and no partial derivatives). The derivatives are defined by
+     * the array dt.
      */
     TDNumber constant(double d, double... dt);
 
     /**
-     * Load a variable with the given derivatives and
-     * index idx.
+     * Load a variable with the given derivatives and index idx.
      */
     TDNumber variable(int idx, double... der);
 
     /**
-     * Load a mixed variable (that is a variable where the first
-     * n derivatives are constant in the local function context).
-     * The values in der starting at n will be interpreteted as 
-     * local function variables.
+     * Load a mixed variable (that is a variable where the first n derivatives
+     * are constant in the local function context). The values in der starting
+     * at n will be interpreteted as local function variables.
      */
     TDNumber variable(int idx, int n, double... der);
 
-    Product[][][] multOps();
+    MultiplicationOperations multOps();
 
-    CompositionProduct[][][] compOps();
+    CompositionOperation compOps();
 
 }
