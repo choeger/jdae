@@ -28,7 +28,7 @@ public final class ExecutionContext {
 
     final GlobalVariable[] params;
     public final TDOperations compiler;
-    final double[][] data;
+    public final double[][] data;
 
     public ExecutionContext(int order, GlobalVariable[] vars, double[][] data) {
         super();
