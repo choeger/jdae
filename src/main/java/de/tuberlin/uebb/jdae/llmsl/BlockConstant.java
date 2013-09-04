@@ -46,7 +46,7 @@ public final class BlockConstant implements BlockVariable {
     public final GlobalVariable var;
 
     public String toString() {
-        return "(constant: " + var + ")";
+        return "(block constant: " + var + ")";
     }
 
     @Override

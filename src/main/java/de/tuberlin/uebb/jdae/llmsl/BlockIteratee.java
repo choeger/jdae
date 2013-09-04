@@ -30,6 +30,10 @@ public final class BlockIteratee implements BlockVariable {
         return ctxt.loadD(var);
     }
 
+    public String toString() {
+	return var.toString() + " as block-iteratee, index: " + blockIndex;
+    }
+
     public BlockIteratee(GlobalVariable var, int blockIndex) {
         super();
         this.blockIndex = blockIndex;

@@ -35,6 +35,10 @@ public class BlockState implements BlockVariable {
         this.firstDerivative = firstDerivative;
     }
 
+    public String toString() {
+	return var.toString() + " as block-state, first der: " + firstDerivative;
+    }
+
     @Override
     public double value(ExecutionContext ctxt) {
         return ctxt.loadD(var);
