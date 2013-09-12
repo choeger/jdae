@@ -19,14 +19,20 @@
 
 package de.tuberlin.uebb.jdae.simulation;
 
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 
 import com.google.common.base.Objects;
 
+import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+
 public final class SimulationOptions {
 
     public static final SimulationOptions DEFAULT = new SimulationOptions(0, 1,
-            1e-6, 1e-3, 1e-3, InlineIntegratorSelection.INLINE_FORWARD_EULER);
+            1e-6, 1e-3, 1e-3, InlineIntegratorSelection.INLINE_FORWARD_EULER,
+            new TObjectDoubleHashMap<Unknown>());
     public final double startTime;
     public final double stopTime;
     public final FirstOrderIntegrator integrator;
@@ -36,6 +42,7 @@ public final class SimulationOptions {
 
     public final double tolerance;
     public final InlineIntegratorSelection inlineIntegrator;
+    public final TObjectDoubleMap<Unknown> startValues;
 
     // TODO: let user choose
     public int maxIterations = 1000;
@@ -43,8 +50,10 @@ public final class SimulationOptions {
     protected SimulationOptions(double startTime, double stopTime,
             FirstOrderIntegrator integrator, double minStepSize,
             double maxStepSize, double tolerance,
-            InlineIntegratorSelection inlineIntegrator) {
+            InlineIntegratorSelection inlineIntegrator,
+            TObjectDoubleMap<Unknown> startValues) {
         super();
+        this.startValues = startValues;
         this.startTime = startTime;
         this.stopTime = stopTime;
         this.integrator = integrator;
@@ -55,7 +64,10 @@ public final class SimulationOptions {
     }
 
     public SimulationOptions(double startTime, double stopTime, double tol,
-            double minStep, double maxStep, InlineIntegratorSelection integrator) {
+            double minStep, double maxStep,
+            InlineIntegratorSelection integrator,
+            TObjectDoubleMap<Unknown> startValues) {
+        this.startValues = startValues;
         this.startTime = startTime;
         this.minStepSize = minStep;
         this.maxStepSize = maxStep;
@@ -66,8 +78,10 @@ public final class SimulationOptions {
     }
 
     public SimulationOptions(double startTime, double stopTime, double tol,
-            double minStep, double maxStep, FirstOrderIntegrator integrator) {
+            double minStep, double maxStep, FirstOrderIntegrator integrator,
+            TObjectDoubleMap<Unknown> startValues) {
         super();
+        this.startValues = startValues;
         this.startTime = startTime;
         this.minStepSize = minStep;
         this.maxStepSize = maxStep;
@@ -87,17 +101,23 @@ public final class SimulationOptions {
 
     public SimulationOptions withStartTime(final double start) {
         return new SimulationOptions(start, stopTime, integrator, tolerance,
-                minStepSize, maxStepSize, inlineIntegrator);
+                minStepSize, maxStepSize, inlineIntegrator, startValues);
     }
 
     public SimulationOptions withStopTime(final double stop) {
         return new SimulationOptions(startTime, stop, integrator, tolerance,
-                minStepSize, maxStepSize, inlineIntegrator);
+                minStepSize, maxStepSize, inlineIntegrator, startValues);
     }
 
     public SimulationOptions withStepSize(final double step) {
         return new SimulationOptions(startTime, stopTime, integrator,
-                tolerance, step, step, inlineIntegrator);
+                tolerance, step, step, inlineIntegrator, startValues);
+    }
+
+    public SimulationOptions withStartValues(
+            final TObjectDoubleMap<Unknown> startValues) {
+        return new SimulationOptions(startTime, stopTime, tolerance,
+                minStepSize, maxStepSize, integrator, startValues);
     }
 
 }

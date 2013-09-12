@@ -18,6 +18,8 @@
  */
 package de.tuberlin.uebb.jdae.simulation;
 
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +86,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         final FirstOrderIntegrator i = new EulerIntegrator(stepSize);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
-                stepSize * 1e-3, stepSize, stepSize, i);
+                stepSize * 1e-3, stepSize, stepSize, i,
+                new TObjectDoubleHashMap<Unknown>());
 
         simulate(dae.withOptions(options));
         return options;
@@ -97,7 +100,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 stepSize * 1e-3, stepSize, stepSize,
-                InlineIntegratorSelection.INLINE_FORWARD_EULER);
+                InlineIntegratorSelection.INLINE_FORWARD_EULER,
+                new TObjectDoubleHashMap<Unknown>());
 
         simulate(dae.withOptions(options));
         return options;
@@ -119,7 +123,8 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
         final FirstOrderIntegrator i = new DormandPrince54Integrator(minStep,
                 maxStep, absoluteTolerance, relativeTolerance);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
-                absoluteTolerance, minStep, maxStep, i);
+                absoluteTolerance, minStep, maxStep, i,
+                new TObjectDoubleHashMap<Unknown>());
 
         simulate(dae.withOptions(options));
         return options;
