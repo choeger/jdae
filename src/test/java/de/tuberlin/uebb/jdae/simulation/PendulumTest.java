@@ -19,6 +19,7 @@
 package de.tuberlin.uebb.jdae.simulation;
 
 import org.apache.commons.math3.analysis.MultivariateMatrixFunction;
+import org.apache.commons.math3.exception.ConvergenceException;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -240,6 +241,12 @@ public class PendulumTest {
         assertEquals(SIM_TEST_STOP_TIME, dae.data[0][0], 1e-8);
         assertThat(runtime.lastResults().results.size(),
                 is(SIM_TEST_STOP_TIME * 1000));
+    }
+
+    @Test(expected = ConvergenceException.class)
+    public void testConvergenceError() {
+        dae.data[1][0] = 0.0;
+        dae.initialize();
     }
 
     @Test
