@@ -53,9 +53,9 @@ public class PendulumTest {
             reduction.ctxt.get(model.y), -0.9);
     final ContinuousEvent[] events = model.events(reduction.ctxt).toArray(
             new ContinuousEvent[0]);
-    final ExecutableDAE dae = runtime
-            .causalise(reduction, ImmutableList.of(initial_y),
-                    model.initials(reduction.ctxt), events);
+    final ExecutableDAE dae = runtime.causalise(reduction,
+            ImmutableList.of(initial_y), model.initials(reduction.ctxt),
+            events, SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {
@@ -76,7 +76,8 @@ public class PendulumTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(initial_y),
-                model.initials(reduction.ctxt), events);
+                model.initials(reduction.ctxt), events,
+                SimulationOptions.DEFAULT);
 
         final Block initBlock = (Block) dae.initials[2];
 
@@ -154,7 +155,8 @@ public class PendulumTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(initial_y),
-                model.initials(reduction.ctxt), events);
+                model.initials(reduction.ctxt), events,
+                SimulationOptions.DEFAULT);
 
         dae.data[1][0] = 0.1;
 

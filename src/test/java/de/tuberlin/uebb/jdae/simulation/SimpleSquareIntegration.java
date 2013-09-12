@@ -54,7 +54,8 @@ public class SimpleSquareIntegration {
     final ExecutableDAE dae = runtime
             .causalise(reduction, ImmutableList.of(new ConstantEquation(x, 0.0)
                     .bind(reduction.ctxt)), ImmutableMap
-                    .<GlobalVariable, Double> of(), new ContinuousEvent[0]);
+                    .<GlobalVariable, Double> of(), new ContinuousEvent[0],
+                    SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {

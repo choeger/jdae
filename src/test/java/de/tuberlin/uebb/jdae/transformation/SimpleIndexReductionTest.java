@@ -28,6 +28,7 @@ import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.simulation.DefaultSimulationRuntime;
+import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
 
 import static org.hamcrest.Matchers.is;
@@ -52,7 +53,8 @@ public final class SimpleIndexReductionTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(),
-                m.initials(reduction.ctxt), new ContinuousEvent[0]);
+                m.initials(reduction.ctxt), new ContinuousEvent[0],
+                SimulationOptions.DEFAULT);
 
         assertNotNull(dae);
 
@@ -67,7 +69,8 @@ public final class SimpleIndexReductionTest {
     public void testInitialization() {
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(),
-                m.initials(reduction.ctxt), new ContinuousEvent[0]);
+                m.initials(reduction.ctxt), new ContinuousEvent[0],
+                SimulationOptions.DEFAULT);
 
         dae.initialize();
 
@@ -83,7 +86,7 @@ public final class SimpleIndexReductionTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(),
-                m.initials(reduction.ctxt), events);
+                m.initials(reduction.ctxt), events, SimulationOptions.DEFAULT);
 
         runtime.simulateVariableStep(dae, 1.0, Double.MAX_VALUE,
                 Double.MAX_VALUE, 1e-6, 1e-6);

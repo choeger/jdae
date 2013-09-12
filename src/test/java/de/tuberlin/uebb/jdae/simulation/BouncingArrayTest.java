@@ -19,18 +19,10 @@
 
 package de.tuberlin.uebb.jdae.simulation;
 
-import java.util.Collection;
-
-import org.junit.Ignore;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
 
 import de.tuberlin.uebb.jdae.examples.BouncingBallArray;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
-import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
-import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -46,7 +38,8 @@ public class BouncingArrayTest {
     final BouncingBallArray model = new BouncingBallArray(runtime);
     final Reduction reduction = runtime.reduce(model.equations());
 
-    final ExecutableDAE dae = runtime.causalise(model);
+    final ExecutableDAE dae = runtime.causalise(model,
+            SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {
@@ -61,7 +54,8 @@ public class BouncingArrayTest {
     @Test
     public void testInitialization() {
 
-        final ExecutableDAE dae = runtime.causalise(model);
+        final ExecutableDAE dae = runtime.causalise(model,
+                SimulationOptions.DEFAULT);
 
         dae.initialize();
 

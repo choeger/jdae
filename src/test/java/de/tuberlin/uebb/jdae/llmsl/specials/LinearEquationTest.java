@@ -51,7 +51,8 @@ public class LinearEquationTest {
     @Test
     public void testSpecialization() {
         final ExecutableDAE dae = new ExecutableDAE(layout,
-                new IBlock[] { null }, new IBlock[] {}, ImmutableList.of(h));
+                new IBlock[] { null }, new IBlock[] {}, ImmutableList.of(h),
+                null);
 
         /* don't try this at home! */
         dae.blocks[0] = eq.specializeFor(b, null, dae);

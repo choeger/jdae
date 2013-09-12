@@ -59,7 +59,8 @@ public class LinearSystemTest {
             LINEAR2));
     final ExecutableDAE dae = runtime.causalise(reduction,
             ImmutableList.<GlobalEquation> of(),
-            ImmutableMap.<GlobalVariable, Double> of(), new ContinuousEvent[0]);
+            ImmutableMap.<GlobalVariable, Double> of(), new ContinuousEvent[0],
+            SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {

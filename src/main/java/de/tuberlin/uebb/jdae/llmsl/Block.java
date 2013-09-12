@@ -37,13 +37,14 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
+import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import de.tuberlin.uebb.jdae.transformation.DerivedEquation;
 
 /**
  * @author choeger
  * 
  */
-public class Block implements MultivariateVectorFunction, IBlock {
+public final class Block implements MultivariateVectorFunction, IBlock {
 
     private static final double TOLERANCE = 1e-8;
     public static long evals;
@@ -69,12 +70,17 @@ public class Block implements MultivariateVectorFunction, IBlock {
     private final TDNumber[] residuals;
     private double[] lastPoint = null;
 
+    /* simulation flags */
+    final SimulationOptions options;
+
     /* equation solver */
     final ExecutionContext view;
 
     public Block(double[][] data, DataLayout layout,
-            Set<GlobalVariable> variables, Set<DerivedEquation> equations) {
+            Set<GlobalVariable> variables, Set<DerivedEquation> equations,
+            SimulationOptions options) {
 
+        this.options = options;
         this.variables = variables
                 .toArray(new GlobalVariable[variables.size()]);
         Arrays.sort(this.variables, Ordering.natural());
@@ -248,7 +254,17 @@ public class Block implements MultivariateVectorFunction, IBlock {
         views[0].loadD(point, variables);
         forceCompute();
 
+        int steps = 1000;
         while (!writeNegResidual(residual.data)) {
+            if (steps-- <= 0) {
+                views[0].loadD(point, variables);
+                forceCompute();
+                writeJacobian();
+                System.out.println("Convergence Error:");
+                System.out.println(jacobianMatrix.toString());
+
+                throw new ConvergenceException();
+            }
             writeJacobian();
             if (!solver.setA(jacobianMatrix))
                 throw new ConvergenceException();

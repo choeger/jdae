@@ -46,7 +46,8 @@ public class StiffHybridTest {
     final ContinuousEvent[] events = model.events(reduction.ctxt).toArray(
             new ContinuousEvent[0]);
     final ExecutableDAE dae = runtime.causalise(reduction,
-            ImmutableList.of(x1_init), model.initials(reduction.ctxt), events);
+            ImmutableList.of(x1_init), model.initials(reduction.ctxt), events,
+            SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {
@@ -63,7 +64,8 @@ public class StiffHybridTest {
 
         final ExecutableDAE dae = runtime.causalise(reduction,
                 ImmutableList.<GlobalEquation> of(x1_init),
-                model.initials(reduction.ctxt), events);
+                model.initials(reduction.ctxt), events,
+                SimulationOptions.DEFAULT);
 
         dae.initialize();
 

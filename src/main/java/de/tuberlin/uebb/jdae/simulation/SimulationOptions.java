@@ -25,6 +25,8 @@ import com.google.common.base.Objects;
 
 public final class SimulationOptions {
 
+    public static final SimulationOptions DEFAULT = new SimulationOptions(0, 1,
+            1e-6, 1e-3, 1e-3, InlineIntegratorSelection.INLINE_FORWARD_EULER);
     public final double startTime;
     public final double stopTime;
     public final FirstOrderIntegrator integrator;

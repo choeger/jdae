@@ -28,23 +28,22 @@ import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.EulerIntegrator;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+
+import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
 import de.tuberlin.uebb.jdae.llmsl.DataLayout;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
-import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.transformation.Causalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationCausalisation;
 import de.tuberlin.uebb.jdae.transformation.InitializationMatching;
 import de.tuberlin.uebb.jdae.transformation.Matching;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.ImmutableList;
-
 
 /**
  * Simulation entry point. This class contains a unique
@@ -79,29 +78,29 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * (de.tuberlin.uebb.jdae.dae.SolvableDAE, java.util.Map, double, int)
      */
     @Override
-    public SimulationOptions simulateFixedStep(ExecutableDAE dae, double stop_time,
-            final int steps) {
+    public SimulationOptions simulateFixedStep(ExecutableDAE dae,
+            double stop_time, final int steps) {
         final double stepSize = (stop_time / steps);
 
         final FirstOrderIntegrator i = new EulerIntegrator(stepSize);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 stepSize * 1e-3, stepSize, stepSize, i);
 
-        simulate(dae, options);
-	return options;
+        simulate(dae.withOptions(options));
+        return options;
     }
 
     @Override
-    public SimulationOptions simulateInlineFixedStep(ExecutableDAE dae, double stop_time,
-            final int steps) {
+    public SimulationOptions simulateInlineFixedStep(ExecutableDAE dae,
+            double stop_time, final int steps) {
         final double stepSize = (stop_time / steps);
 
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 stepSize * 1e-3, stepSize, stepSize,
                 InlineIntegratorSelection.INLINE_FORWARD_EULER);
 
-        simulate(dae, options);
-	return options;
+        simulate(dae.withOptions(options));
+        return options;
     }
 
     /*
@@ -113,17 +112,17 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
      * double, double, double)
      */
     @Override
-    public SimulationOptions simulateVariableStep(ExecutableDAE dae, double stop_time,
-            double minStep, double maxStep, double absoluteTolerance,
-            double relativeTolerance) {
+    public SimulationOptions simulateVariableStep(ExecutableDAE dae,
+            double stop_time, double minStep, double maxStep,
+            double absoluteTolerance, double relativeTolerance) {
 
         final FirstOrderIntegrator i = new DormandPrince54Integrator(minStep,
                 maxStep, absoluteTolerance, relativeTolerance);
         final SimulationOptions options = new SimulationOptions(0.0, stop_time,
                 absoluteTolerance, minStep, maxStep, i);
 
-        simulate(dae, options);
-	return options;
+        simulate(dae.withOptions(options));
+        return options;
     }
 
     @Override
@@ -132,11 +131,11 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public void simulate(ExecutableDAE dae, SimulationOptions options) {
+    public void simulate(ExecutableDAE dae) {
         results = new ResultStorage(dae);
 
         final long iStart = System.currentTimeMillis();
-
+        final SimulationOptions options = dae.options;
         dae.initialize();
 
         logger.log(Level.INFO, "Initialization done after: {0}ms",
@@ -154,7 +153,7 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
 
         final long start = System.currentTimeMillis();
 
-        dae.integrate(results, options);
+        dae.integrate(results);
 
         logger.log(
                 Level.INFO,
@@ -172,20 +171,22 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
     }
 
     @Override
-    public ExecutableDAE causalise(LoadableModel model) {
-	final Reduction reduction = reduce(model.equations());
-	final Collection<ContinuousEvent> events = model.events(reduction.ctxt);
-	return causalise(reduction, 
-			 Lists.transform(ImmutableList.copyOf(model.initialEquations()), 
-					 GlobalEquation.bindFrom(reduction.ctxt)), 
-			 model.initials(reduction.ctxt), 
-			 events.toArray(new ContinuousEvent[events.size()]));
+    public ExecutableDAE causalise(LoadableModel model,
+            SimulationOptions options) {
+        final Reduction reduction = reduce(model.equations());
+        final Collection<ContinuousEvent> events = model.events(reduction.ctxt);
+        return causalise(reduction, Lists.transform(
+                ImmutableList.copyOf(model.initialEquations()),
+                GlobalEquation.bindFrom(reduction.ctxt)),
+                model.initials(reduction.ctxt),
+                events.toArray(new ContinuousEvent[events.size()]), options);
     }
 
     @Override
     public ExecutableDAE causalise(Reduction reduction,
             List<GlobalEquation> initialEquations,
-            Map<GlobalVariable, Double> startValues, ContinuousEvent[] c_events) {
+            Map<GlobalVariable, Double> startValues,
+            ContinuousEvent[] c_events, SimulationOptions options) {
         final long match_start = System.currentTimeMillis();
 
         final Matching matching = new Matching(reduction, logger);
@@ -209,11 +210,11 @@ public final class DefaultSimulationRuntime implements SimulationRuntime {
                 iMatching, logger);
 
         final ExecutableDAE dae = new ExecutableDAE(new DataLayout(
-                causality.layout), causality, iCausalisation, c_events);
+                causality.layout), causality, iCausalisation, c_events, options);
 
-	for(Map.Entry<GlobalVariable, Double> e : startValues.entrySet()) {
-	    dae.set(e.getKey(), e.getValue());
-	}
+        for (Map.Entry<GlobalVariable, Double> e : startValues.entrySet()) {
+            dae.set(e.getKey(), e.getValue());
+        }
 
         return dae;
 

@@ -49,6 +49,7 @@ import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
+    public final SimulationOptions options;
     public final double[][] data;
     public final EventEvaluator eventHandler;
     public final DataLayout layout;
@@ -67,7 +68,8 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
     public ExecutableDAE(final DataLayout layout, Causalisation causalisation,
             InitializationCausalisation iCausalisation,
-            final ContinuousEvent[] continuousEvents) {
+            final ContinuousEvent[] continuousEvents, SimulationOptions options) {
+        this.options = options;
         this.logger = Logger.getLogger(this.getClass().toString());
 
         this.layout = layout;
@@ -93,7 +95,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             final IBlock block_i;
             /* always prepare a numerical fallback, just in case */
             final IBlock numericalSolution = new Block(data, layout,
-                    causalisation.iteratees.get(i), deriveds);
+                    causalisation.iteratees.get(i), deriveds, options);
 
             if (causalisation.iteratees.get(i).size() == 1) {
                 /* causalisation */
@@ -118,17 +120,19 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
         this.initials = new IBlock[iCausalisation.computations.size()];
         for (Set<DerivedEquation> block : iCausalisation.computations)
             initials[i] = new Block(data, layout,
-                    iCausalisation.iteratees.get(i++), block);
+                    iCausalisation.iteratees.get(i++), block, options);
 
         this.execCtxt = new ExecutionContext(0, new GlobalVariable[0], data);
 
-	//must be last, calls methods here
+        // must be last, calls methods here
         this.eventHandler = new EventEvaluator(this, continuousEvents);
     }
 
     public ExecutableDAE(final DataLayout layout, final IBlock[] blocks,
-            final IBlock[] initials, final List<GlobalVariable> states) {
+            final IBlock[] initials, final List<GlobalVariable> states,
+            SimulationOptions options) {
 
+        this.options = options;
         this.eventHandler = new EventEvaluator(this, new ContinuousEvent[0]);
         this.logger = Logger.getLogger(this.getClass().toString());
         this.layout = layout;
@@ -145,8 +149,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
             iB.exec();
     }
 
-    public void integrate(final ResultStorage results,
-            final SimulationOptions options) {
+    public void integrate(final ResultStorage results) {
         evaluations = 0;
         data[0][0] = options.startTime;
 
@@ -210,9 +213,9 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
     public void integrateApacheCommonsIntegrator(final SimulationOptions options) {
         logger.log(Level.INFO, "Starting integration.");
 
-	for (EventHandler handler : eventHandler.getEventHandlers())
-	    options.integrator.addEventHandler(handler, options.maxStepSize,
-					       options.tolerance, 1000);
+        for (EventHandler handler : eventHandler.getEventHandlers())
+            options.integrator.addEventHandler(handler, options.maxStepSize,
+                    options.tolerance, 1000);
 
         final double[] stateVector = new double[states.size()];
 
@@ -312,6 +315,29 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
                     "The following variables are not computed: "
                             + left.toString());
         return i;
+    }
+
+    public ExecutableDAE(SimulationOptions options, double[][] data,
+            EventEvaluator eventHandler, DataLayout layout, IBlock[] blocks,
+            List<GlobalVariable> states, Logger logger, IBlock[] initials,
+            int evaluations, long time, ExecutionContext execCtxt) {
+        super();
+        this.options = options;
+        this.data = data;
+        this.eventHandler = eventHandler;
+        this.layout = layout;
+        this.blocks = blocks;
+        this.states = states;
+        this.logger = logger;
+        this.initials = initials;
+        this.evaluations = evaluations;
+        this.time = time;
+        this.execCtxt = execCtxt;
+    }
+
+    public ExecutableDAE withOptions(SimulationOptions options2) {
+        return new ExecutableDAE(options2, data, eventHandler, layout, blocks,
+                states, logger, initials, evaluations, time, execCtxt);
     }
 
 }

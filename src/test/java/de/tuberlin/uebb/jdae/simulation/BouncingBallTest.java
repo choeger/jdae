@@ -20,13 +20,8 @@ package de.tuberlin.uebb.jdae.simulation;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
 import de.tuberlin.uebb.jdae.examples.BouncingBall;
 import de.tuberlin.uebb.jdae.llmsl.ExecutableDAE;
-import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
-import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
-import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 import de.tuberlin.uebb.jdae.transformation.Reduction;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -41,7 +36,8 @@ public class BouncingBallTest {
     final BouncingBall model = new BouncingBall(runtime);
     final Reduction reduction = runtime.reduce(model.equations());
 
-    final ExecutableDAE dae = runtime.causalise(model);
+    final ExecutableDAE dae = runtime.causalise(model,
+            SimulationOptions.DEFAULT);
 
     @Test
     public void testCausalisation() {
@@ -60,7 +56,8 @@ public class BouncingBallTest {
     @Test
     public void testInitialization() {
 
-        final ExecutableDAE dae = runtime.causalise(model);
+        final ExecutableDAE dae = runtime.causalise(model,
+                SimulationOptions.DEFAULT);
 
         dae.initialize();
 

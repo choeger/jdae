@@ -36,6 +36,7 @@ import de.tuberlin.uebb.jdae.llmsl.ExecutionContext;
 import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
+import de.tuberlin.uebb.jdae.simulation.SimulationOptions;
 import static org.junit.Assert.assertEquals;
 
 public final class BlockEquationTest {
@@ -69,7 +70,7 @@ public final class BlockEquationTest {
 
     final double data[][] = layout.alloc();
     final Block b = new Block(data, layout, ImmutableSet.of(x, y),
-            ImmutableSet.of(eq2.der(0), eq1.der(0)));
+            ImmutableSet.of(eq2.der(0), eq1.der(0)), SimulationOptions.DEFAULT);
 
     public void testSingularBlock() {
         data[1][0] = 0.0;
