@@ -37,6 +37,9 @@ public final class SimulationOptions {
     public final double tolerance;
     public final InlineIntegratorSelection inlineIntegrator;
 
+    // TODO: let user choose
+    public int maxIterations = 1000;
+
     protected SimulationOptions(double startTime, double stopTime,
             FirstOrderIntegrator integrator, double minStepSize,
             double maxStepSize, double tolerance,

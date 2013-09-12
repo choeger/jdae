@@ -254,7 +254,7 @@ public final class Block implements MultivariateVectorFunction, IBlock {
         views[0].loadD(point, variables);
         forceCompute();
 
-        int steps = 1000;
+        int steps = options.maxIterations;
         while (!writeNegResidual(residual.data)) {
             if (steps-- <= 0) {
                 views[0].loadD(point, variables);
