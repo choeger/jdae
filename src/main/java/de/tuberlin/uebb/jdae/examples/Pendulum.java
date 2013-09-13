@@ -29,8 +29,8 @@ import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.diff.total.TDNumber;
 import de.tuberlin.uebb.jdae.diff.total.TDRegister;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
-import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.hlmsl.specials.ConstantEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockEquation;
 import de.tuberlin.uebb.jdae.llmsl.BlockVariable;
 import de.tuberlin.uebb.jdae.llmsl.DirectBlock;
@@ -50,14 +50,13 @@ import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
  */
 public final class Pendulum implements LoadableModel {
 
-    public final Unknown x,y,F;
+    public final Unknown x, y, F;
 
     public Pendulum(final SimulationRuntime runtime) {
-	this.x = runtime.newUnknown("x");
-	this.y = runtime.newUnknown("y");
-	this.F = runtime.newUnknown("F");
+        this.x = runtime.newUnknown("x");
+        this.y = runtime.newUnknown("y");
+        this.F = runtime.newUnknown("F");
     }
-    
 
     @Override
     public Map<GlobalVariable, Double> initials(
@@ -73,7 +72,7 @@ public final class Pendulum implements LoadableModel {
 
     @Override
     public Collection<Equation> initialEquations() {
-	return ImmutableList.of((Equation) new ConstantEquation(y, -0.9));
+        return ImmutableList.of((Equation) new ConstantEquation(y, -0.9));
     }
 
     public String name() {
@@ -239,7 +238,7 @@ public final class Pendulum implements LoadableModel {
 
         @Override
         public String toString() {
-            return String.format("%s = %s * %s", y.der(2), F, y);
+            return String.format("%s = %s * %s - %f", y.der(2), F, y, g);
         }
 
     }
