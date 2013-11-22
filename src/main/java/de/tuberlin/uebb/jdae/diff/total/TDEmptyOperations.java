@@ -19,8 +19,6 @@
 
 package de.tuberlin.uebb.jdae.diff.total;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.diff.total.operations.Composition;
 import de.tuberlin.uebb.jdae.diff.total.operations.Multiplication;
 
@@ -39,27 +37,21 @@ public class TDEmptyOperations implements TDOperations {
     public int order() {
         return 0;
     }
-
-    /*
-     * (nicht-Javadoc)
-     * 
-     * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#subOps()
-     */
+    
     @Override
-    public PDOperations subOps() {
-        return null;
+    public int params() {
+        return 0;
     }
-
     /*
      * (nicht-Javadoc)
      * 
      * @see
      * de.tuberlin.uebb.jdae.diff.total.TDOperations#add(de.tuberlin.uebb.jdae
-     * .diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * .diff.partial.double[], de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void add(PDNumber[] a, PDNumber[] b, PDNumber[] target) {
+    public void add(double[] a, double[] b, double[] target) {
     }
 
     /*
@@ -67,22 +59,22 @@ public class TDEmptyOperations implements TDOperations {
      * 
      * @see
      * de.tuberlin.uebb.jdae.diff.total.TDOperations#mult(de.tuberlin.uebb.jdae
-     * .diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * .diff.partial.double[], de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void mult(PDNumber[] a, PDNumber[] b, PDNumber[] target) {
+    public void mult(double[] a, double[] b, double[] target) {
     }
 
     /*
      * (nicht-Javadoc)
      * 
      * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#compose(double[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void compose(double[] f, PDNumber[] a, PDNumber[] target) {
+    public void compose(double[] f, double[] a, double[] target) {
     }
 
     /*
@@ -100,10 +92,10 @@ public class TDEmptyOperations implements TDOperations {
      * 
      * @see
      * de.tuberlin.uebb.jdae.diff.total.TDOperations#sin(de.tuberlin.uebb.jdae
-     * .diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * .diff.partial.double[], de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void sin(PDNumber[] a, PDNumber[] target) {
+    public void sin(double[] a, double[] target) {
     }
 
     /*
@@ -111,32 +103,32 @@ public class TDEmptyOperations implements TDOperations {
      * 
      * @see
      * de.tuberlin.uebb.jdae.diff.total.TDOperations#cos(de.tuberlin.uebb.jdae
-     * .diff.partial.PDNumber[], de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * .diff.partial.double[], de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void cos(PDNumber[] a, PDNumber[] target) {
+    public void cos(double[] a, double[] target) {
     }
 
     /*
      * (nicht-Javadoc)
      * 
      * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#pow(int,
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void pow(int n, PDNumber[] a, PDNumber[] target) {
+    public void pow(int n, double[] a, double[] target) {
     }
 
     /*
      * (nicht-Javadoc)
      * 
      * @see de.tuberlin.uebb.jdae.diff.total.TDOperations#pow(double,
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[])
+     * de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[])
      */
     @Override
-    public void pow(double n, PDNumber[] a, PDNumber[] target) {
+    public void pow(double n, double[] a, double[] target) {
     }
 
     /*

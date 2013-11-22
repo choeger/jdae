@@ -33,8 +33,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.google.common.collect.Lists;
 import com.google.common.testing.EqualsTester;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumberTest;
-
 import static org.hamcrest.CoreMatchers.is;
 
 import static org.junit.Assert.assertThat;
@@ -42,7 +40,8 @@ import static org.junit.Assert.assertThat;
 @RunWith(Parameterized.class)
 public class TDNumberTest {
 
-    private static final int MANY_ITERATIONS = 1000000;
+    private static final int MANY_ITERATIONS = 2000000;
+    private static final double EPS = 1e-12;
 
     public static Matcher<TDNumber> closeTo(final TDNumber number) {
         return new BaseMatcher<TDNumber>() {
@@ -68,12 +67,12 @@ public class TDNumberTest {
             return false;
 
         for (int i = 0; i < testee.values.length; i++)
-            if (!PDNumberTest.approximate(testee.values[i], number.values[i]))
+            if (Math.abs(testee.values[i] - number.values[i]) > EPS)
                 return false;
 
         return true;
     }
-
+    
     final static TDNumber[] examples(TDOperations ops) {
         return new TDNumber[] { ops.constant(0.0), ops.constant(1.0),
                 ops.constant(2.0), ops.constant(4.0) };
@@ -102,7 +101,7 @@ public class TDNumberTest {
 
     @Test
     public void testEqualsContract() {
-        if (ops.subOps().params > 0) {
+        if (ops.params() > 0) {
             final double[] der = new double[ops.order() + 1];
             for (int i = 0; i < der.length; ++i)
                 der[i] = 1.0 + i;

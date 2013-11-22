@@ -50,7 +50,7 @@ public class BlockState implements BlockVariable {
             assert ctxt.params[relativeDerivative].index == var.index : String
                     .format("%d-th derivative of %s is not iteratee of this block!",
                             i, var);
-            number.values[i].values[relativeDerivative + 1] = 1.0;
+            number.values[i * number.width + relativeDerivative + 1] = 1.0;
         }
 
         return number;

@@ -45,7 +45,7 @@ public final class BlockIteratee implements BlockVariable {
                     .format("%d-th derivative of %s is not iteratee of this block!",
                             i, var);
 
-            number.values[i].values[blockIndex + i + 1] = 1;
+            number.values[i * number.width + blockIndex + i + 1] = 1;
         }
 
         return number;

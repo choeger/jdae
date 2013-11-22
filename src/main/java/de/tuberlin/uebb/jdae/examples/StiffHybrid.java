@@ -235,4 +235,11 @@ public final class StiffHybrid implements LoadableModel {
                 ContinuousEvent.EventDirection.DOWN);
         return ImmutableList.of(e);
     }
+
+    @Override
+    public List<GlobalEquation> initialEquations(
+            Map<Unknown, GlobalVariable> ctxt) {
+        // TODO Automatisch generierter Methodenstub
+        return null;
+    }
 }

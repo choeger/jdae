@@ -39,6 +39,7 @@ import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.IBlock;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
+import de.tuberlin.uebb.jdae.llmsl.specials.ConstantGlobalEquation;
 
 /**
  * A cartesian pendulum model
@@ -343,6 +344,14 @@ public final class Pendulum implements LoadableModel {
 
             return reg1.unsafe();
         }
+    }
+
+    @Override
+    public List<GlobalEquation> initialEquations(
+            Map<Unknown, GlobalVariable> ctxt) {        
+            return ImmutableList.of((GlobalEquation) new ConstantGlobalEquation(
+                    ctxt.get(y), -0.9));
+        
     }
 
 }

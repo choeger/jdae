@@ -19,10 +19,10 @@
 
 package de.tuberlin.uebb.jdae.diff.total.operations;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.utils.IntTriple;
 
 public final class Product {
+    
     public final int factor;
     public final IntTriple key;
 
@@ -48,10 +48,5 @@ public final class Product {
         } else
             return String.format("%d * a[%d][0] * b[%d][i]", factor, key.x,
                     key.y);
-    }
-
-    public double eval(final int col, final PDNumber[] a, final PDNumber[] b) {
-        return factor * a[key.x].values[key.z * col]
-                * b[key.y].values[(1 - key.z) * col];
     }
 }

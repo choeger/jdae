@@ -18,8 +18,6 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.diff.total.operations.Composition;
 import de.tuberlin.uebb.jdae.diff.total.operations.Multiplication;
 
@@ -35,25 +33,25 @@ public interface TDOperations {
     int order();
 
     /**
-     * @return the underyling PDOperations
+     * @return the number of parameters calculated by that implementation.
      */
-    PDOperations subOps();
-
+    int params();
+    
     /**
      * Invoke addition a + b and store result in target
      */
-    void add(final PDNumber[] a, final PDNumber[] b, final PDNumber[] target);
+    void add(final double[] a, final double[] b, final double[] target);
 
     /**
      * Invoke multiplaction a * b and store result in target
      */
-    void mult(final PDNumber[] a, final PDNumber[] b, final PDNumber[] target);
+    void mult(final double[] a, final double[] b, final double[] target);
 
     /**
      * Invoke the composition f ° a and store result in target. Note: f must
      * contain the total derivatives computed at a[0][0]
      */
-    void compose(double f[], final PDNumber[] a, final PDNumber[] target);
+    void compose(double f[], final double[] a, final double[] target);
 
     /**
      * @return the operations for the TDNumber of one less degree.
@@ -63,22 +61,22 @@ public interface TDOperations {
     /**
      * Invoke the sinus of a and store result in target
      */
-    void sin(final PDNumber[] a, final PDNumber[] target);
+    void sin(final double[] a, final double[] target);
 
     /**
      * Invoke the sinus of a and store result in target
      */
-    void cos(final PDNumber[] a, final PDNumber[] target);
+    void cos(final double[] a, final double[] target);
 
     /**
      * Calculate the nt-h power of a and store result in target
      */
-    void pow(int n, final PDNumber[] a, final PDNumber[] target);
+    void pow(int n, final double[] a, final double[] target);
 
     /**
      * Calculate the nt-h power of a and store result in target
      */
-    void pow(double n, final PDNumber[] a, final PDNumber[] target);
+    void pow(double n, final double[] a, final double[] target);
 
     /**
      * Create a matching constant variable (that is, a variable with given total

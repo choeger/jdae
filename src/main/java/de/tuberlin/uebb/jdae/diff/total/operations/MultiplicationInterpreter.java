@@ -26,8 +26,6 @@ import com.google.common.collect.Maps;
 import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.utils.IntTriple;
 
 public final class MultiplicationInterpreter implements Multiplication {
@@ -40,7 +38,7 @@ public final class MultiplicationInterpreter implements Multiplication {
     @ImmutableArray
     public final Product[] partialDerivative;
 
-    private final int order;
+    private final int localOrder;
 
     public MultiplicationInterpreter(Multiplication smaller, Product[] value,
             Product[] partialDerivative) {
@@ -48,7 +46,7 @@ public final class MultiplicationInterpreter implements Multiplication {
         this.smaller = smaller == null ? EMPTY_MULTIPLICATION : smaller;
         this.value = merge(value);
         this.partialDerivative = merge(partialDerivative);
-        this.order = countOrder();
+        this.localOrder = countOrder();
     }
 
     @Override
@@ -61,58 +59,66 @@ public final class MultiplicationInterpreter implements Multiplication {
      * 
      * @see
      * de.tuberlin.uebb.jdae.diff.total.operations.Multiplication#multInd(de
-     * .tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
-     * de.tuberlin.uebb.jdae.diff.partial.PDNumber[],
+     * .tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[],
+     * de.tuberlin.uebb.jdae.diff.partial.double[],
      * de.tuberlin.uebb.jdae.diff.partial.PDOperations)
      */
     @Override
     @Optimizable
     @StrictLoops
-    public final void multInd(final PDNumber[] a, final PDNumber[] b,
-            final PDNumber[] target, PDOperations subOps) {
+    public final void multInd(final double[] a, final double[] b,
+            final double[] target, final int width) {
 
+        final int params = width - 1;
+        
         if (smaller != EMPTY_MULTIPLICATION)
-            smaller.multInd(a, b, target, subOps);
+            smaller.multInd(a, b, target, width);
 
-        if (target[order] == null)
-            target[order] = new PDNumber(subOps, new double[subOps.params + 1]);
+        evalValue(a, b, target, width);
 
-        evalValue(a, b, target);
-
-        for (int j = 1; j <= subOps.params; ++j) {
-            evalPartialDerivative(a, b, target, j);
+        for (int j = 1; j <= params; ++j) {
+            evalPartialDerivative(a, b, target, width, j);
         }
     }
 
     @Optimizable
     @StrictLoops
-    public final void evalPartialDerivative(final PDNumber[] a,
-            final PDNumber[] b, final PDNumber[] target, final int j) {
-        target[order].values[j] = 0;
-        for (int p = 0; p < partialDerivative.length; ++p) {
-            final int x = partialDerivative[p].key.x;
-            final int y = partialDerivative[p].key.y;
-            final int z = partialDerivative[p].key.z;
+    public final void evalPartialDerivative(final double[] a,
+            final double[] b, final double[] target, final int width, final int j) {
+
+        double d = 0;
+        for (int p = 0; p < partialDerivative.length; ++p) {  
             final int factor = partialDerivative[p].factor;
+            
+            if (factor != 0) {
+                final int x = partialDerivative[p].key.x;
+                final int y = partialDerivative[p].key.y;
+                final int z = partialDerivative[p].key.z;            
 
-            target[order].values[j] += factor * a[x].values[z * j]
-                    * b[y].values[(1 - z) * j];
+                d += factor * a[x * width + z * j]
+                        * b[y * width + (1 - z) * j];
+            }
         }
+        target[localOrder*width + j] = d;
     }
 
     @Optimizable
     @StrictLoops
-    public final void evalValue(final PDNumber[] a, final PDNumber[] b,
-            final PDNumber[] target) {
-        target[order].values[0] = 0;
-        for (int p = 0; p < value.length; ++p) {
-            final int x = value[p].key.x;
-            final int y = value[p].key.y;
-            final int factor = value[p].factor;
+    public final void evalValue(final double[] a, final double[] b,
+            final double[] target, final int width) {
 
-            target[order].values[0] += factor * a[x].values[0] * b[y].values[0];
+        double d = 0;
+        for (int p = 0; p < value.length; ++p) {
+            final int factor = value[p].factor;
+            if (factor != 0) {
+                final int x = value[p].key.x;
+                final int y = value[p].key.y;
+
+                d += factor * a[x*width] * b[y*width];
+            }       
         }
+        target[localOrder*width] = d;
     }
 
     private static Product[] merge(Product[] products) {

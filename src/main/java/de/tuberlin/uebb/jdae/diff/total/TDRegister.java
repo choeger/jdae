@@ -18,7 +18,6 @@
  */
 package de.tuberlin.uebb.jdae.diff.total;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 
 public final class TDRegister {
 
@@ -30,7 +29,7 @@ public final class TDRegister {
         this.numbers[0] = initial;
         this.current = 0;
         this.numbers[1] = new TDNumber(initial.ops,
-                new PDNumber[initial.values.length]);
+                new double[initial.values.length]);
 
         this.ops = initial.ops;
     }
@@ -44,11 +43,11 @@ public final class TDRegister {
     }
 
     public final void add(int n) {
-        numbers[current].values[0].values[0] += n;
+        numbers[current].values[0] += n;
     }
 
     public final void add(double d) {
-        numbers[current].values[0].values[0] += d;
+        numbers[current].values[0] += d;
     }
 
     public final void add(TDNumber o) {
@@ -71,8 +70,7 @@ public final class TDRegister {
 
     public void mult(int n) {
         for (int i = 0; i < numbers[current].values.length; ++i)
-            for (int j = 0; j < numbers[current].values[i].values.length; ++j)
-                numbers[current].values[i].values[j] *= n;
+                numbers[current].values[i] *= n;
 
     }
 

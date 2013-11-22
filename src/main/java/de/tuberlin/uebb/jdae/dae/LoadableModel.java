@@ -19,10 +19,12 @@
 package de.tuberlin.uebb.jdae.dae;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 
@@ -41,4 +43,6 @@ public interface LoadableModel {
 
     public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt);
 
+    public List<GlobalEquation> initialEquations(Map<Unknown, GlobalVariable> ctxt);
+    
 }

@@ -248,7 +248,10 @@ public class Block implements MultivariateVectorFunction, IBlock {
         views[0].loadD(point, variables);
         forceCompute();
 
+        int steps = 100;
         while (!writeNegResidual(residual.data)) {
+            if (steps-- <= 0)
+                throw new RuntimeException("Convergence Error");
             writeJacobian();
             if (!solver.setA(jacobianMatrix))
                 throw new ConvergenceException();

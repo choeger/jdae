@@ -26,7 +26,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -207,53 +206,45 @@ public class TDNumberDifferentialTest {
         this.ddx = ddx;
         this.ddy = ddy;
 
-        final PDNumber _x = getPD(x, 0);
-        final PDNumber _y = getPD(y, 1);
-        final PDNumber _dx = getPD(dx, 2);
-        final PDNumber _dy = getPD(dy, 3);
-        final PDNumber _ddx = getPD(ddx, 4);
-        final PDNumber _ddy = getPD(ddy, 5);
-
-        this.tx = new TDNumber(new PDNumber[] { _x, _dx, _ddx });
-        this.ty = new TDNumber(new PDNumber[] { _y, _dy, _ddy });
-
+        this.tx = new TDNumber(2, new double[] { x,  1, 0, 0, 0, 0, 0,
+                                                 dx, 0, 0, 1, 0, 0, 0,
+                                                 ddx,0, 0, 0, 0, 1, 0 });
+        
+        this.ty = new TDNumber(2, new double[] { y,  0, 1, 0, 0, 0, 0,
+                                                 dy, 0, 0, 0, 1, 0, 0,
+                                                 ddy,0, 0, 0, 0, 0, 1 });
+        
     }
 
     @Test
     public void test1stTotalDerivative() {
         final TDNumber result = f(tx, ty);
-        assertEquals(df(), result.values[1].values[0], 10e-6);
+        assertEquals(df(), result.values[1* result.width], 10e-6);
     }
 
     @Test
     public void test1stPartialDerivativeX() {
         final TDNumber result = f(tx, ty);
-        assertEquals(dfdx(), result.values[1].values[1], 10e-6);
+        assertEquals(dfdx(), result.values[1* result.width + 1], 10e-6);
     }
 
     @Test
     public void test1stPartialDerivativeDx() {
         final TDNumber result = f(tx, ty);
-        assertEquals(dfddx(), result.values[1].values[3], 10e-6);
+        final double dfddx = dfddx();
+        assertEquals(dfddx, result.values[1* result.width + 3], 10e-6);
     }
 
     @Test
     public void test2ndTotalDerivative() {
         final TDNumber result = f(tx, ty);
-        assertEquals(df2(), result.values[2].values[0], 10e-6);
+        assertEquals(df2(), result.values[2* result.width], 10e-6);
     }
 
     @Test
     public void testInner2ndTotalDerivative() {
         final TDNumber result = inner(tx, ty);
         assertEquals(2 * ddx + 2 * dy * dy + 2 * y * ddy,
-                result.values[2].values[0], 10e-6);
-    }
-
-    private final PDNumber getPD(double val, int idx) {
-        final PDNumber n = new PDNumber(6);
-        n.values[0] = val;
-        n.values[idx + 1] = 1.0;
-        return n;
+                result.values[2 * result.width], 10e-6);
     }
 }

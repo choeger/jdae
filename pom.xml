@@ -54,7 +54,7 @@
     </licenses>
     <dependencies>
         <dependency>
-            <groupId>de.tuberlin.uebb.jdae</groupId>
+            <groupId>de.tuberlin.uebb.jbop</groupId>
             <artifactId>jbop</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>

@@ -26,7 +26,6 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 import de.tuberlin.uebb.jdae.diff.total.operations.Composition;
 import de.tuberlin.uebb.jdae.diff.total.operations.CompositionInterpreter;
 import de.tuberlin.uebb.jdae.diff.total.operations.CompositionProduct;
@@ -47,12 +46,11 @@ public final class TDOpsFactory {
         final TIntObjectMap<TDOperations> map = instanceCache.get(order);
 
         if (!map.containsKey(params)) {
-            final PDOperations subOps = new PDOperations(params);
 
             final Composition compOps = getComposition(order);
             final Multiplication multiplication = getMultiplication(order);
 
-            final TDInterpreter ops = new TDInterpreter(order, subOps,
+            final TDInterpreter ops = new TDInterpreter(order, params,
                     multiplication, compOps, order > 0 ? getInstance(order - 1,
                             params) : NO_OPS);
 

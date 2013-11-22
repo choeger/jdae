@@ -201,7 +201,7 @@ public final class ExecutableDAE implements FirstOrderDifferentialEquations {
 
             /* accept step */
             eventHandler.acceptLastStep();
-            results.addResult(data);
+            //results.addResult(data);
         }
 
         time += (System.currentTimeMillis() - s);

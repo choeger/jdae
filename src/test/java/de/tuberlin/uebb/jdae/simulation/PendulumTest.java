@@ -56,7 +56,7 @@ public class PendulumTest {
     final ExecutableDAE dae = runtime
             .causalise(reduction, ImmutableList.of(initial_y),
                     model.initials(reduction.ctxt), events);
-
+    
     @Test
     public void testCausalisation() {
         /* d2h and b */

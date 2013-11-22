@@ -19,6 +19,7 @@
 package de.tuberlin.uebb.jdae.examples;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
@@ -130,5 +131,12 @@ public class BouncingBall implements LoadableModel {
                 bounce_effect, ContinuousEvent.EventDirection.DOWN);
 
         return ImmutableList.of(bounce);
+    }
+
+    @Override
+    public List<GlobalEquation> initialEquations(
+            Map<Unknown, GlobalVariable> ctxt) {
+        // TODO Automatisch generierter Methodenstub
+        return null;
     }
 }

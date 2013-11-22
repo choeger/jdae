@@ -20,6 +20,7 @@
 package de.tuberlin.uebb.jdae.examples;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
@@ -29,6 +30,7 @@ import com.google.common.collect.Iterables;
 import de.tuberlin.uebb.jdae.dae.LoadableModel;
 import de.tuberlin.uebb.jdae.hlmsl.Equation;
 import de.tuberlin.uebb.jdae.hlmsl.Unknown;
+import de.tuberlin.uebb.jdae.llmsl.GlobalEquation;
 import de.tuberlin.uebb.jdae.llmsl.GlobalVariable;
 import de.tuberlin.uebb.jdae.llmsl.events.ContinuousEvent;
 import de.tuberlin.uebb.jdae.simulation.SimulationRuntime;
@@ -64,6 +66,13 @@ public class BouncingBallArray implements LoadableModel {
     public Collection<ContinuousEvent> events(Map<Unknown, GlobalVariable> ctxt) {
         return ImmutableList.copyOf(Iterables.concat(balls[0].events(ctxt),
                 balls[1].events(ctxt), balls[2].events(ctxt)));
+    }
+
+    @Override
+    public List<GlobalEquation> initialEquations(
+            Map<Unknown, GlobalVariable> ctxt) {
+        // TODO Automatisch generierter Methodenstub
+        return null;
     }
 
 }

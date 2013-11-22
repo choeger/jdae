@@ -118,4 +118,11 @@ public final class SimpleHigherIndexExample implements LoadableModel {
         return ImmutableList.of();
     }
 
+    @Override
+    public List<GlobalEquation> initialEquations(
+            Map<Unknown, GlobalVariable> ctxt) {
+        // TODO Automatisch generierter Methodenstub
+        return null;
+    }
+
 }

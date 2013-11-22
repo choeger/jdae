@@ -19,10 +19,10 @@
 
 package de.tuberlin.uebb.jdae.diff.total.operations;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 import de.tuberlin.uebb.jdae.utils.IntPair;
 
 public final class CompositionProduct {
+
     public final int f_factor;
     public final CompositionKey key;
 
@@ -43,12 +43,5 @@ public final class CompositionProduct {
 
     public String toString() {
         return "( " + f_factor + " * " + key + ")";
-    }
-
-    public double apply(final int col, final PDNumber[] a, final double[] f) {
-        double d = f_factor * f[key.f_order];
-        for (IntPair k : key.keys)
-            d *= a[k.x].values[col * k.y];
-        return d;
     }
 }

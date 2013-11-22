@@ -19,30 +19,30 @@
 package de.tuberlin.uebb.jdae.diff.total;
 
 import java.util.Arrays;
-import de.tuberlin.uebb.jdae.diff.total.TDOpsFactory;
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
 
 public final class TDNumber {
 
-    public final PDNumber[] values;
+    public final double[] values; 
+    public final int width;
     public final TDOperations ops;
 
     public TDNumber(int order, int params) {
-        this.values = new PDNumber[order + 1];
-        this.ops = TDOpsFactory.getInstance(order, params);
-        for (int i = 0; i <= order; i++)
-            values[i] = new PDNumber(params);
+        this.values = new double[(order + 1) * (params + 1)];
+        this.width = params+1;
+        this.ops = TDOpsFactory.getInstance(order, params);        
     }
 
-    public TDNumber(PDNumber[] values) {
+    public TDNumber(final int order, double[] values) {
         super();
         this.values = values;
-        this.ops = TDOpsFactory.getInstance(values.length - 1,
-                values[0].values.length - 1);
+        this.width = values.length / (order + 1);
+        this.ops = TDOpsFactory.getInstance(order,
+                width -1);
     }
 
-    public TDNumber(TDOperations ops, PDNumber[] values) {
+    public TDNumber(TDOperations ops, double[] values) {
         this.ops = ops;
+        this.width = values.length / (ops.order() + 1);
         this.values = values;
     }
 
@@ -70,67 +70,65 @@ public final class TDNumber {
 
     public TDNumber add(final TDNumber other) {
         assert other.values.length == values.length : "Cannot add two numbers of different dimensions!";
-        final PDNumber[] newVal = new PDNumber[values.length];
+        final double[] newVal = new double[values.length];
         ops.add(values, other.values, newVal);
         return new TDNumber(ops, newVal);
     }
 
     public TDNumber add(final double value) {
-        final PDNumber[] target = new PDNumber[values.length];
-        target[0] = values[0].add(value);
+        final double[] target = new double[values.length];
+        target[0] = values[0] + value;
         for (int i = 1; i < target.length; i++)
             target[i] = values[i];
         return new TDNumber(ops, target);
     }
 
     public TDNumber add(final int value) {
-        final PDNumber[] target = new PDNumber[values.length];
-        target[0] = values[0].add(value);
-        for (int i = 1; i < target.length; i++)
-            target[i] = values[i];
+        final double[] target = Arrays.copyOf(values, values.length);
+        target[0] = values[0] + value;
         return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final TDNumber other) {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         ops.mult(values, other.values, target);
         return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final double value) {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         for (int i = 0; i < target.length; i++)
-            target[i] = values[i].mult(value);
+            target[i] = values[i] * value;
         return new TDNumber(ops, target);
     }
 
     public TDNumber mult(final int value) {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         for (int i = 0; i < target.length; i++)
-            target[i] = values[i].mult(value);
+            target[i] = values[i] * value;
         return new TDNumber(ops, target);
     }
 
     public TDNumber sin() {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         ops.sin(values, target);
         return new TDNumber(ops, target);
     }
 
     public TDNumber cos() {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         ops.cos(values, target);
         return new TDNumber(ops, target);
     }
 
     public TDNumber pow(int n) {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         ops.pow(n, values, target);
         return new TDNumber(ops, target);
     }
 
     public TDNumber pow(double n) {
-        final PDNumber[] target = new PDNumber[values.length];
+        final double[] target = new double[values.length];
         ops.pow(n, values, target);
         return new TDNumber(ops, target);
     }
@@ -144,7 +142,7 @@ public final class TDNumber {
     }
 
     public String toString() {
-        return Arrays.deepToString(values);
+        return Arrays.toString(values);
     }
 
     public TDNumber constant(double d) {
@@ -152,15 +150,15 @@ public final class TDNumber {
     }
 
     public double der(final int dt) {
-        return values[dt].values[0];
+        return values[dt * width];
     }
 
     public double der(int dt, int idx) {
-        return values[dt].values[idx + 1];
+        return values[dt * width + (idx+1)];
     }
 
     public double getValue() {
-        return values[0].values[0];
+        return values[0];
     }
 
     public TDNumber subtract(double c) {
@@ -172,10 +170,7 @@ public final class TDNumber {
     }
 
     public TDNumber copy() {
-        final PDNumber[] values = new PDNumber[this.values.length];
-        for (int i = 0; i < values.length; ++i)
-            values[i] = this.values[i].copy();
-        return new TDNumber(ops, values);
+        return new TDNumber(ops, Arrays.copyOf(values, values.length));
     }
 
 }

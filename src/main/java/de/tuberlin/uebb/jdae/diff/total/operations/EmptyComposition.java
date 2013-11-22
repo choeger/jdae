@@ -19,14 +19,11 @@
 
 package de.tuberlin.uebb.jdae.diff.total.operations;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public class EmptyComposition implements Composition {
 
     @Override
-    public void compInd(double[] f, PDNumber[] a, PDNumber[] target,
-            PDOperations subOps) {
+    public void compInd(double[] f, double[] a, double[] target, final int width) {
     }
 
     @Override

@@ -19,15 +19,12 @@
 
 package de.tuberlin.uebb.jdae.diff.total.operations;
 
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public interface Composition {
 
     public static final Composition EMPTY_COMPOSITION = new EmptyComposition();
 
-    void compInd(double[] f, PDNumber[] a, PDNumber[] target,
-            PDOperations subOps);
+    void compInd(double[] f, double[] a, double[] target, final int width);
 
     int countOrder();
 

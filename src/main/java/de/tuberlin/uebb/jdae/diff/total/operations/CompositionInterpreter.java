@@ -26,8 +26,6 @@ import com.google.common.collect.Maps;
 import de.tuberlin.uebb.jbop.optimizer.annotations.ImmutableArray;
 import de.tuberlin.uebb.jbop.optimizer.annotations.Optimizable;
 import de.tuberlin.uebb.jbop.optimizer.annotations.StrictLoops;
-import de.tuberlin.uebb.jdae.diff.partial.PDNumber;
-import de.tuberlin.uebb.jdae.diff.partial.PDOperations;
 
 public final class CompositionInterpreter implements Composition {
 
@@ -84,53 +82,55 @@ public final class CompositionInterpreter implements Composition {
     @Override
     @Optimizable
     @StrictLoops
-    public final void compInd(final double[] f, final PDNumber[] a,
-            final PDNumber[] target, final PDOperations subOps) {
+    public final void compInd(final double[] f, final double[] a,
+            final double[] target, final int width) {
         if (smaller != EMPTY_COMPOSITION)
-            smaller.compInd(f, a, target, subOps);
+            smaller.compInd(f, a, target, width);
 
-        if (target[order] == null)
-            target[order] = new PDNumber(subOps, new double[subOps.params + 1]);
 
-        evalValue(f, a, target);
+        evalValue(f, a, target, width);
 
-        for (int j = 1; j <= subOps.params; ++j) {
-            evalPartialDerivative(f, a, target, j);
+        final int params = width - 1;
+        
+        for (int j = 1; j <= params; ++j) {
+            evalPartialDerivative(f, a, target, width, j);
         }
     }
 
     @Optimizable
     @StrictLoops
-    public final void evalValue(final double[] f, final PDNumber[] a,
-            final PDNumber[] target) {
-        target[order].values[0] = 0;
+    public final void evalValue(final double[] f, final double[] a,
+            final double[] target, final int width) {
+        double r = 0;
         for (int k = 0; k < value.length; ++k) {
             if (f[value[k].key.f_order] != 0) {
                 double d = value[k].f_factor * f[value[k].key.f_order];
                 for (int l = 0; l < value[k].key.keys.length; l++)
-                    d *= a[value[k].key.keys[l].x].values[0];
+                    d *= a[value[k].key.keys[l].x * width];
 
-                target[order].values[0] += d;
+                r += d;
             }
         }
+        target[order*width] = r;
     }
 
     @Optimizable
     @StrictLoops
     public final void evalPartialDerivative(final double[] f,
-            final PDNumber[] a, final PDNumber[] target, final int col) {
-        target[order].values[col] = 0;
+            final double[] a, final double[] target, final int width, final int col) {
+        double r = 0;
         for (int k = 0; k < partialDerivative.length; ++k) {
             if (f[partialDerivative[k].key.f_order] != 0) {
                 double d = partialDerivative[k].f_factor
                         * f[partialDerivative[k].key.f_order];
                 for (int l = 0; l < partialDerivative[k].key.keys.length; l++)
-                    d *= a[partialDerivative[k].key.keys[l].x].values[partialDerivative[k].key.keys[l].y
+                    d *= a[partialDerivative[k].key.keys[l].x * width + partialDerivative[k].key.keys[l].y
                             * col];
 
-                target[order].values[col] += d;
+                r += d;
             }
         }
+        target[order*width + col] = r;
     }
 
     @Override
